@@ -10,9 +10,11 @@ from genologics.epp import EppLogger
 def main(lims, process_id, output_file):
     """Create Hamilton samplesheet for filling out 96 well plate."""
     with open(output_file, 'w') as file:
+        file.write('SourceTubeID\tPositionID\n')
         process = Process(lims, id=process_id)
         for placement, artifact in process.output_containers()[0].placements.iteritems():
-            file.write('{0}\t{1}\n'.format(placement, artifact.name))
+            placement = ''.join(placement.split(':'))
+            file.write('{0}\t{1}\n'.format(artifact.samples[0].udf['Dx_fractienummer'], placement))
 
 
 if __name__ == "__main__":
@@ -24,5 +26,4 @@ if __name__ == "__main__":
 
     with EppLogger():
         lims = Lims(BASEURI, USERNAME, PASSWORD)
-        lims.check_version()
         main(lims, args.process_id, args.output_file)
