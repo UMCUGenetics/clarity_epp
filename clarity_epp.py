@@ -1,3 +1,4 @@
+#!venv/bin/python
 """Clarity epp application."""
 
 import argparse
