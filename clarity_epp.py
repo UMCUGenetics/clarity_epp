@@ -1,21 +1,15 @@
 """Clarity epp application."""
 
 import argparse
-import os
 
 from genologics.lims import Lims
-from genologics import config
-from genologics.epp import EppLogger
 
+import config
+import utils
 import samplesheet
 
 # Setup lims connection
-config_file = "{path}/{config_file}".format(
-    path=os.path.realpath(os.path.dirname(__file__)),
-    config_file='genologics.conf'
-)
-BASEURI, USERNAME, PASSWORD, VERSION, MAIN_LOG = config.load_config(specified_config=config_file)
-lims = Lims(BASEURI, USERNAME, PASSWORD)
+lims = Lims(config.baseuri, config.username, config.password)
 
 
 def hamilton(args):
@@ -27,7 +21,7 @@ def hamilton(args):
 
 
 if __name__ == "__main__":
-    with EppLogger():
+    with utils.EppLogger(main_log=config.main_log):
         parser = argparse.ArgumentParser()
         subparser = parser.add_subparsers()
 
