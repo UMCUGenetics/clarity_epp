@@ -21,6 +21,12 @@ def hamilton(args):
         samplesheet.hamilton.purify(lims, args.process_id, args.output_file)
 
 
+def manual_pipetting(args):
+    """Create samplesheets for manual pipetting."""
+    if args.type == 'purify':
+        samplesheet.manual_pipetting.purify(lims, args.process_id, args.output_file)
+
+
 if __name__ == "__main__":
     # with utils.EppLogger(main_log=config.main_log):
     parser = argparse.ArgumentParser()
@@ -35,6 +41,12 @@ if __name__ == "__main__":
     parser_hamilton.add_argument('process_id', help='Clarity lims process id')
     parser_hamilton.add_argument('output_file', help='/path/to/output_file')
     parser_hamilton.set_defaults(func=hamilton)
+
+    parser_manual_pipetting = subparser_samplesheet.add_parser('manual', help='Create manual pipetting samplesheets')
+    parser_manual_pipetting.add_argument('type', choices=['purify'], help='Samplesheet type')
+    parser_manual_pipetting.add_argument('process_id', help='Clarity lims process id')
+    parser_manual_pipetting.add_argument('output_file', help='/path/to/output_file')
+    parser_manual_pipetting.set_defaults(func=manual_pipetting)
 
     args = parser.parse_args()
     args.func(args)
