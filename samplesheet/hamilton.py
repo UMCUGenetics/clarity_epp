@@ -28,8 +28,7 @@ def purify(lims, process_id, output_file):
     with open(output_file, 'w') as file:
         file.write('SampleID\tSample Rack barcode\tSample rack positionID\tSample Start volume\n')
         process = Process(lims, id=process_id)
-        parent_process_barcode = process.parent_processes()[0].udf['Barcode plaat']
-        # parent_process_barcode = process.parent_processes()[0].output_containers()[0].name
+        parent_process_barcode = process.parent_processes()[0].output_containers()[0].name
         well_plate = {}
 
         for placement, artifact in process.output_containers()[0].placements.iteritems():
