@@ -27,6 +27,11 @@ def manual_pipetting(args):
         samplesheet.manual_pipetting.purify(lims, args.process_id, args.output_file)
 
 
+def tecan(args):
+    """Create samplesheets for tecan machine."""
+    samplesheet.tecan.run_tecan(lims, args.process_id, args.output_file)
+
+
 if __name__ == "__main__":
     # with utils.EppLogger(main_log=config.main_log):
     parser = argparse.ArgumentParser()
@@ -41,6 +46,11 @@ if __name__ == "__main__":
     parser_hamilton.add_argument('process_id', help='Clarity lims process id')
     parser_hamilton.add_argument('output_file', help='/path/to/output_file')
     parser_hamilton.set_defaults(func=hamilton)
+
+    parser_tecan = subparser_samplesheet.add_parser('tecan', help='Create tecan samplsheets')
+    parser_tecan.add_argument('process_id', help='Clarity lims process id')
+    parser_tecan.add_argument('output_file', help='/path/to/output_file')
+    parser_tecan.set_defaults(func=tecan)
 
     parser_manual_pipetting = subparser_samplesheet.add_parser('manual', help='Create manual pipetting samplesheets')
     parser_manual_pipetting.add_argument('type', choices=['purify'], help='Samplesheet type')
