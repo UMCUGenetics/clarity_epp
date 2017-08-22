@@ -23,7 +23,7 @@ def purify(lims, process_id, output_file):
             elif 'Dx Concentratie (ng/uL)' in sample.udf:
                     concentration = sample.udf['Dx Concentratie (ng/uL)']
 
-            input_gdna_ng = artifact.udf['Dx input hoevelheid (ng)']
+            input_gdna_ng = artifact.udf['Dx input hoeveelheid (ng)']
             uL_gdna = input_gdna_ng/concentration
             uL_water = 200 - uL_gdna
 
