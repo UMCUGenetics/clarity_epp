@@ -32,22 +32,28 @@ def tecan(args):
     samplesheet.tecan.run_tecan(lims, args.process_id, args.output_file)
 
 
+def caliper(args):
+    """Create samplesheets for caliper machine."""
+    if args.type == 'normalise':
+        samplesheet.caliper.normalise(lims, args.process_id, args.output_file)
+
+
 if __name__ == "__main__":
     # with utils.EppLogger(main_log=config.main_log):
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
 
     # samplesheet
-    parser_samplesheet = subparser.add_parser('samplesheet', help='Create samplsheets')
+    parser_samplesheet = subparser.add_parser('samplesheet', help='Create samplesheets')
     subparser_samplesheet = parser_samplesheet.add_subparsers()
 
-    parser_hamilton = subparser_samplesheet.add_parser('hamilton', help='Create hamilton samplsheets')
+    parser_hamilton = subparser_samplesheet.add_parser('hamilton', help='Create hamilton samplesheets')
     parser_hamilton.add_argument('type', choices=['filling_out', 'purify'], help='Samplesheet type')
     parser_hamilton.add_argument('process_id', help='Clarity lims process id')
     parser_hamilton.add_argument('output_file', help='/path/to/output_file')
     parser_hamilton.set_defaults(func=hamilton)
 
-    parser_tecan = subparser_samplesheet.add_parser('tecan', help='Create tecan samplsheets')
+    parser_tecan = subparser_samplesheet.add_parser('tecan', help='Create tecan samplesheets')
     parser_tecan.add_argument('process_id', help='Clarity lims process id')
     parser_tecan.add_argument('output_file', help='/path/to/output_file')
     parser_tecan.set_defaults(func=tecan)
@@ -57,6 +63,12 @@ if __name__ == "__main__":
     parser_manual_pipetting.add_argument('process_id', help='Clarity lims process id')
     parser_manual_pipetting.add_argument('output_file', help='/path/to/output_file')
     parser_manual_pipetting.set_defaults(func=manual_pipetting)
+
+    parser_caliper = subparser_samplesheet.add_parser('caliper', help='Create caliper samplesheets')
+    parser_caliper.add_argument('type', choices=['normalise'], help='Samplesheet type')
+    parser_caliper.add_argument('process_id', help='Clarity lims process id')
+    parser_caliper.add_argument('output_file', help='/path/to/output_file')
+    parser_caliper.set_defaults(func=caliper)
 
     args = parser.parse_args()
     args.func(args)
