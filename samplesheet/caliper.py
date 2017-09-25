@@ -21,7 +21,7 @@ def normalise(lims, process_id, output_file):
 
     for placement, artifact in process.output_containers()[0].placements.iteritems():
         placement = ''.join(placement.split(':'))
-        monsternummer[placement] = artifact.samples[0].udf['Dx Monsternummer']
+        monsternummer[placement] = artifact.samples[0].name
 
         if 'Concentration' in artifact.input_artifact_list()[0].udf:
             conc_measured[placement] = artifact.input_artifact_list()[0].udf['Concentration']
