@@ -7,13 +7,14 @@ import argparse
 from genologics.lims import Lims
 
 import config
-# import utils
 import samplesheet
+import upload
 
 # Setup lims connection
 lims = Lims(config.baseuri, config.username, config.password)
 
 
+# Samplesheets
 def hamilton(args):
     """Create samplesheets for hamilton machine."""
     if args.type == 'filling_out':
@@ -37,6 +38,12 @@ def caliper(args):
     """Create samplesheets for caliper machine."""
     if args.type == 'normalise':
         samplesheet.caliper.normalise(lims, args.process_id, args.output_file)
+
+
+# Sample Upload
+def upload_samples(args):
+    """Upload samples from helix output file."""
+    upload.samples.from_helix(lims, args.input_file)
 
 
 if __name__ == "__main__":
@@ -70,6 +77,11 @@ if __name__ == "__main__":
     parser_caliper.add_argument('type', choices=['normalise'], help='Samplesheet type')
     parser_caliper.add_argument('process_id', help='Clarity lims process id')
     parser_caliper.set_defaults(func=caliper)
+
+    # Sample upload
+    parser_sample_upload = subparser.add_parser('sample_upload', help='Upload samples from helix export')
+    parser_sample_upload.add_argument('input_file', type=argparse.FileType('r'), help='Input file path')
+    parser_sample_upload.set_defaults(func=upload_samples)
 
     args = parser.parse_args()
     args.func(args)

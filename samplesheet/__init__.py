@@ -1,4 +1,4 @@
-"""Samplsheet generating scripts."""
+"""Samplsheet generating functions."""
 
 import hamilton
 import manual_pipetting
