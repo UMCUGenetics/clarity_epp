@@ -23,15 +23,13 @@ def normalise(lims, process_id, output_file):
         placement = ''.join(placement.split(':'))
         monsternummer[placement] = artifact.samples[0].name
 
-        if 'Concentration' in artifact.input_artifact_list()[0].udf:
-            conc_measured[placement] = artifact.input_artifact_list()[0].udf['Concentration']
+        if 'Dx Concentratie fluorescentie (ng/uL)' in artifact.input_artifact_list()[0].udf:
+            conc_measured[placement] = artifact.input_artifact_list()[0].udf['Dx Concentratie fluorescentie (ng/uL)']
             if output_ng/conc_measured[placement] > 50:
                 conc[placement] = output_ng/50
             else:
                 conc[placement] = conc_measured[placement]
-        else:
-            conc[placement] = 1  # tijdelijke oplossing voor samples vanaf qubit stap
-
+        
         volume_DNA[placement] = int(round(float(output_ng)/conc[placement]))
         volume_H2O[placement] = output_ul-int(round(float(output_ng)/conc[placement]))
 
