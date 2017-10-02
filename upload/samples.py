@@ -1,8 +1,6 @@
 """Sample upload epp functions."""
 from genologics.entities import Sample, Project, Containertype, Container
 
-hand = False
-
 
 def letter_to_bool(letter):
     """Transform letter (Y/N) to Bool."""
@@ -27,7 +25,7 @@ def from_helix(lims, input_file):
 
     input_file.readline()  # expect header on first line, skip it.
     for line in input_file:
-        data = line.rstrip().split('","')
+        data = line.rstrip().replace('"', '').split(',')
         sample_name = data[1]
 
         if value_to_bool(data[5]) == False and letter_to_bool(data[6]) == False and letter_to_bool(data[8]) == False and letter_to_bool(data[9]) == False and data[4] == 'BL':
@@ -40,7 +38,7 @@ def from_helix(lims, input_file):
         else:
             udf_data = {
                 'Sample Type': 'DNA isolated',  # required lims input
-                'Dx Onderzoeknummer': data[0].replace('"',''),
+                'Dx Onderzoeknummer': data[0],
                 'Dx Fractienummer': data[2],
                 'Dx Concentratie (ng/uL)': data[3],
                 'Dx Materiaal type': data[4],
@@ -57,7 +55,7 @@ def from_helix(lims, input_file):
                 'Dx meet ID': data[15],
                 'Dx Stoftest code': data[16],
                 'Dx Stoftest omschrijving': data[17],
-                'Dx Helix indicatie': data[18].replace('"',''),
+                'Dx Helix indicatie': data[18],
                 'Dx Handmatig': hand,
             }
             container = Container.create(lims, type=container_type)
