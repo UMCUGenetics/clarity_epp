@@ -1,26 +1,17 @@
 """Sample upload epp functions."""
-from genologics.entities import Sample, Project, Containertype, Container
+from genologics.entities import Sample, Project, Containertype, Container, Researcher
 
-
-def letter_to_bool(letter):
-    """Transform letter (Y/N) to Bool."""
-    if letter.upper() == 'J':
-        return True
-    elif letter.upper() == 'N':
-        return False
-
-
-def value_to_bool(value):
-    """Transform value to Bool."""
-    if len(value) != 0:
-        return True
-    elif len(value) == 0:
-        return False
+import utils
 
 
 def from_helix(lims, input_file):
     """Upload samples from helix export file."""
-    project = Project(lims, id='ERN151')
+    # Create project
+    project_name = input_file.name.rstrip('.csv').split('/')[-1]
+    if not lims.get_projects(name=project_name):
+        researcher = Researcher(lims, id='254')  # DX_EPP user
+        project = Project.create(lims, name=project_name, researcher=researcher, udf={'Application': 'DX'})
+
     container_type = Containertype(lims, id='2')  # Tube
 
     input_file.readline()  # expect header on first line, skip it.
@@ -28,7 +19,7 @@ def from_helix(lims, input_file):
         data = line.rstrip().replace('"', '').split(',')
         sample_name = data[1]
 
-        if value_to_bool(data[5]) == False and letter_to_bool(data[6]) == False and letter_to_bool(data[8]) == False and letter_to_bool(data[9]) == False and data[4] == 'BL':
+        if utils.value_to_bool(data[5]) == False and utils.letter_to_bool(data[6]) == False and utils.letter_to_bool(data[8]) == False and utils.letter_to_bool(data[9]) == False and data[4] == 'BL':
             hand = False
         else:
             hand = True
@@ -42,11 +33,11 @@ def from_helix(lims, input_file):
                 'Dx Fractienummer': data[2],
                 'Dx Concentratie (ng/uL)': data[3],
                 'Dx Materiaal type': data[4],
-                'Dx Foetus': value_to_bool(data[5]),
-                'Dx Overleden': letter_to_bool(data[6]),
+                'Dx Foetus': utils.value_to_bool(data[5]),
+                'Dx Overleden': utils.letter_to_bool(data[6]),
                 'Dx Opslaglocatie': data[7],
-                'Dx Spoed': letter_to_bool(data[8]),
-                'Dx NICU Spoed': letter_to_bool(data[9]),
+                'Dx Spoed': utils.letter_to_bool(data[8]),
+                'Dx NICU Spoed': utils.letter_to_bool(data[9]),
                 'Dx Persoons ID': data[10],
                 'Dx Werklijstnummer': data[11],
                 'Dx Unummer': data[12],
@@ -59,4 +50,6 @@ def from_helix(lims, input_file):
                 'Dx Handmatig': hand,
             }
             container = Container.create(lims, type=container_type)
-            Sample.create(lims, container=container, position='1:1', project=project, name=sample_name, udf=udf_data)
+            sample = Sample.create(lims, container=container, position='1:1', project=project, name=sample_name, udf=udf_data)
+            workflow = utils.stofcode_to_workflow(lims, udf_data['Dx Stoftest code'])
+            lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
