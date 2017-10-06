@@ -31,7 +31,11 @@ def normalise(lims, process_id, output_file):
     for p in qc_processes:
         for a in p.all_outputs():
             if 'Dx Concentratie fluorescentie (ng/ul)' in a.udf:
-                sample, machine = a.name.split(' ')
+                if 'Tecan' in a.parent_process.type.name:
+                    machine = 'Tecan'
+                if 'Qubit' in a.parent_process.type.name:
+                    machine = 'Qubit'
+                sample = a.samples[0].name
                 if sample not in sample_concentration or machine == 'Qubit':
                     sample_concentration[sample] = a.udf['Dx Concentratie fluorescentie (ng/ul)']
 
