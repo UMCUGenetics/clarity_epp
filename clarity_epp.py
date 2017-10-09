@@ -47,6 +47,11 @@ def upload_samples(args):
     upload.samples.from_helix(lims, args.input_file)
 
 
+def upload_tecan_results(args):
+    """Upload tecan results."""
+    upload.tecan.results(lims, args.process_id)
+
+
 # QC functions
 def qc_qubit(args):
     """Set QC status based on qubit measurement."""
@@ -86,9 +91,16 @@ if __name__ == "__main__":
     parser_samplesheet_caliper.set_defaults(func=caliper)
 
     # Sample upload
-    parser_sample_upload = subparser.add_parser('sample_upload', help='Upload samples from helix export')
-    parser_sample_upload.add_argument('input_file', type=argparse.FileType('r'), help='Input file path')
-    parser_sample_upload.set_defaults(func=upload_samples)
+    parser_upload = subparser.add_parser('upload', help='Upload samples or results to clarity lims')
+    subparser_upload = parser_upload.add_subparsers()
+
+    parser_upload_sample = subparser_upload.add_parser('sample', help='Upload samples from helix export')
+    parser_upload_sample.add_argument('input_file', type=argparse.FileType('r'), help='Input file path')
+    parser_upload_sample.set_defaults(func=upload_samples)
+
+    parser_upload_tecan = subparser_upload.add_parser('tecan', help='Upload tecan results')
+    parser_upload_tecan.add_argument('process_id', help='Clarity lims process id')
+    parser_upload_tecan.set_defaults(func=upload_tecan_results)
 
     # QC
     parser_qc = subparser.add_parser('qc', help='Set QC values/flags.')
