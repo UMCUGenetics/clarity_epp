@@ -19,7 +19,7 @@ def results(lims, process_id):
                 if not line.startswith('<>'):
                     data = line.rstrip().split('\t')
                     for index, value in enumerate(data[1:]):
-                        coordinate = '{}{}'.format(data[0], str(index))
+                        coordinate = '{0}{1}'.format(data[0], str(index))
                         if coordinate not in sample_measurements:
                             sample_measurements[coordinate] = {tecan_file_order[tecan_file_part]: float(value)}
                         elif tecan_file_order[tecan_file_part] == 'sample_name':
