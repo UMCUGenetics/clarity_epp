@@ -23,3 +23,4 @@ def copy_layout(lims, process_id):
         placement_list.append([artifact, (new_container, placement)])
 
     process.step.placements.set_placement_list(placement_list)
+    process.step.placements.post()
