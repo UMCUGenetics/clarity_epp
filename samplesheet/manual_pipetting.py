@@ -16,17 +16,17 @@ def purify(lims, process_id, output_file):
         fractienummer = sample.udf['Dx Fractienummer']
 
         if 'Dx Concentratie fluorescentie (ng/uL)' in input_artifact.udf:
-                concentration = input_artifact.udf['Dx Concentratie fluorescentie (ng/uL)']
+                concentration = float(input_artifact.udf['Dx Concentratie fluorescentie (ng/uL)'])
         elif 'Dx Concentratie OD (ng/uL)' in input_artifact.udf:
-                concentration = input_artifact.udf['Dx Concentratie OD (ng/uL)']
+                concentration = float(input_artifact.udf['Dx Concentratie OD (ng/uL)'])
         elif 'Dx Concentratie (ng/uL)' in sample.udf:
-                concentration = sample.udf['Dx Concentratie (ng/uL)']
+                concentration = float(sample.udf['Dx Concentratie (ng/uL)'])
 
-        input_gdna_ng = artifact.udf['Dx input hoeveelheid (ng)']
+        input_gdna_ng = float(artifact.udf['Dx input hoeveelheid (ng)'])
         uL_gdna = input_gdna_ng/concentration
         uL_water = 200 - uL_gdna
 
-        output_file.write('{fractienummer}\t{concentration}\t{input_gdna_ng}\t{uL_gdna}\t{uL_water}\n'.format(
+        output_file.write('{fractienummer}\t{concentration}\t{input_gdna_ng}\t{uL_gdna:.1f}\t{uL_water:.1f}\n'.format(
             fractienummer=fractienummer,
             concentration=concentration,
             input_gdna_ng=input_gdna_ng,
