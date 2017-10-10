@@ -58,8 +58,9 @@ def qc_qubit(args):
     """Set QC status based on qubit measurement."""
     qc.qubit.set_qc_flag(lims, args.process_id)
 
+
 # Placement functions
-def qc_qubit(args):
+def placement_automatic(args):
     """Copy container layout from previous step."""
     placement.plate.copy_layout(lims, args.process_id)
 
@@ -122,7 +123,7 @@ if __name__ == "__main__":
 
     parser_placement_automatic = subparser_placement.add_parser('copy', help='Copy container layout from previous step.')
     parser_placement_automatic.add_argument('process_id', help='Clarity lims process id')
-    parser_placement_automatic.set_defaults(func=qc_qubit)
+    parser_placement_automatic.set_defaults(func=placement_automatic)
 
     args = parser.parse_args()
     args.func(args)
