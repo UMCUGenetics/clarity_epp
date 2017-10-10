@@ -42,6 +42,11 @@ def caliper(args):
         samplesheet.caliper.normalise(lims, args.process_id, args.output_file)
 
 
+def tapestation(args):
+    """Create samplesheets for Tapestation machine."""
+    samplesheet.tapestation.run_tapestation(lims, args.process_id, args.output_file)
+
+
 # Sample Upload
 def upload_samples(args):
     """Upload samples from helix output file."""
@@ -80,7 +85,6 @@ if __name__ == "__main__":
     parser_samplesheet_hamilton = subparser_samplesheet.add_parser('hamilton', help='Create hamilton samplesheets', parents=[output_parser])
     parser_samplesheet_hamilton.add_argument('type', choices=['filling_out', 'purify'], help='Samplesheet type')
     parser_samplesheet_hamilton.add_argument('process_id', help='Clarity lims process id')
-
     parser_samplesheet_hamilton.set_defaults(func=hamilton)
 
     parser_samplesheet_tecan = subparser_samplesheet.add_parser('tecan', help='Create tecan samplesheets', parents=[output_parser])
@@ -96,6 +100,10 @@ if __name__ == "__main__":
     parser_samplesheet_caliper.add_argument('type', choices=['normalise'], help='Samplesheet type')
     parser_samplesheet_caliper.add_argument('process_id', help='Clarity lims process id')
     parser_samplesheet_caliper.set_defaults(func=caliper)
+
+    parser_samplesheet_tapestation = subparser_samplesheet.add_parser('tapestation', help='Create tapestation samplesheets', parents=[output_parser])
+    parser_samplesheet_tapestation.add_argument('process_id', help='Clarity lims process id')
+    parser_samplesheet_tapestation.set_defaults(func=tapestation)
 
     # Sample upload
     parser_upload = subparser.add_parser('upload', help='Upload samples or results to clarity lims')
