@@ -10,6 +10,7 @@ import config
 import samplesheet
 import upload
 import qc
+import placement
 
 # Setup lims connection
 lims = Lims(config.baseuri, config.username, config.password)
@@ -56,6 +57,11 @@ def upload_tecan_results(args):
 def qc_qubit(args):
     """Set QC status based on qubit measurement."""
     qc.qubit.set_qc_flag(lims, args.process_id)
+
+# Placement functions
+def qc_qubit(args):
+    """Copy container layout from previous step."""
+    placement.plate.copy_layout(lims, args.process_id)
 
 
 if __name__ == "__main__":
@@ -109,6 +115,14 @@ if __name__ == "__main__":
     parser_qc_qubit = subparser_qc.add_parser('qubit', help='Set qubit qc flag.')
     parser_qc_qubit.add_argument('process_id', help='Clarity lims process id')
     parser_qc_qubit.set_defaults(func=qc_qubit)
+
+    # placement
+    parser_placement = subparser.add_parser('placement', help='Container placement functions.')
+    subparser_placement = parser_placement.add_subparsers()
+
+    parser_placement_automatic = subparser_placement.add_parser('copy', help='Copy container layout from previous step.')
+    parser_placement_automatic.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_automatic.set_defaults(func=qc_qubit)
 
     args = parser.parse_args()
     args.func(args)
