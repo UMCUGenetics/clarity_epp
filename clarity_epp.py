@@ -58,6 +58,11 @@ def upload_tecan_results(args):
     upload.tecan.results(lims, args.process_id)
 
 
+def upload_tapestation_results(args):
+    """Upload tapestation results."""
+    upload.tapestation.results(lims, args.process_id)
+
+
 # QC functions
 def qc_qubit(args):
     """Set QC status based on qubit measurement."""
@@ -116,6 +121,10 @@ if __name__ == "__main__":
     parser_upload_tecan = subparser_upload.add_parser('tecan', help='Upload tecan results')
     parser_upload_tecan.add_argument('process_id', help='Clarity lims process id')
     parser_upload_tecan.set_defaults(func=upload_tecan_results)
+
+    parser_upload_tapestation = subparser_upload.add_parser('tapestation', help='Upload tapestation results')
+    parser_upload_tapestation.add_argument('process_id', help='Clarity lims process id')
+    parser_upload_tapestation.set_defaults(func=upload_tapestation_results)
 
     # QC
     parser_qc = subparser.add_parser('qc', help='Set QC values/flags.')

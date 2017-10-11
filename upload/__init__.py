@@ -2,3 +2,4 @@
 
 import samples
 import tecan
+import tapestation
