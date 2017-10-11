@@ -29,5 +29,5 @@ def results(lims, process_id):
     for artifact in process.all_outputs():
         if artifact.name != 'TapeStation Output' and artifact.name != 'TapeStation Samplesheet':
             sample_name = artifact.name.split('_')[0]
-            artifact.udf['Dx Size (bp)'] = sample_measurements[sample_name]
+            artifact.udf['Dx Fragmentlengte (bp)'] = sample_measurements[sample_name]
             artifact.put()

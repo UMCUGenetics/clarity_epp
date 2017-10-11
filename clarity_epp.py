@@ -69,6 +69,11 @@ def qc_qubit(args):
     qc.qubit.set_qc_flag(lims, args.process_id)
 
 
+def qc_tapestation(args):
+    """Set QC status based on tapestation measurement."""
+    qc.tapestation.set_qc_flag(lims, args.process_id)
+
+
 # Placement functions
 def placement_automatic(args):
     """Copy container layout from previous step."""
@@ -133,6 +138,10 @@ if __name__ == "__main__":
     parser_qc_qubit = subparser_qc.add_parser('qubit', help='Set qubit qc flag.')
     parser_qc_qubit.add_argument('process_id', help='Clarity lims process id')
     parser_qc_qubit.set_defaults(func=qc_qubit)
+
+    parser_qc_tapestation = subparser_qc.add_parser('tapestation', help='Set tapestation qc flag.')
+    parser_qc_tapestation.add_argument('process_id', help='Clarity lims process id')
+    parser_qc_tapestation.set_defaults(func=qc_tapestation)
 
     # placement
     parser_placement = subparser.add_parser('placement', help='Container placement functions.')

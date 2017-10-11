@@ -1,4 +1,5 @@
 """Qubit QC epp functions."""
+
 from genologics.entities import Process
 
 
