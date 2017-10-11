@@ -1,5 +1,5 @@
 """Sample upload epp functions."""
-from genologics.entities import Sample, Project, Containertype, Container, Researcher
+from genologics.entities import Sample, Project, Containertype, Container, Researcher, Workflow
 
 import utils
 
@@ -51,5 +51,10 @@ def from_helix(lims, input_file):
             }
             container = Container.create(lims, type=container_type)
             sample = Sample.create(lims, container=container, position='1:1', project=project, name=sample_name, udf=udf_data)
-            workflow = utils.stofcode_to_workflow(lims, udf_data['Dx Stoftest code'])
+
+            if lims.get_sample_number(udf={'Dx Persoons ID': udf_data['Dx Persoons ID']}) > 1:
+                workflow = Workflow(lims, id='352')  # Dx Aandachtspunten
+            else:
+                workflow = utils.stofcode_to_workflow(lims, udf_data['Dx Stoftest code'])
+
             lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
