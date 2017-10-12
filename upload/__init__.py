@@ -3,3 +3,4 @@
 import samples
 import tecan
 import tapestation
+import bioanalyzer

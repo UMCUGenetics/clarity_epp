@@ -47,6 +47,11 @@ def tapestation(args):
     samplesheet.tapestation.run_tapestation(lims, args.process_id, args.output_file)
 
 
+def bioanalyzer(args):
+    """Create samplesheets for Bioanalyzer machine."""
+    samplesheet.bioanalyzer.run_bioanalyzer(lims, args.process_id, args.output_file)
+
+
 # Sample Upload
 def upload_samples(args):
     """Upload samples from helix output file."""
@@ -63,15 +68,20 @@ def upload_tapestation_results(args):
     upload.tapestation.results(lims, args.process_id)
 
 
+def upload_bioanalyzer_results(args):
+    """Upload bioanalyzer results."""
+    upload.bioanalyzer.results(lims, args.process_id)
+
+
 # QC functions
 def qc_qubit(args):
     """Set QC status based on qubit measurement."""
     qc.qubit.set_qc_flag(lims, args.process_id)
 
 
-def qc_tapestation(args):
-    """Set QC status based on tapestation measurement."""
-    qc.tapestation.set_qc_flag(lims, args.process_id)
+def qc_fragment_length(args):
+    """Set QC status based on fragment length measurement."""
+    qc.fragment_length.set_qc_flag(lims, args.process_id)
 
 
 # Placement functions
@@ -115,6 +125,10 @@ if __name__ == "__main__":
     parser_samplesheet_tapestation.add_argument('process_id', help='Clarity lims process id')
     parser_samplesheet_tapestation.set_defaults(func=tapestation)
 
+    parser_samplesheet_bioanalyzer = subparser_samplesheet.add_parser('bioanalyzer', help='Create bioanalyzer samplesheets', parents=[output_parser])
+    parser_samplesheet_bioanalyzer.add_argument('process_id', help='Clarity lims process id')
+    parser_samplesheet_bioanalyzer.set_defaults(func=bioanalyzer)
+
     # Sample upload
     parser_upload = subparser.add_parser('upload', help='Upload samples or results to clarity lims')
     subparser_upload = parser_upload.add_subparsers()
@@ -131,6 +145,10 @@ if __name__ == "__main__":
     parser_upload_tapestation.add_argument('process_id', help='Clarity lims process id')
     parser_upload_tapestation.set_defaults(func=upload_tapestation_results)
 
+    parser_upload_bioanalyzer = subparser_upload.add_parser('bioanalyzer', help='Upload bioanalyzer results')
+    parser_upload_bioanalyzer.add_argument('process_id', help='Clarity lims process id')
+    parser_upload_bioanalyzer.set_defaults(func=upload_bioanalyzer_results)
+
     # QC
     parser_qc = subparser.add_parser('qc', help='Set QC values/flags.')
     subparser_qc = parser_qc.add_subparsers()
@@ -139,9 +157,9 @@ if __name__ == "__main__":
     parser_qc_qubit.add_argument('process_id', help='Clarity lims process id')
     parser_qc_qubit.set_defaults(func=qc_qubit)
 
-    parser_qc_tapestation = subparser_qc.add_parser('tapestation', help='Set tapestation qc flag.')
-    parser_qc_tapestation.add_argument('process_id', help='Clarity lims process id')
-    parser_qc_tapestation.set_defaults(func=qc_tapestation)
+    parser_qc_fragment_length = subparser_qc.add_parser('fragment_length', help='Set fragment length qc flag.')
+    parser_qc_fragment_length.add_argument('process_id', help='Clarity lims process id')
+    parser_qc_fragment_length.set_defaults(func=qc_fragment_length)
 
     # placement
     parser_placement = subparser.add_parser('placement', help='Container placement functions.')
