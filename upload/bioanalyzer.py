@@ -21,7 +21,7 @@ def results(lims, process_id):
                 elif line.startswith('"Region 1'):
                     line = re.sub(r'(""[0-9]+),([0-9\.]+"")', r'\1\2', line)  # Fix
                     size = line.rstrip().split(',')[5]
-                    sample_measurements[sample] = size
+                    sample_measurements[sample] = int(size)
 
     # Set UDF
     for artifact in process.all_outputs():
