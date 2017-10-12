@@ -10,7 +10,6 @@ def normalise(lims, process_id, output_file):
     output_file.write('Monsternummer\tPlate_Id_input\tWell\tPlate_Id_output\tPipetteervolume DNA (ul)\tPipetteervolume H2O (ul)\n')
     process = Process(lims, id=process_id)
     parent_process = process.parent_processes()[0]
-
     parent_process_barcode = parent_process.output_containers()[0].name
     output_plate_barcode = process.output_containers()[0].name
     monsternummer = {}
@@ -20,7 +19,7 @@ def normalise(lims, process_id, output_file):
     volume_H2O = {}
     output_ng = process.udf['Output genormaliseerd gDNA']
     output_ul = process.udf['Eindvolume (ul) genormaliseerd gDNA']
-
+    
     input_artifact_ids = [analyte.id for analyte in parent_process.all_outputs()]
     qc_processes = lims.get_processes(
         type=['Dx Qubit QC', 'Dx Tecan Spark 10M QC'],
@@ -28,17 +27,36 @@ def normalise(lims, process_id, output_file):
     )
 
     sample_concentration = {}
+    samples_measurements_tecan = {}
+    samples_measurements_qubit = {}
+
     for p in qc_processes:
         for a in p.all_outputs():
             if 'Dx Concentratie fluorescentie (ng/ul)' in a.udf:
                 if 'Tecan' in a.parent_process.type.name:
                     machine = 'Tecan'
+                    sample = a.samples[0].name
+                    measurement = a.udf['Dx Concentratie fluorescentie (ng/ul)']
+                    if sample in samples_measurements_tecan:
+                        samples_measurements_tecan[sample].append(measurement)
+                    else:
+                        samples_measurements_tecan[sample] = [measurement]
                 if 'Qubit' in a.parent_process.type.name:
                     machine = 'Qubit'
-                sample = a.samples[0].name
+                    sample = a.samples[0].name
+                    measurement = a.udf['Dx Concentratie fluorescentie (ng/ul)']
+                    if sample in samples_measurements_qubit:
+                        samples_measurements_qubit[sample].append(measurement)
+                    else:
+                        samples_measurements_qubit[sample] = [measurement]
                 if sample not in sample_concentration or machine == 'Qubit':
-                    sample_concentration[sample] = a.udf['Dx Concentratie fluorescentie (ng/ul)']
-
+                   if machine == 'Tecan':
+                       sample_measurements = samples_measurements_tecan[sample]
+                   elif machine == 'Qubit':
+                       sample_measurements = samples_measurements_qubit[sample]
+                   sample_measurements_average = sum(sample_measurements) / float(len(sample_measurements))
+                   sample_concentration[sample] = sample_measurements_average
+ 
     for placement, artifact in process.output_containers()[0].placements.iteritems():
         sample = artifact.samples[0].name
         placement = ''.join(placement.split(':'))
