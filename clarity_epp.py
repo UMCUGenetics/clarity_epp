@@ -47,6 +47,11 @@ def tapestation(args):
     samplesheet.tapestation.run_tapestation(lims, args.process_id, args.output_file)
 
 
+def bioanalyzer(args):
+    """Create samplesheets for Bioanalyzer machine."""
+    samplesheet.bioanalyzer.run_bioanalyzer(lims, args.process_id, args.output_file)
+
+
 # Sample Upload
 def upload_samples(args):
     """Upload samples from helix output file."""
@@ -114,6 +119,10 @@ if __name__ == "__main__":
     parser_samplesheet_tapestation = subparser_samplesheet.add_parser('tapestation', help='Create tapestation samplesheets', parents=[output_parser])
     parser_samplesheet_tapestation.add_argument('process_id', help='Clarity lims process id')
     parser_samplesheet_tapestation.set_defaults(func=tapestation)
+
+    parser_samplesheet_bioanalyzer = subparser_samplesheet.add_parser('bioanalyzer', help='Create bioanalyzer samplesheets', parents=[output_parser])
+    parser_samplesheet_bioanalyzer.add_argument('process_id', help='Clarity lims process id')
+    parser_samplesheet_bioanalyzer.set_defaults(func=bioanalyzer)
 
     # Sample upload
     parser_upload = subparser.add_parser('upload', help='Upload samples or results to clarity lims')
