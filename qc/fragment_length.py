@@ -1,10 +1,10 @@
-"""Tapestation QC epp functions."""
+"""Fragment length QC epp functions."""
 
 from genologics.entities import Process
 
 
 def set_qc_flag(lims, process_id):
-    """Set tapestation qc flags based on Dx Fragmentlengte (bp) udf and criterea set by users."""
+    """Set qc flags based on Dx Fragmentlengte (bp) udf and criterea set by users."""
     process = Process(lims, id=process_id)
 
     min_size = process.udf['Minimale fragmentlengte (bp)']
