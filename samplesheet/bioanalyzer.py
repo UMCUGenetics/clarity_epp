@@ -30,7 +30,11 @@ def run_bioanalyzer(lims, process_id, output_file):
         ))
     output_file.write('Ladder,,FALSE,1,,,\n\n')
 
-    output_file.write('"Chip Lot #","Reagent Kit Lot #"\n\n\n')
+    output_file.write('"Chip Lot #","Reagent Kit Lot #"\n')
+    output_file.write('{chip_lot},{reagent_lot}\n\n'.format(
+        chip_lot=process.udf['lot # chip'],
+        reagent_lot=process.udf['lot # Reagentia kit']
+    ))
 
     output_file.write('"QC1 Min [%]","QC1 Max [%]","QC2 Min [%]","QC2 Max [%]"\n')
     output_file.write(',,,\n\n')
