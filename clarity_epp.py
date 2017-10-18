@@ -90,6 +90,11 @@ def placement_automatic(args):
     placement.plate.copy_layout(lims, args.process_id)
 
 
+def placement_barcode(args):
+    """Check barcodes."""
+    placement.barcode.check(lims, args.process_id)
+
+
 if __name__ == "__main__":
     # with utils.EppLogger(main_log=config.main_log):
     parser = argparse.ArgumentParser()
@@ -168,6 +173,10 @@ if __name__ == "__main__":
     parser_placement_automatic = subparser_placement.add_parser('copy', help='Copy container layout from previous step.')
     parser_placement_automatic.add_argument('process_id', help='Clarity lims process id')
     parser_placement_automatic.set_defaults(func=placement_automatic)
+
+    parser_placement_barcode = subparser_placement.add_parser('barcode_check', help='Check barcode placement.')
+    parser_placement_barcode.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_barcode.set_defaults(func=placement_barcode)
 
     args = parser.parse_args()
     args.func(args)
