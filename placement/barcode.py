@@ -17,5 +17,5 @@ def check(lims, process_id):
             if family_sample.id != sample.id:
                 family_sample_artifacts = lims.get_artifacts(samplelimsid=family_sample.id, reagent_label=barcode, process_type=process.type.name)
                 if family_sample_artifacts:
-                    artifact.udf['Dx Opmerking library Prep'] = "Duplicate barcode in family: {sample}".format(sample=family_sample.name)
+                    artifact.udf['Dx monster met BC duplicaat'] = "{sample}".format(sample=family_sample.name)
                     artifact.put()
