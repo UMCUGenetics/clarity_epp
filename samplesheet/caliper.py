@@ -37,18 +37,22 @@ def normalise(lims, process_id, output_file):
                     machine = 'Tecan'
                     sample = a.samples[0].name
                     measurement = a.udf['Dx Concentratie fluorescentie (ng/ul)']
-                    if sample in samples_measurements_tecan:
-                        samples_measurements_tecan[sample].append(measurement)
-                    else:
-                        samples_measurements_tecan[sample] = [measurement]
+                    qcflag = a.qc_flag
+                    if qcflag == 'UNKNOWN' or 'PASSED':
+                        if sample in samples_measurements_tecan:
+                            samples_measurements_tecan[sample].append(measurement)
+                        else:
+                            samples_measurements_tecan[sample] = [measurement]
                 if 'Qubit' in a.parent_process.type.name:
                     machine = 'Qubit'
                     sample = a.samples[0].name
                     measurement = a.udf['Dx Concentratie fluorescentie (ng/ul)']
-                    if sample in samples_measurements_qubit:
-                        samples_measurements_qubit[sample].append(measurement)
-                    else:
-                        samples_measurements_qubit[sample] = [measurement]
+                    qcflag = a.qc_flag
+                    if qcflag == 'PASSED':
+                        if sample in samples_measurements_qubit:
+                            samples_measurements_qubit[sample].append(measurement)
+                        else:
+                            samples_measurements_qubit[sample] = [measurement]
                 if sample not in sample_concentration or machine == 'Qubit':
                    if machine == 'Tecan':
                        sample_measurements = samples_measurements_tecan[sample]
