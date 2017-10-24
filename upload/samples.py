@@ -31,7 +31,7 @@ def from_helix(lims, input_file):
                 'Sample Type': 'DNA isolated',  # required lims input
                 'Dx Onderzoeknummer': data[0],
                 'Dx Fractienummer': data[2],
-                'Dx Concentratie (ng/uL)': data[3],
+                'Dx Concentratie (ng/ul)': data[3],
                 'Dx Materiaal type': data[4],
                 'Dx Foetus': utils.value_to_bool(data[5]),
                 'Dx Overleden': utils.letter_to_bool(data[6]),
