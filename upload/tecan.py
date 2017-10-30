@@ -59,9 +59,12 @@ def results(lims, process_id):
     # Set udf values
     for artifact in process.all_outputs():
         if artifact.name != 'Tecan Spark Output' and artifact.name != 'Tecan Spark Samplesheet':
-            sample_fluorescence = sample_measurements[artifact.name]['Dx Fluorescentie (nM)']
-            sample_concentration = ((sample_fluorescence - baseline_fluorescence) * regression_slope) / 2.0
+            if artifact.name.startswith('Dx Tecan std'):
+                ng_index = int(artifact.name.split(' ')[3])-1
+                sample_concentration = ng_values[ng_index]
+            else:
+                sample_fluorescence = sample_measurements[artifact.name]['Dx Fluorescentie (nM)']
+                sample_concentration = ((sample_fluorescence - baseline_fluorescence) * regression_slope) / 2.0
 
-            artifact.udf['Dx Fluorescentie (nM)'] = sample_fluorescence
             artifact.udf['Dx Concentratie fluorescentie (ng/ul)'] = sample_concentration
             artifact.put()
