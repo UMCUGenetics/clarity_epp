@@ -46,10 +46,14 @@ def results(lims, process_id):
 
     if process.udf['Reagentia kit'] == 'Quant-iT High-Sensitivity dsDNA kit':
         ng_values = [0, 5, 10, 20, 40, 60, 80, 100]
+        min_ng = 0.5
+        max_ng = 50
         fluorescence_values.append(sample_measurements['Dx Tecan std 7']['Dx Fluorescentie (nM)'] - baseline_fluorescence)
         fluorescence_values.append(sample_measurements['Dx Tecan std 8']['Dx Fluorescentie (nM)'] - baseline_fluorescence)
     elif process.udf['Reagentia kit'] == 'Quant-iT Broad Range dsDNA kit':
         ng_values = [0, 50, 100, 200, 400, 600]
+        min_ng = 0
+        max_ng = 300
 
     regression_model = sm.OLS(ng_values, fluorescence_values)
     regression_result = regression_model.fit()
@@ -57,14 +61,18 @@ def results(lims, process_id):
     regression_slope = regression_result.params[0]
 
     # Set udf values
+    process.udf['R-squared waarde'] = regression_result.rsquared
+    process.put()
     for artifact in process.all_outputs():
         if artifact.name != 'Tecan Spark Output' and artifact.name != 'Tecan Spark Samplesheet':
             if artifact.name.startswith('Dx Tecan std'):
-                ng_index = int(artifact.name.split(' ')[3])-1
-                sample_concentration = ng_values[ng_index]
+                artifact.qc_flag = 'PASSED'
             else:
                 sample_fluorescence = sample_measurements[artifact.name]['Dx Fluorescentie (nM)']
                 sample_concentration = ((sample_fluorescence - baseline_fluorescence) * regression_slope) / 2.0
-
-            artifact.udf['Dx Concentratie fluorescentie (ng/ul)'] = sample_concentration
+                artifact.udf['Dx Concentratie fluorescentie (ng/ul)'] = sample_concentration
+                if sample_concentration >= min_ng and sample_concentration <= max_ng:
+                    artifact.qc_flag = 'PASSED'
+                else:
+                    artifact.qc_flag = 'FAILED'
             artifact.put()
