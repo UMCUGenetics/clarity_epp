@@ -1,7 +1,6 @@
 """Tecan results upload epp functions."""
 
 from genologics.entities import Process
-import statsmodels.api as sm
 
 
 def results(lims, process_id):
@@ -55,13 +54,11 @@ def results(lims, process_id):
         min_ng = 0
         max_ng = 300
 
-    regression_model = sm.OLS(ng_values, fluorescence_values)
-    regression_result = regression_model.fit()
-
-    regression_slope = regression_result.params[0]
+    regression_slope = sum([x*y for x, y in zip(fluorescence_values, ng_values)]) / sum([x**2 for x in fluorescence_values])
+    rsquared = 1 - (sum([(y - x*regression_slope)**2 for x, y in zip(fluorescence_values, ng_values)]) / sum([y**2 for y in ng_values]))
 
     # Set udf values
-    process.udf['R-squared waarde'] = regression_result.rsquared
+    process.udf['R-squared waarde'] = rsquared
     process.put()
     for artifact in process.all_outputs():
         if artifact.name != 'Tecan Spark Output' and artifact.name != 'Tecan Spark Samplesheet':
