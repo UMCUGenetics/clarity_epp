@@ -11,7 +11,7 @@ def results(lims, process_id):
     for output in process.shared_result_files():
         if output.name == 'Tecan Spark Output':
             tecan_result_file = output.files[0]
-            tecan_file_order = ['Dx Fluorescentie (nM)', 'Dx Concentratie fluorescentie (ng/ul)', 'sample_name']
+            tecan_file_order = ['Dx Fluorescentie (nM)', 'sample_name']
             tecan_file_part = -1
 
             sample_measurements = {}
