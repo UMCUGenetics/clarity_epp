@@ -18,7 +18,7 @@ def run_bioanalyzer(lims, process_id, output_file):
     # Get sample placement
     for placement, artifact in process.output_containers()[0].placements.iteritems():
         placement = ''.join(placement.split(':'))
-        plate[placement]['name'] = artifact.samples[0].name
+        plate[placement]['name'] = artifact.name
         plate[placement]['comment'] = ''
 
     # Create samplesheet
