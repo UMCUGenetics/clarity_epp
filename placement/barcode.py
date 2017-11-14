@@ -3,7 +3,7 @@
 from genologics.entities import Process
 
 
-def check(lims, process_id):
+def check_family(lims, process_id):
     """Check barcodes."""
     process = Process(lims, id=process_id)
     for artifact in process.all_outputs():
@@ -19,3 +19,16 @@ def check(lims, process_id):
                 if family_sample_artifacts:
                     artifact.udf['Dx monster met BC duplicaat'] = "{sample}".format(sample=family_sample.name)
                     artifact.put()
+
+
+def check_pool(lims, process_id):
+    """Check for duplicate barcodes in pools."""
+    process = Process(lims, id=process_id)
+    for container in process.output_containers():
+        artifact = container.placements['1:1']
+        pool = artifact.name
+        barcodes = {}
+        barcodes[pool] = [artifact.reagent_labels]
+        if len(barcodes) != len(set(barcodes)):
+            artifact.udf['Dx pool met BC duplicaat'] = "{pool}".format(pool="BC duplicaat in deze pool")
+            artifact.put()

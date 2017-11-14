@@ -1,6 +1,8 @@
 """Manual pipetting epp functions."""
 
 from genologics.entities import Process
+import datetime
+import utils
 
 
 def purify(lims, process_id, output_file):
@@ -33,3 +35,203 @@ def purify(lims, process_id, output_file):
             ul_gdna=ul_gdna,
             ul_water=ul_water
         ))
+
+
+def library_dilution_calculator(concentration, size, pedigree, factor):
+    """Calculation of ul per sample needed for multiplexing."""
+    ul_sample = []
+    ng_sample = []
+
+    nM_DNA = (float(concentration)*(10.0**3.0)*(1.0/649.0)*(1.0/float(size)))*1000.0
+    if pedigree == 'Child':
+        ul_sample = (float(factor)/nM_DNA)*11.0
+    if pedigree == 'Parent':
+        ul_sample = (float(factor)/nM_DNA)*10.0
+    ng_sample = float(concentration)*ul_sample
+    return ul_sample, ng_sample
+
+
+def multiplex(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for multiplexing(pooling) samples."""
+    output_file.write('Sample\tul Sample\tPlaat_id\twell_id\tpool\n')
+    process = Process(lims, id=process_id)
+    parent_process = []
+    parent_process = process.parent_processes()
+    parent_process = list(set(parent_process))
+    input_artifact_ids = []
+    for p in parent_process:
+        for analyte in p.all_outputs():
+            input_artifact_ids.append(analyte.id)
+    input_artifact_ids = list(set(input_artifact_ids))
+    qc_processes = lims.get_processes(
+        type=['Dx Qubit QC', 'Dx Tecan Spark 10M QC', 'Dx Bioanalyzer QC', 'Dx Tapestation 2200 QC', 'Dx Tapestation 4200 QC'],
+        inputartifactlimsid=input_artifact_ids
+    )
+    samples_measurements_tecan = {}
+    samples_measurements_qubit = {}
+    sample_concentration = {}
+    samples_measurements_tapestation = {}
+    samples_measurements_bioanalyzer = {}
+    sample_size = {}
+    Unummers_per_monster = {}
+    years = {}
+    genders = {}
+    births_per_family = {}
+    parent_parent_process = []
+    for p in parent_process:
+        for pp in p.parent_processes():
+            parent_parent_process.append(pp)
+    parent_parent_process = list(set(parent_parent_process))
+    family_status = {}
+    samplenamen = {}
+    pool_per_monsternummer = {}
+    ul_per_monsternummer = {}
+    well = {}
+    plate_per_monsternummer = {}
+
+    for p in qc_processes:
+        for a in p.all_outputs():
+            if 'Dx Concentratie fluorescentie (ng/ul)' in a.udf:
+                if 'Tecan' in a.parent_process.type.name:
+                    machine = 'Tecan'
+                    sample = a.samples[0].name
+                    measurement = a.udf['Dx Concentratie fluorescentie (ng/ul)']
+                    qcflag = a.qc_flag
+                    if qcflag == 'UNKNOWN' or 'PASSED':
+                        if sample in samples_measurements_tecan:
+                            samples_measurements_tecan[sample].append(measurement)
+                        else:
+                            samples_measurements_tecan[sample] = [measurement]
+                elif 'Qubit' in a.parent_process.type.name:
+                    machine = 'Qubit'
+                    sample = a.samples[0].name
+                    measurement = a.udf['Dx Concentratie fluorescentie (ng/ul)']
+                    qcflag = a.qc_flag
+                    if qcflag == 'PASSED':
+                        if sample in samples_measurements_qubit:
+                            samples_measurements_qubit[sample].append(measurement)
+                        else:
+                            samples_measurements_qubit[sample] = [measurement]
+                if sample not in sample_concentration or machine == 'Qubit':
+                    if machine == 'Tecan':
+                        sample_measurements = samples_measurements_tecan[sample]
+                    elif machine == 'Qubit':
+                        sample_measurements = samples_measurements_qubit[sample]
+                    sample_measurements_average = sum(sample_measurements) / float(len(sample_measurements))
+                    sample_concentration[sample] = sample_measurements_average
+            if 'Dx Fragmentlengte (bp)' in a.udf:
+                if 'Tapestation' in a.parent_process.type.name:
+                    machine = 'Tapestation'
+                    sample = a.samples[0].name
+                    measurement = a.udf['Dx Fragmentlengte (bp)']
+                    qcflag = a.qc_flag
+                    if qcflag == 'UNKNOWN' or 'PASSED':
+                        if sample in samples_measurements_tapestaion:
+                            samples_measurements_tapestation[sample].append(measurement)
+                        else:
+                            samples_measurements_tapestation[sample] = [measurement]
+                elif 'Bioanalyzer' in a.parent_process.type.name:
+                    machine = 'Bioanalyzer'
+                    sample = a.samples[0].name
+                    measurement = a.udf['Dx Fragmentlengte (bp)']
+                    qcflag = a.qc_flag
+                    if qcflag == 'UNKNOWN' or 'PASSED':
+                        if sample in samples_measurements_bioanalyzer:
+                            samples_measurements_bioanalyzer[sample].append(measurement)
+                        else:
+                            samples_measurements_bioanalyzer[sample] = [measurement]
+                if sample not in sample_size or machine == 'Bioanalyzer':
+                    if machine == 'Tapestation':
+                        sample_measurements = samples_measurements_tapestation[sample]
+                    elif machine == 'Bioanalyzer':
+                        sample_measurements = samples_measurements_bioanalyzer[sample]
+                    sample_measurements_average = sum(sample_measurements) / float(len(sample_measurements))
+                    sample_size[sample] = sample_measurements_average
+
+    for p in parent_process:
+        plate = p.output_containers()[0].name
+        for placement, artifact in p.output_containers()[0].placements.iteritems():
+            monsternummer = artifact.samples[0].name
+            plate_per_monsternummer[monsternummer] = plate
+            Unummers_per_monster[monsternummer] = artifact.samples[0].udf['Dx Unummer']
+            years[monsternummer] = artifact.samples[0].udf['Dx Geboortejaar']
+            genders[monsternummer] = artifact.samples[0].udf['Dx Geslacht']
+            if genders[monsternummer] == 'V' or genders[monsternummer] == 'Vrouw' or genders[monsternummer] == 'vrouw':
+                genders[monsternummer] = 'F'
+            elif genders[monsternummer] == 'Man' or genders[monsternummer] == 'man':
+                genders[monsternummer] = 'M'
+            if artifact.samples[0].udf['Dx Foetus'] == True:
+                genders[monsternummer] = 'O'
+                years[monsternummer] = datetime.datetime.now().year
+            elif artifact.samples[0].udf['Dx Helix indicatie'] == 'DSD00':
+                genders[monsternummer] = 'O'
+
+    for pp in parent_parent_process:
+        for placement, artifact in pp.output_containers()[0].placements.iteritems():
+            monsternummer = artifact.samples[0].name
+            family_status[monsternummer] = artifact.udf['Dx Familie status']
+
+    for p in parent_process:
+        for placement, artifact in p.output_containers()[0].placements.iteritems():
+            monsternummer = artifact.samples[0].name
+            if family_status[monsternummer] == 'Child':
+                pedigree = 'C'
+            elif family_status[monsternummer] == 'Parent':
+                pedigree = 'P'
+            elif family_status[monsternummer] == 'Unknown':
+                pedigree = 'C'
+            samplenaam = "%s%s%s%s" % (Unummers_per_monster[monsternummer], pedigree, genders[monsternummer], monsternummer)
+            samplenamen[monsternummer] = samplenaam
+
+    for container in process.output_containers():
+        artifact = container.placements['1:1']
+        pool = artifact.name
+        ng_samples = []
+        if len(artifact.samples) == 3:
+            factor = 80
+            ng_samples.append(850.0)
+            while (sum(ng_samples) > 800.0):
+                ng_samples = []
+                for sample in artifact.samples:
+                    monsternummer = sample.name
+                    pool_per_monsternummer[monsternummer] = pool
+                    average_concentration = sample_concentration[monsternummer]
+                    average_size = sample_size[monsternummer]
+                    pedigree = family_status[monsternummer]
+                    ul_sample, ng_sample = library_dilution_calculator(average_concentration, average_size, pedigree, factor)
+                    if ul_sample < 25:
+                        if ul_sample > 23:
+                            pool_per_monsternummer[monsternummer] = "%s let op!: ul sample 23-25" % pool
+                        ul_per_monsternummer[monsternummer] = ul_sample
+                        ng_samples.append(ng_sample)
+                    elif ul_sample > 25:
+                        ul_per_monsternummer[monsternummer] = 0.0
+                        pool_per_monsternummer[monsternummer] = "%s error: ul sample > 25" % pool
+                factor = factor - 5
+            if sum(ng_samples) < 650:
+                output_file.write('Let op! De volgende pool heeft een totaal aantal ng < 650: {pool} (Mogelijke oorzaak is error ul sample > 25, zie {pool} hieronder.)\n'.format(
+                    pool=pool
+                ))
+        else:
+            for sample in artifact.samples:
+                monsternummer = sample.name
+                pool_per_monsternummer[monsternummer] = "%s error: geen 3 samples in deze pool" % pool
+                ul_per_monsternummer[monsternummer] = 0.0
+
+    for p in parent_process:
+        for placement, artifact in p.output_containers()[0].placements.iteritems():
+            monsternummer = artifact.samples[0].name
+            placement = ''.join(placement.split(':'))
+            well[monsternummer] = placement
+
+    for container in process.output_containers():
+        artifact = container.placements['1:1']
+        for sample in artifact.samples:
+            monsternummer = sample.name
+            output_file.write('{sample}\t{ul_sample:.1f}\t{plate_id}\t{well_id}\t{pool}\n'.format(
+                sample=samplenamen[monsternummer],
+                ul_sample=ul_per_monsternummer[monsternummer],
+                plate_id=plate_per_monsternummer[monsternummer],
+                well_id=well[monsternummer],
+                pool=pool_per_monsternummer[monsternummer]
+            ))

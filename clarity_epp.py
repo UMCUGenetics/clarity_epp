@@ -11,6 +11,7 @@ import samplesheet
 import upload
 import qc
 import placement
+import generate
 
 # Setup lims connection
 lims = Lims(config.baseuri, config.username, config.password)
@@ -29,6 +30,8 @@ def manual_pipetting(args):
     """Create samplesheets for manual pipetting."""
     if args.type == 'purify':
         samplesheet.manual_pipetting.purify(lims, args.process_id, args.output_file)
+    elif args.type == 'multiplex':
+        samplesheet.manual_pipetting.multiplex(lims, args.process_id, args.output_file)
 
 
 def tecan(args):
@@ -92,7 +95,16 @@ def placement_automatic(args):
 
 def placement_barcode(args):
     """Check barcodes."""
-    placement.barcode.check(lims, args.process_id)
+    if args.type == 'check_family':
+        placement.barcode.check_family(lims, args.process_id)
+    elif args.type == 'check_pool':
+        placement.barcode.check_pool(lims, args.process_id)
+
+
+#Generate functions
+def generate_family_status(args):
+    """Generate family status"""
+    generate.samplenames.family_status(lims, args.process_id)
 
 
 if __name__ == "__main__":
@@ -117,7 +129,7 @@ if __name__ == "__main__":
     parser_samplesheet_tecan.set_defaults(func=tecan)
 
     parser_samplesheet_manual_pipetting = subparser_samplesheet.add_parser('manual', help='Create manual pipetting samplesheets', parents=[output_parser])
-    parser_samplesheet_manual_pipetting.add_argument('type', choices=['purify'], help='Samplesheet type')
+    parser_samplesheet_manual_pipetting.add_argument('type', choices=['purify', 'multiplex'], help='Samplesheet type')
     parser_samplesheet_manual_pipetting.add_argument('process_id', help='Clarity lims process id')
     parser_samplesheet_manual_pipetting.set_defaults(func=manual_pipetting)
 
@@ -175,8 +187,17 @@ if __name__ == "__main__":
     parser_placement_automatic.set_defaults(func=placement_automatic)
 
     parser_placement_barcode = subparser_placement.add_parser('barcode_check', help='Check barcode placement.')
+    parser_placement_barcode.add_argument('type', choices=['check_family', 'check_pool'], help='Check type')
     parser_placement_barcode.add_argument('process_id', help='Clarity lims process id')
     parser_placement_barcode.set_defaults(func=placement_barcode)
+
+    # generate
+    parser_generate = subparser.add_parser('generate', help='Generate samplenames functions.')
+    subparser_generate = parser_generate.add_subparsers()
+
+    parser_generate_samplenames = subparser_generate.add_parser('family_status', help='Generate family status.')
+    parser_generate_samplenames.add_argument('process_id', help='Clarity lims process id')
+    parser_generate_samplenames.set_defaults(func=generate_family_status)
 
     args = parser.parse_args()
     args.func(args)
