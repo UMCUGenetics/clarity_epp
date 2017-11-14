@@ -29,6 +29,8 @@ def manual_pipetting(args):
     """Create samplesheets for manual pipetting."""
     if args.type == 'purify':
         samplesheet.manual_pipetting.purify(lims, args.process_id, args.output_file)
+    if args.type == 'sequencing_pool':
+        samplesheet.manual_pipetting.sequencing_pool(lims, args.process_id, args.output_file)
 
 
 def tecan(args):
@@ -117,7 +119,7 @@ if __name__ == "__main__":
     parser_samplesheet_tecan.set_defaults(func=tecan)
 
     parser_samplesheet_manual_pipetting = subparser_samplesheet.add_parser('manual', help='Create manual pipetting samplesheets', parents=[output_parser])
-    parser_samplesheet_manual_pipetting.add_argument('type', choices=['purify'], help='Samplesheet type')
+    parser_samplesheet_manual_pipetting.add_argument('type', choices=['purify', 'sequencing_pool'], help='Samplesheet type')
     parser_samplesheet_manual_pipetting.add_argument('process_id', help='Clarity lims process id')
     parser_samplesheet_manual_pipetting.set_defaults(func=manual_pipetting)
 

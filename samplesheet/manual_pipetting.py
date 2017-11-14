@@ -33,3 +33,23 @@ def purify(lims, process_id, output_file):
             ul_gdna=ul_gdna,
             ul_water=ul_water
         ))
+
+
+def sequencing_pool(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for sequencing pools."""
+    output_file.write('Sample pool\tul Sample\tul EB\n')
+    process = Process(lims, id=process_id)
+    for pool in process.all_inputs():
+
+        size = float(pool.udf['Dx Fragmentlengte (bp)'])
+        concentration = float(pool.udf['Dx Concentratie fluorescentie (ng/ul)'])
+
+        nM_dna = (concentration * 1000 * (1/649.0) * (1/size)) * 1000
+        ul_sample = (2/nM_dna) * 20
+        ul_EB = 20 - ul_sample
+
+        output_file.write('{pool_name}\t{ul_sample:.2f}\t{ul_EB:.2f}\n'.format(
+            pool_name=pool.name,
+            ul_sample=ul_sample,
+            ul_EB=ul_EB
+        ))
