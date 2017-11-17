@@ -25,7 +25,7 @@ def family_status(lims, process_id):
                     births_per_family[Unummer].append(years[monsternummer])
                 else:
                     births_per_family[Unummer] = [years[monsternummer]]
-            all_samples_Unummer.append(Unummer) 
+            all_samples_Unummer.append(Unummer)
 
     for artifact in process.all_outputs():
         monsternummer = artifact.samples[0].name

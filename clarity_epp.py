@@ -99,14 +99,17 @@ def placement_barcode(args):
     """Check barcodes."""
     if args.type == 'check_family':
         placement.barcode.check_family(lims, args.process_id)
-    elif args.type == 'check_pool':
-        placement.barcode.check_pool(lims, args.process_id)
 
 
-#Generate functions
+# Generate functions
 def generate_family_status(args):
     """Generate family status"""
     generate.samplenames.family_status(lims, args.process_id)
+
+
+def generate_labelnames(args):
+    """Generate labelnames"""
+    generate.labels.container_label(lims, args.process_id, args.output_file)
 
 
 if __name__ == "__main__":
@@ -189,17 +192,21 @@ if __name__ == "__main__":
     parser_placement_automatic.set_defaults(func=placement_automatic)
 
     parser_placement_barcode = subparser_placement.add_parser('barcode_check', help='Check barcode placement.')
-    parser_placement_barcode.add_argument('type', choices=['check_family', 'check_pool'], help='Check type')
+    parser_placement_barcode.add_argument('type', choices=['check_family'], help='Check type')
     parser_placement_barcode.add_argument('process_id', help='Clarity lims process id')
     parser_placement_barcode.set_defaults(func=placement_barcode)
 
     # generate
-    parser_generate = subparser.add_parser('generate', help='Generate samplenames functions.')
+    parser_generate = subparser.add_parser('generate', help='Generate samplenames/labelnames functions.')
     subparser_generate = parser_generate.add_subparsers()
 
     parser_generate_samplenames = subparser_generate.add_parser('family_status', help='Generate family status.')
     parser_generate_samplenames.add_argument('process_id', help='Clarity lims process id')
     parser_generate_samplenames.set_defaults(func=generate_family_status)
+
+    parser_generate_labels = subparser_generate.add_parser('labels', help='Generate labelnames.', parents=[output_parser])
+    parser_generate_labels.add_argument('process_id', help='Clarity lims process id')
+    parser_generate_labels.set_defaults(func=generate_labelnames)
 
     args = parser.parse_args()
     args.func(args)
