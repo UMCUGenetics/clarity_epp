@@ -112,6 +112,11 @@ def generate_labelnames(args):
     generate.labels.container_label(lims, args.process_id, args.output_file)
 
 
+def generate_ped_file(args):
+    """Generate labelnames"""
+    generate.ped.create_file(lims, args.process_id, args.output_file)
+
+
 if __name__ == "__main__":
     # with utils.EppLogger(main_log=config.main_log):
     parser = argparse.ArgumentParser()
@@ -207,6 +212,10 @@ if __name__ == "__main__":
     parser_generate_labels = subparser_generate.add_parser('labels', help='Generate labelnames.', parents=[output_parser])
     parser_generate_labels.add_argument('process_id', help='Clarity lims process id')
     parser_generate_labels.set_defaults(func=generate_labelnames)
+
+    parser_generate_ped = subparser_generate.add_parser('ped', help='Generate ped file.', parents=[output_parser])
+    parser_generate_ped.add_argument('process_id', help='Clarity lims process id')
+    parser_generate_ped.set_defaults(func=generate_ped_file)
 
     args = parser.parse_args()
     args.func(args)
