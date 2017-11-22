@@ -1,11 +1,11 @@
-"""Hamilton samplesheet epp functions."""
+"""Hamilton export functions."""
 
 from genologics.entities import Process
 
 import utils
 
 
-def filling_out(lims, process_id, output_file):
+def samplesheet_filling_out(lims, process_id, output_file):
     """Create Hamilton samplesheet for filling out 96 well plate."""
     output_file.write('SourceTubeID\tPositionID\n')
     process = Process(lims, id=process_id)
@@ -22,7 +22,7 @@ def filling_out(lims, process_id, output_file):
         ))
 
 
-def purify(lims, process_id, output_file):
+def samplesheet_purify(lims, process_id, output_file):
     """Create Hamilton samplesheet for purifying 96 well plate."""
     output_file.write('SampleID\tSample Rack barcode\tSample rack positionID\tSample Start volume\n')
     process = Process(lims, id=process_id)

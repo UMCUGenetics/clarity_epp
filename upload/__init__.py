@@ -1,4 +1,4 @@
-"""Upload to lims functions."""
+"""Upload functions."""
 
 import samples
 import tecan

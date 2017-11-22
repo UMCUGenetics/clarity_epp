@@ -1,11 +1,11 @@
-"""Manual pipetting epp functions."""
+"""Manual pipetting export functions."""
 
 from genologics.entities import Process
 import datetime
 import utils
 
 
-def purify(lims, process_id, output_file):
+def samplesheet_purify(lims, process_id, output_file):
     """Create manual pipetting samplesheet for purifying samples."""
     output_file.write('Fractienummer\tConcentration(ng/ul)\taantal ng te isoleren\tul gDNA\tul Water\n')
     process = Process(lims, id=process_id)
@@ -37,7 +37,7 @@ def purify(lims, process_id, output_file):
         ))
 
 
-def sequencing_pool(lims, process_id, output_file):
+def samplesheet_sequencing_pool(lims, process_id, output_file):
     """Create manual pipetting samplesheet for sequencing pools."""
     output_file.write('Sample pool\tul Sample\tul EB\n')
     process = Process(lims, id=process_id)
@@ -71,7 +71,7 @@ def library_dilution_calculator(concentration, size, pedigree, factor):
     return ul_sample, ng_sample
 
 
-def multiplex(lims, process_id, output_file):
+def samplesheet_multiplex(lims, process_id, output_file):
     """Create manual pipetting samplesheet for multiplexing(pooling) samples."""
     output_file.write('Sample\tul Sample\tPlaat_id\twell_id\tpool\n')
     process = Process(lims, id=process_id)

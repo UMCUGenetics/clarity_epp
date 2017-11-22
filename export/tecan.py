@@ -1,11 +1,11 @@
-"""Tecan samplesheet epp functions."""
+"""Tecan export functions."""
 
 from genologics.entities import Process
 
 import utils
 
 
-def run_tecan(lims, process_id, output_file):
+def samplesheet(lims, process_id, output_file):
     """Create Tecan samplesheet."""
     output_file.write('Position\tSample\n')
     process = Process(lims, id=process_id)

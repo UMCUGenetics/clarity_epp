@@ -7,8 +7,8 @@ import argparse
 from genologics.lims import Lims
 
 import config
-import samplesheet
 import upload
+import export
 import qc
 import placement
 import generate
@@ -17,47 +17,57 @@ import generate
 lims = Lims(config.baseuri, config.username, config.password)
 
 
-# Samplesheets
-def hamilton(args):
-    """Create samplesheets for hamilton machine."""
-    if args.type == 'filling_out':
-        samplesheet.hamilton.filling_out(lims, args.process_id, args.output_file)
-    elif args.type == 'purify':
-        samplesheet.hamilton.purify(lims, args.process_id, args.output_file)
+# Export Functions
+def export_bioanalyzer(args):
+    """Export samplesheets for Bioanalyzer machine."""
+    export.bioanalyzer.samplesheet(lims, args.process_id, args.output_file)
 
 
-def manual_pipetting(args):
-    """Create samplesheets for manual pipetting."""
-    if args.type == 'purify':
-        samplesheet.manual_pipetting.purify(lims, args.process_id, args.output_file)
-    elif args.type == 'sequencing_pool':
-        samplesheet.manual_pipetting.sequencing_pool(lims, args.process_id, args.output_file)
-    elif args.type == 'multiplex':
-        samplesheet.manual_pipetting.multiplex(lims, args.process_id, args.output_file)
-
-
-def tecan(args):
-    """Create samplesheets for tecan machine."""
-    samplesheet.tecan.run_tecan(lims, args.process_id, args.output_file)
-
-
-def caliper(args):
-    """Create samplesheets for caliper machine."""
+def export_caliper(args):
+    """Export samplesheets for caliper machine."""
     if args.type == 'normalise':
-        samplesheet.caliper.normalise(lims, args.process_id, args.output_file)
+        export.caliper.samplesheet_normalise(lims, args.process_id, args.output_file)
 
 
-def tapestation(args):
-    """Create samplesheets for Tapestation machine."""
-    samplesheet.tapestation.run_tapestation(lims, args.process_id, args.output_file)
+def export_hamilton(args):
+    """Export samplesheets for hamilton machine."""
+    if args.type == 'filling_out':
+        export.hamilton.samplesheet_filling_out(lims, args.process_id, args.output_file)
+    elif args.type == 'purify':
+        export.hamilton.samplesheet_purify(lims, args.process_id, args.output_file)
 
 
-def bioanalyzer(args):
-    """Create samplesheets for Bioanalyzer machine."""
-    samplesheet.bioanalyzer.run_bioanalyzer(lims, args.process_id, args.output_file)
+def export_labels(args):
+    """Export container labels."""
+    export.labels.containers(lims, args.process_id, args.output_file)
 
 
-# Sample Upload
+def export_manual_pipetting(args):
+    """Export samplesheets for manual pipetting."""
+    if args.type == 'purify':
+        export.manual_pipetting.samplesheet_purify(lims, args.process_id, args.output_file)
+    elif args.type == 'sequencing_pool':
+        export.manual_pipetting.samplesheet_sequencing_pool(lims, args.process_id, args.output_file)
+    elif args.type == 'multiplex':
+        export.manual_pipetting.samplesheet_multiplex(lims, args.process_id, args.output_file)
+
+
+def export_ped_file(args):
+    """Export ped file."""
+    export.ped.create_file(lims, args.process_id, args.output_file)
+
+
+def export_tapestation(args):
+    """Export samplesheets for Tapestation machine."""
+    export.tapestation.samplesheet(lims, args.process_id, args.output_file)
+
+
+def export_tecan(args):
+    """Export samplesheets for tecan machine."""
+    export.tecan.samplesheet(lims, args.process_id, args.output_file)
+
+
+# Upload Functions
 def upload_samples(args):
     """Upload samples from helix output file."""
     upload.samples.from_helix(lims, args.input_file)
@@ -103,18 +113,8 @@ def placement_barcode(args):
 
 # Generate functions
 def generate_family_status(args):
-    """Generate family status"""
+    """Generate family status."""
     generate.samplenames.family_status(lims, args.process_id)
-
-
-def generate_labelnames(args):
-    """Generate labelnames"""
-    generate.labels.container_label(lims, args.process_id, args.output_file)
-
-
-def generate_ped_file(args):
-    """Generate labelnames"""
-    generate.ped.create_file(lims, args.process_id, args.output_file)
 
 
 if __name__ == "__main__":
@@ -125,36 +125,44 @@ if __name__ == "__main__":
     output_parser = argparse.ArgumentParser(add_help=False)
     output_parser.add_argument('-o', '--output_file',  nargs='?', type=argparse.FileType('w'), default=sys.stdout, help='Output file path (default=stdout)')
 
-    # samplesheet
-    parser_samplesheet = subparser.add_parser('samplesheet', help='Create samplesheets')
-    subparser_samplesheet = parser_samplesheet.add_subparsers()
+    # export
+    parser_export = subparser.add_parser('export', help='Export from lims.')
+    subparser_export = parser_export.add_subparsers()
 
-    parser_samplesheet_hamilton = subparser_samplesheet.add_parser('hamilton', help='Create hamilton samplesheets', parents=[output_parser])
-    parser_samplesheet_hamilton.add_argument('type', choices=['filling_out', 'purify'], help='Samplesheet type')
-    parser_samplesheet_hamilton.add_argument('process_id', help='Clarity lims process id')
-    parser_samplesheet_hamilton.set_defaults(func=hamilton)
+    parser_export_hamilton = subparser_export.add_parser('hamilton', help='Create hamilton samplesheets', parents=[output_parser])
+    parser_export_hamilton.add_argument('type', choices=['filling_out', 'purify'], help='Samplesheet type')
+    parser_export_hamilton.add_argument('process_id', help='Clarity lims process id')
+    parser_export_hamilton.set_defaults(func=export_hamilton)
 
-    parser_samplesheet_tecan = subparser_samplesheet.add_parser('tecan', help='Create tecan samplesheets', parents=[output_parser])
-    parser_samplesheet_tecan.add_argument('process_id', help='Clarity lims process id')
-    parser_samplesheet_tecan.set_defaults(func=tecan)
+    parser_export_tecan = subparser_export.add_parser('tecan', help='Create tecan samplesheets', parents=[output_parser])
+    parser_export_tecan.add_argument('process_id', help='Clarity lims process id')
+    parser_export_tecan.set_defaults(func=export_tecan)
 
-    parser_samplesheet_manual_pipetting = subparser_samplesheet.add_parser('manual', help='Create manual pipetting samplesheets', parents=[output_parser])
-    parser_samplesheet_manual_pipetting.add_argument('type', choices=['purify', 'sequencing_pool', 'multiplex'], help='Samplesheet type')
-    parser_samplesheet_manual_pipetting.add_argument('process_id', help='Clarity lims process id')
-    parser_samplesheet_manual_pipetting.set_defaults(func=manual_pipetting)
+    parser_export_manual_pipetting = subparser_export.add_parser('manual', help='Create manual pipetting _exports', parents=[output_parser])
+    parser_export_manual_pipetting.add_argument('type', choices=['purify', 'sequencing_pool', 'multiplex'], help='Samplesheet type')
+    parser_export_manual_pipetting.add_argument('process_id', help='Clarity lims process id')
+    parser_export_manual_pipetting.set_defaults(func=export_manual_pipetting)
 
-    parser_samplesheet_caliper = subparser_samplesheet.add_parser('caliper', help='Create caliper samplesheets', parents=[output_parser])
-    parser_samplesheet_caliper.add_argument('type', choices=['normalise'], help='Samplesheet type')
-    parser_samplesheet_caliper.add_argument('process_id', help='Clarity lims process id')
-    parser_samplesheet_caliper.set_defaults(func=caliper)
+    parser_export_caliper = subparser_export.add_parser('caliper', help='Create caliper samplesheets', parents=[output_parser])
+    parser_export_caliper.add_argument('type', choices=['normalise'], help='Samplesheet type')
+    parser_export_caliper.add_argument('process_id', help='Clarity lims process id')
+    parser_export_caliper.set_defaults(func=export_caliper)
 
-    parser_samplesheet_tapestation = subparser_samplesheet.add_parser('tapestation', help='Create tapestation samplesheets', parents=[output_parser])
-    parser_samplesheet_tapestation.add_argument('process_id', help='Clarity lims process id')
-    parser_samplesheet_tapestation.set_defaults(func=tapestation)
+    parser_export_tapestation = subparser_export.add_parser('tapestation', help='Create tapestation samplesheets', parents=[output_parser])
+    parser_export_tapestation.add_argument('process_id', help='Clarity lims process id')
+    parser_export_tapestation.set_defaults(func=export_tapestation)
 
-    parser_samplesheet_bioanalyzer = subparser_samplesheet.add_parser('bioanalyzer', help='Create bioanalyzer samplesheets', parents=[output_parser])
-    parser_samplesheet_bioanalyzer.add_argument('process_id', help='Clarity lims process id')
-    parser_samplesheet_bioanalyzer.set_defaults(func=bioanalyzer)
+    parser_export_bioanalyzer = subparser_export.add_parser('bioanalyzer', help='Create bioanalyzer samplesheets', parents=[output_parser])
+    parser_export_bioanalyzer.add_argument('process_id', help='Clarity lims process id')
+    parser_export_bioanalyzer.set_defaults(func=export_bioanalyzer)
+
+    parser_export_labels = subparser_export.add_parser('labels', help='Export container labels.', parents=[output_parser])
+    parser_export_labels.add_argument('process_id', help='Clarity lims process id')
+    parser_export_labels.set_defaults(func=export_labels)
+
+    parser_export_ped = subparser_export.add_parser('ped', help='Export ped file.', parents=[output_parser])
+    parser_export_ped.add_argument('process_id', help='Clarity lims process id')
+    parser_export_ped.set_defaults(func=export_ped_file)
 
     # Sample upload
     parser_upload = subparser.add_parser('upload', help='Upload samples or results to clarity lims')
@@ -202,20 +210,12 @@ if __name__ == "__main__":
     parser_placement_barcode.set_defaults(func=placement_barcode)
 
     # generate
-    parser_generate = subparser.add_parser('generate', help='Generate samplenames/labelnames functions.')
+    parser_generate = subparser.add_parser('generate', help='Generate samplenames functions.')
     subparser_generate = parser_generate.add_subparsers()
 
     parser_generate_samplenames = subparser_generate.add_parser('family_status', help='Generate family status.')
     parser_generate_samplenames.add_argument('process_id', help='Clarity lims process id')
     parser_generate_samplenames.set_defaults(func=generate_family_status)
-
-    parser_generate_labels = subparser_generate.add_parser('labels', help='Generate labelnames.', parents=[output_parser])
-    parser_generate_labels.add_argument('process_id', help='Clarity lims process id')
-    parser_generate_labels.set_defaults(func=generate_labelnames)
-
-    parser_generate_ped = subparser_generate.add_parser('ped', help='Generate ped file.', parents=[output_parser])
-    parser_generate_ped.add_argument('process_id', help='Clarity lims process id')
-    parser_generate_ped.set_defaults(func=generate_ped_file)
 
     args = parser.parse_args()
     args.func(args)

@@ -1,9 +1,9 @@
-"""Bioanalyzer samplesheet epp functions."""
+"""Bioanalyzer export functions."""
 
 from genologics.entities import Process
 
 
-def run_bioanalyzer(lims, process_id, output_file):
+def samplesheet(lims, process_id, output_file):
     """Create Bioanalyzer samplesheet."""
     process = Process(lims, id=process_id)
 

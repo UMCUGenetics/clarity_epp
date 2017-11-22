@@ -1,4 +1,4 @@
-"""Create ped file."""
+"""Export ped functions."""
 from genologics.entities import Process
 
 
@@ -22,7 +22,7 @@ def create_file(lims, process_id, output_file):
 
         output_file.write('{family}\t{sample}\t{paternal_sample}\t{maternal_sample}\t{sex}\t{affection}\n'.format(
             family=sample.udf['Dx Unummer'],
-            sample=sample.name, # change to ped/sequencing name
+            sample=sample.name,  # change to ped/sequencing name
             paternal_sample='',
             maternal_sample='',
             sex=sample_sex,

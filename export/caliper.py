@@ -1,11 +1,11 @@
-"""Caliper samplesheet epp functions."""
+"""Caliper export functions."""
 
-from genologics.entities import Process, SampleHistory, Processtype
+from genologics.entities import Process
 
 import utils
 
 
-def normalise(lims, process_id, output_file):
+def samplesheet_normalise(lims, process_id, output_file):
     """Create Caliper samplesheet for normalising 96 well plate."""
     output_file.write('Monsternummer\tPlate_Id_input\tWell\tPlate_Id_output\tPipetteervolume DNA (ul)\tPipetteervolume H2O (ul)\n')
     process = Process(lims, id=process_id)
@@ -19,7 +19,7 @@ def normalise(lims, process_id, output_file):
     volume_H2O = {}
     output_ng = process.udf['Output genormaliseerd gDNA']
     output_ul = process.udf['Eindvolume (ul) genormaliseerd gDNA']
-    
+
     input_artifact_ids = [analyte.id for analyte in parent_process.all_outputs()]
     qc_processes = lims.get_processes(
         type=['Dx Qubit QC', 'Dx Tecan Spark 10M QC'],
@@ -54,13 +54,13 @@ def normalise(lims, process_id, output_file):
                         else:
                             samples_measurements_qubit[sample] = [measurement]
                 if sample not in sample_concentration or machine == 'Qubit':
-                   if machine == 'Tecan':
-                       sample_measurements = samples_measurements_tecan[sample]
-                   elif machine == 'Qubit':
-                       sample_measurements = samples_measurements_qubit[sample]
-                   sample_measurements_average = sum(sample_measurements) / float(len(sample_measurements))
-                   sample_concentration[sample] = sample_measurements_average
- 
+                    if machine == 'Tecan':
+                        sample_measurements = samples_measurements_tecan[sample]
+                    elif machine == 'Qubit':
+                        sample_measurements = samples_measurements_qubit[sample]
+                    sample_measurements_average = sum(sample_measurements) / float(len(sample_measurements))
+                    sample_concentration[sample] = sample_measurements_average
+
     for placement, artifact in process.output_containers()[0].placements.iteritems():
         sample = artifact.samples[0].name
         placement = ''.join(placement.split(':'))

@@ -1,4 +1,4 @@
-"""Utility functions used for uploading samples."""
+"""Utility functions."""
 from genologics.entities import Workflow
 
 

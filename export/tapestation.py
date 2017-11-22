@@ -1,11 +1,11 @@
-"""Tapestation samplesheet epp functions."""
+"""Tapestation export functions."""
 
 from genologics.entities import Process
 
 import utils
 
 
-def run_tapestation(lims, process_id, output_file):
+def samplesheet(lims, process_id, output_file):
     """Create Tapestation samplesheet."""
     process = Process(lims, id=process_id)
     well_plate = {}
