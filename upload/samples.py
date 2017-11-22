@@ -14,41 +14,54 @@ def from_helix(lims, input_file):
 
     container_type = Containertype(lims, id='2')  # Tube
 
-    input_file.readline()  # expect header on first line, skip it.
+    # match header and udf fields
+    udf_column = {
+        'Dx Onderzoeknummer': {'column': 'Onderzoeknummer'},
+        'Dx Fractienummer': {'column': 'Fractienummer'},
+        'Dx Concentratie (ng/ul)': {'column': 'Concentratie (ng/ul)'},
+        'Dx Materiaal type': {'column': 'Materiaal'},
+        'Dx Foetus': {'column': 'Foetus'},
+        'Dx Overleden': {'column': 'Overleden'},
+        'Dx Opslaglocatie': {'column': 'Opslagpositie'},
+        'Dx Spoed': {'column': 'Spoed'},
+        'Dx NICU Spoed': {'column': 'NICU Spoed'},
+        'Dx Persoons ID': {'column': 'Persoons_id'},
+        'Dx Werklijstnummer': {'column': 'Werklijstnummer'},
+        'Dx Unummer': {'column': 'Familienummer'},
+        'Dx Geslacht': {'column': 'Geslacht'},
+        'Dx Geboortejaar': {'column': 'Geboortejaar'},
+        'Dx meet ID': {'column': 'Meet_id'},
+        'Dx Stoftest code': {'column': 'Stoftestcode'},
+        'Dx Stoftest omschrijving': {'column': 'Stoftestomschrijving'},
+        'Dx Helix indicatie': {'column': 'Onderzoeksindicatie'},
+    }
+    header = input_file.readline().rstrip().split(',')  # expect header on first line
+    for udf in udf_column:
+        udf_column[udf]['index'] = header.index(udf_column[udf]['column'])
+
+    # Parse samples
     for line in input_file:
         data = line.rstrip().replace('"', '').split(',')
-        sample_name = data[1]
-
-        if utils.value_to_bool(data[5]) == False and utils.letter_to_bool(data[6]) == False and utils.letter_to_bool(data[8]) == False and utils.letter_to_bool(data[9]) == False and data[4] == 'BL':
-            hand = False
-        else:
-            hand = True
+        sample_name = data[header.index('Monsternummer')]
 
         if lims.get_sample_number(name=sample_name):
             print "ERROR: Sample {sample_name} already exists.".format(sample_name=sample_name)
         else:
-            udf_data = {
-                'Sample Type': 'DNA isolated',  # required lims input
-                'Dx Onderzoeknummer': data[0],
-                'Dx Fractienummer': data[2],
-                'Dx Concentratie (ng/ul)': data[3],
-                'Dx Materiaal type': data[4],
-                'Dx Foetus': utils.value_to_bool(data[5]),
-                'Dx Overleden': utils.letter_to_bool(data[6]),
-                'Dx Opslaglocatie': data[7],
-                'Dx Spoed': utils.letter_to_bool(data[8]),
-                'Dx NICU Spoed': utils.letter_to_bool(data[9]),
-                'Dx Persoons ID': data[10],
-                'Dx Werklijstnummer': data[11],
-                'Dx Unummer': data[12],
-                'Dx Geslacht': data[13],
-                'Dx Geboortejaar': data[14],
-                'Dx meet ID': data[15],
-                'Dx Stoftest code': data[16],
-                'Dx Stoftest omschrijving': data[17],
-                'Dx Helix indicatie': data[18],
-                'Dx Handmatig': hand,
-            }
+            udf_data = {}
+            for udf in udf_column:
+                # Transform specific udf
+                if udf in ['Dx Foetus']:
+                    udf_data[udf] = utils.value_to_bool(data[udf_column[udf]['index']])
+                elif udf in ['Dx Overleden', 'Dx Spoed', 'Dx NICU Spoed']:
+                    udf_data[udf] = utils.letter_to_bool(data[udf_column[udf]['index']])
+                else:
+                    udf_data[udf] = data[udf_column[udf]['index']]
+            # Set 'handmatig' udf
+            if udf_data['Dx Foetus'] or udf_data['Dx Overleden'] or udf_data['Dx Spoed'] or udf_data['Dx NICU Spoed'] or udf_data['Dx Materiaal type'] != 'BL':
+                udf_data['Dx Handmatig'] = True
+            else:
+                udf_data['Dx Handmatig'] = False
+
             container = Container.create(lims, type=container_type)
             sample = Sample.create(lims, container=container, position='1:1', project=project, name=sample_name, udf=udf_data)
 
