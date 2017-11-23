@@ -105,6 +105,11 @@ def placement_automatic(args):
     placement.plate.copy_layout(lims, args.process_id)
 
 
+def placement_artifact_set_sequence_name(args):
+    """Change artifact name to sequence name."""
+    placement.artifact.set_sequence_name(lims, args.process_id)
+
+
 def placement_barcode(args):
     """Check barcodes."""
     if args.type == 'check_family':
@@ -203,6 +208,10 @@ if __name__ == "__main__":
     parser_placement_automatic = subparser_placement.add_parser('copy', help='Copy container layout from previous step.')
     parser_placement_automatic.add_argument('process_id', help='Clarity lims process id')
     parser_placement_automatic.set_defaults(func=placement_automatic)
+
+    parser_placement_artifact = subparser_placement.add_parser('artifact', help='Change artifact name to sequence name.')
+    parser_placement_artifact.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_artifact.set_defaults(func=placement_artifact_set_sequence_name)
 
     parser_placement_barcode = subparser_placement.add_parser('barcode_check', help='Check barcode placement.')
     parser_placement_barcode.add_argument('type', choices=['check_family'], help='Check type')

@@ -1,4 +1,5 @@
 """Container placement functions."""
 
-import plate
+import artifact
 import barcode
+import plate
