@@ -19,16 +19,25 @@ def samplesheet_normalise(lims, process_id, output_file):
     volume_H2O = {}
     output_ng = process.udf['Output genormaliseerd gDNA']
     output_ul = process.udf['Eindvolume (ul) genormaliseerd gDNA']
-
     input_artifact_ids = [analyte.id for analyte in parent_process.all_outputs()]
     qc_processes = lims.get_processes(
         type=['Dx Qubit QC', 'Dx Tecan Spark 10M QC'],
         inputartifactlimsid=input_artifact_ids
     )
-
     sample_concentration = {}
     samples_measurements_tecan = {}
     samples_measurements_qubit = {}
+    filled_wells = []
+    order = [
+        'A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'G2', 'H2', 'A3', 'B3', 'C3', 'D3', 'E3', 'F3', 'G3',
+        'H3', 'A4', 'B4', 'C4', 'D4', 'E4', 'F4', 'G4', 'H4', 'A5', 'B5', 'C5', 'D5', 'E5', 'F5', 'G5', 'H5', 'A6', 'B6', 'C6', 'D6', 'E6', 'F6',
+        'G6', 'H6', 'A7', 'B7', 'C7', 'D7', 'E7', 'F7', 'G7', 'H7', 'A8', 'B8', 'C8', 'D8', 'E8', 'F8', 'G8', 'H8', 'A9', 'B9', 'C9', 'D9', 'E9',
+        'F9', 'G9', 'H9', 'A10', 'B10', 'C10', 'D10', 'E10', 'F10', 'G10', 'H10', 'A11', 'B11', 'C11', 'D11', 'E11', 'F11', 'G11', 'H11', 'A12',
+        'B12', 'C12', 'D12', 'E12', 'F12', 'G12', 'H12'
+    ]
+    order = dict(zip(order, range(len(order))))
+    last_filled_well = 0
+    x = 0
 
     for p in qc_processes:
         for a in p.all_outputs():
@@ -60,6 +69,20 @@ def samplesheet_normalise(lims, process_id, output_file):
                         sample_measurements = samples_measurements_qubit[sample]
                     sample_measurements_average = sum(sample_measurements) / float(len(sample_measurements))
                     sample_concentration[sample] = sample_measurements_average
+
+    for placement, artifact in process.output_containers()[0].placements.iteritems():
+        placement = ''.join(placement.split(':'))
+        filled_wells.append(placement)
+        if order[placement] > last_filled_well:
+            last_filled_well = order[placement]
+
+    for x in range(0 ,last_filled_well):
+        for well, number in order.iteritems():
+            if number == x:
+                placement = well
+        monsternummer[placement] = ""
+        volume_DNA[placement] = 0
+        volume_H2O[placement] = 0
 
     for placement, artifact in process.output_containers()[0].placements.iteritems():
         sample = artifact.samples[0].name
