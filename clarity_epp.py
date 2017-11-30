@@ -6,12 +6,14 @@ import argparse
 
 from genologics.lims import Lims
 
+
+import clarity_epp.upload
+import clarity_epp.export
+import clarity_epp.qc
+import clarity_epp.placement
+import clarity_epp.generate
+
 import config
-import upload
-import export
-import qc
-import placement
-import generate
 
 # Setup lims connection
 lims = Lims(config.baseuri, config.username, config.password)
@@ -20,106 +22,106 @@ lims = Lims(config.baseuri, config.username, config.password)
 # Export Functions
 def export_bioanalyzer(args):
     """Export samplesheets for Bioanalyzer machine."""
-    export.bioanalyzer.samplesheet(lims, args.process_id, args.output_file)
+    clarity_epp.export.bioanalyzer.samplesheet(lims, args.process_id, args.output_file)
 
 
 def export_caliper(args):
     """Export samplesheets for caliper machine."""
     if args.type == 'normalise':
-        export.caliper.samplesheet_normalise(lims, args.process_id, args.output_file)
+        clarity_epp.export.caliper.samplesheet_normalise(lims, args.process_id, args.output_file)
 
 
 def export_hamilton(args):
     """Export samplesheets for hamilton machine."""
     if args.type == 'filling_out':
-        export.hamilton.samplesheet_filling_out(lims, args.process_id, args.output_file)
+        clarity_epp.export.hamilton.samplesheet_filling_out(lims, args.process_id, args.output_file)
     elif args.type == 'purify':
-        export.hamilton.samplesheet_purify(lims, args.process_id, args.output_file)
+        clarity_epp.export.hamilton.samplesheet_purify(lims, args.process_id, args.output_file)
 
 
 def export_labels(args):
     """Export container labels."""
-    export.labels.containers(lims, args.process_id, args.output_file)
+    clarity_epp.export.labels.containers(lims, args.process_id, args.output_file)
 
 
 def export_manual_pipetting(args):
     """Export samplesheets for manual pipetting."""
     if args.type == 'purify':
-        export.manual_pipetting.samplesheet_purify(lims, args.process_id, args.output_file)
+        clarity_epp.export.manual_pipetting.samplesheet_purify(lims, args.process_id, args.output_file)
     elif args.type == 'sequencing_pool':
-        export.manual_pipetting.samplesheet_sequencing_pool(lims, args.process_id, args.output_file)
+        clarity_epp.export.manual_pipetting.samplesheet_sequencing_pool(lims, args.process_id, args.output_file)
     elif args.type == 'multiplex':
-        export.manual_pipetting.samplesheet_multiplex(lims, args.process_id, args.output_file)
+        clarity_epp.export.manual_pipetting.samplesheet_multiplex(lims, args.process_id, args.output_file)
 
 
 def export_ped_file(args):
     """Export ped file."""
-    export.ped.create_file(lims, args.process_id, args.output_file)
+    clarity_epp.export.ped.create_file(lims, args.process_id, args.output_file)
 
 
 def export_tapestation(args):
     """Export samplesheets for Tapestation machine."""
-    export.tapestation.samplesheet(lims, args.process_id, args.output_file)
+    clarity_epp.export.tapestation.samplesheet(lims, args.process_id, args.output_file)
 
 
 def export_tecan(args):
     """Export samplesheets for tecan machine."""
-    export.tecan.samplesheet(lims, args.process_id, args.output_file)
+    clarity_epp.export.tecan.samplesheet(lims, args.process_id, args.output_file)
 
 
 # Upload Functions
 def upload_samples(args):
     """Upload samples from helix output file."""
-    upload.samples.from_helix(lims, args.input_file)
+    clarity_epp.upload.samples.from_helix(lims, args.input_file)
 
 
 def upload_tecan_results(args):
     """Upload tecan results."""
-    upload.tecan.results(lims, args.process_id)
+    clarity_epp.upload.tecan.results(lims, args.process_id)
 
 
 def upload_tapestation_results(args):
     """Upload tapestation results."""
-    upload.tapestation.results(lims, args.process_id)
+    clarity_epp.upload.tapestation.results(lims, args.process_id)
 
 
 def upload_bioanalyzer_results(args):
     """Upload bioanalyzer results."""
-    upload.bioanalyzer.results(lims, args.process_id)
+    clarity_epp.upload.bioanalyzer.results(lims, args.process_id)
 
 
 # QC functions
 def qc_qubit(args):
     """Set QC status based on qubit measurement."""
-    qc.qubit.set_qc_flag(lims, args.process_id)
+    clarity_epp.qc.qubit.set_qc_flag(lims, args.process_id)
 
 
 def qc_fragment_length(args):
     """Set QC status based on fragment length measurement."""
-    qc.fragment_length.set_qc_flag(lims, args.process_id)
+    clarity_epp.qc.fragment_length.set_qc_flag(lims, args.process_id)
 
 
 # Placement functions
 def placement_automatic(args):
     """Copy container layout from previous step."""
-    placement.plate.copy_layout(lims, args.process_id)
+    clarity_epp.placement.plate.copy_layout(lims, args.process_id)
 
 
 def placement_artifact_set_sequence_name(args):
     """Change artifact name to sequence name."""
-    placement.artifact.set_sequence_name(lims, args.process_id)
+    clarity_epp.placement.artifact.set_sequence_name(lims, args.process_id)
 
 
 def placement_barcode(args):
     """Check barcodes."""
     if args.type == 'check_family':
-        placement.barcode.check_family(lims, args.process_id)
+        clarity_epp.placement.barcode.check_family(lims, args.process_id)
 
 
 # Generate functions
 def generate_family_status(args):
     """Generate family status."""
-    generate.samplenames.family_status(lims, args.process_id)
+    clarity_epp.generate.samplenames.family_status(lims, args.process_id)
 
 
 if __name__ == "__main__":
@@ -213,7 +215,7 @@ if __name__ == "__main__":
     parser_placement_artifact.add_argument('process_id', help='Clarity lims process id')
     parser_placement_artifact.set_defaults(func=placement_artifact_set_sequence_name)
 
-    parser_placement_barcode = subparser_placement.add_parser('barcode_check', help='Check barcode placement.')
+    parser_placement_barcode = subparser_placement.add_parser('barcode_check', help='Check barcode clarity_epp.placement.')
     parser_placement_barcode.add_argument('type', choices=['check_family'], help='Check type')
     parser_placement_barcode.add_argument('process_id', help='Clarity lims process id')
     parser_placement_barcode.set_defaults(func=placement_barcode)
