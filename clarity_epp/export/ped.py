@@ -1,7 +1,7 @@
 """Export ped functions."""
 from genologics.entities import Process
 
-from . import get_sequence_name
+from .. import get_sequence_name
 
 
 def create_file(lims, process_id, output_file):
@@ -24,11 +24,16 @@ def create_file(lims, process_id, output_file):
             }
 
         # Determine sex
-        if sample.udf['Dx Geslacht'].lower() == 'man':
+        if sample.udf['Dx Foetus']:
+            gender_udf = 'Dx Foetus geslacht'
+        else:
+            gender_udf = 'Dx Geslacht'
+
+        if sample.udf[gender_udf].lower() == 'man':
             ped_sample['sex'] = 1
-        elif sample.udf['Dx Geslacht'].lower() == 'vrouw':
+        elif sample.udf[gender_udf].lower() == 'vrouw':
             ped_sample['sex'] = 2
-        elif sample.udf['Dx Geslacht'].lower() == 'onbekend':
+        elif sample.udf[gender_udf].lower() == 'onbekend':
             ped_sample['sex'] = 0
 
         # Determine affection

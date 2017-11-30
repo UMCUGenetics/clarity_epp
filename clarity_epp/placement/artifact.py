@@ -2,7 +2,7 @@
 
 from genologics.entities import Process
 
-from . import get_sequence_name
+from .. import get_sequence_name
 
 
 def set_sequence_name(lims, process_id):

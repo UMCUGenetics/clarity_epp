@@ -12,7 +12,7 @@ def letter_to_bool(letter):
 
 def foetus_to_bool(value):
     """Transform helix foetus value to Bool."""
-    if len(value) == -1:
+    if value == ' - 1':
         return True
     else:
         return False

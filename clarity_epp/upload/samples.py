@@ -1,5 +1,5 @@
 """Sample upload epp functions."""
-from genologics.entities import Sample, Project, Containertype, Container, Researcher, Workflow
+from genologics.entities import Sample, Project, Containertype, Container, Researcher
 
 import utils
 
@@ -10,7 +10,7 @@ def from_helix(lims, input_file):
     project_name = input_file.name.rstrip('.csv').split('/')[-1]
     if not lims.get_projects(name=project_name):
         researcher = Researcher(lims, id='254')  # DX_EPP user
-        #project = Project.create(lims, name=project_name, researcher=researcher, udf={'Application': 'DX'})
+        project = Project.create(lims, name=project_name, researcher=researcher, udf={'Application': 'DX'})
 
     container_type = Containertype(lims, id='2')  # Tube
 
@@ -32,7 +32,7 @@ def from_helix(lims, input_file):
         'Dx Unummer': {'column': 'Familienummer'},
         'Dx Geslacht': {'column': 'Geslacht'},
         'Dx Geboortejaar': {'column': 'Geboortejaar'},
-        'Dx meet ID': {'column': 'Stof_meet_id'},
+        'Dx Meet ID': {'column': 'Stof_meet_id'},
         'Dx Stoftest code': {'column': 'Stoftestcode'},
         'Dx Stoftest omschrijving': {'column': 'Stoftestomschrijving'},
         'Dx Helix indicatie': {'column': 'Onderzoeksindicatie'},
@@ -49,7 +49,7 @@ def from_helix(lims, input_file):
         data = line.rstrip().replace('"', '').split(',')
         sample_name = data[header.index('Monsternummer')]
 
-        udf_data = {}
+        udf_data = {'Sample Type': 'DNA isolated'}  # required lims input
         for udf in udf_column:
             # Transform specific udf
             if udf in ['Dx Overleden', 'Dx Spoed', 'Dx NICU Spoed']:
@@ -70,6 +70,8 @@ def from_helix(lims, input_file):
         # Set 'Dx Familie status' udf
         if udf_data['Dx Onderzoeksreden'] == 'Bevestiging diagnose':
             udf_data['Dx Familie status'] = 'Kind'
+        elif udf_data['Dx Onderzoeksreden'] == 'Prenataal onderzoek':
+            udf_data['Dx Familie status'] = 'Kind'
         elif udf_data['Dx Onderzoeksreden'] == 'Informativiteitstest':
             udf_data['Dx Familie status'] = 'Ouder'
 
@@ -87,5 +89,3 @@ def from_helix(lims, input_file):
             sample = Sample.create(lims, container=container, position='1:1', project=project, name=sample_name, udf=udf_data)
             workflow = utils.stofcode_to_workflow(lims, udf_data['Dx Stoftest code'])
             lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
-
-        print sample_name, udf_data
