@@ -1,4 +1,5 @@
 """Sample upload epp functions."""
+import sys
 from genologics.entities import Sample, Project, Containertype, Container, Researcher
 
 import utils
@@ -11,6 +12,9 @@ def from_helix(lims, input_file):
     if not lims.get_projects(name=project_name):
         researcher = Researcher(lims, id='254')  # DX_EPP user
         project = Project.create(lims, name=project_name, researcher=researcher, udf={'Application': 'DX'})
+    else:
+        print "ERROR: Duplicate project"
+        sys.exit()
 
     container_type = Containertype(lims, id='2')  # Tube
 
@@ -74,6 +78,15 @@ def from_helix(lims, input_file):
             udf_data['Dx Familie status'] = 'Kind'
         elif udf_data['Dx Onderzoeksreden'] == 'Informativiteitstest':
             udf_data['Dx Familie status'] = 'Ouder'
+
+        # Set 'Dx Geslacht' and 'Dx Geboortejaar' with 'Foetus' information if ''Dx Foetus == True'
+        if udf_data['Dx Foetus']:
+            udf_data['Dx Geslacht'] = udf_data['Dx Foetus geslacht']
+            udf_data['Dx Geboortejaar'] = ''
+
+        # Set 'Dx Geslacht = Onbekend' if 'Dx Helix indicatie == DSD00'
+        if udf_data['Dx Helix indicatie'] == 'DSD00':
+            udf_data['Dx Geslacht'] = 'Onbekend'
 
         sample_list = lims.get_samples(name=sample_name)
         if sample_list:

@@ -23,17 +23,11 @@ def create_file(lims, process_id, output_file):
                 'children': []
             }
 
-        # Determine sex
-        if sample.udf['Dx Foetus']:
-            gender_udf = 'Dx Foetus geslacht'
-        else:
-            gender_udf = 'Dx Geslacht'
-
-        if sample.udf[gender_udf].lower() == 'man':
+        if sample.udf['Dx Geslacht'].lower() == 'man':
             ped_sample['sex'] = 1
-        elif sample.udf[gender_udf].lower() == 'vrouw':
+        elif sample.udf['Dx Geslacht'].lower() == 'vrouw':
             ped_sample['sex'] = 2
-        elif sample.udf[gender_udf].lower() == 'onbekend':
+        elif sample.udf['Dx Geslacht'].lower() == 'onbekend':
             ped_sample['sex'] = 0
 
         # Determine affection
