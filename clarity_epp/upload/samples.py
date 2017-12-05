@@ -13,7 +13,7 @@ def from_helix(lims, input_file):
         researcher = Researcher(lims, id='254')  # DX_EPP user
         project = Project.create(lims, name=project_name, researcher=researcher, udf={'Application': 'DX'})
     else:
-        print "ERROR: Duplicate project"
+        print "ERROR: Duplicate project / werklijst. Samples not loaded."
         sys.exit()
 
     container_type = Containertype(lims, id='2')  # Tube
@@ -39,7 +39,7 @@ def from_helix(lims, input_file):
         'Dx Meet ID': {'column': 'Stof_meet_id'},
         'Dx Stoftest code': {'column': 'Stoftestcode'},
         'Dx Stoftest omschrijving': {'column': 'Stoftestomschrijving'},
-        'Dx Helix indicatie': {'column': 'Onderzoeksindicatie'},
+        'Dx Onderzoeksindicatie': {'column': 'Onderzoeksindicatie'},
         'Dx Onderzoeksreden': {'column': 'Onderzoeksreden'},
         'Dx Protocolcode': {'column': 'Protocolcode'},
         'Dx Protocolomschrijving': {'column': 'Protocolomschrijving'},
@@ -57,11 +57,11 @@ def from_helix(lims, input_file):
         for udf in udf_column:
             # Transform specific udf
             if udf in ['Dx Overleden', 'Dx Spoed', 'Dx NICU Spoed']:
-                udf_data[udf] = utils.letter_to_bool(data[udf_column[udf]['index']])
+                udf_data[udf] = utils.char_to_bool(data[udf_column[udf]['index']])
             elif udf in ['Dx Geslacht', 'Dx Foetus geslacht']:
                 udf_data[udf] = utils.transform_sex(data[udf_column[udf]['index']])
             elif udf == 'Dx Foetus':
-                udf_data[udf] = utils.foetus_to_bool(data[udf_column[udf]['index']])
+                udf_data[udf] = bool(data[udf_column[udf]['index']].strip())
             else:
                 udf_data[udf] = data[udf_column[udf]['index']]
 
@@ -84,21 +84,47 @@ def from_helix(lims, input_file):
             udf_data['Dx Geslacht'] = udf_data['Dx Foetus geslacht']
             udf_data['Dx Geboortejaar'] = ''
 
-        # Set 'Dx Geslacht = Onbekend' if 'Dx Helix indicatie == DSD00'
-        if udf_data['Dx Helix indicatie'] == 'DSD00':
+        # Set 'Dx Geslacht = Onbekend' if 'Dx Onderzoeksindicatie == DSD00'
+        if udf_data['Dx Onderzoeksindicatie'] == 'DSD00':
             udf_data['Dx Geslacht'] = 'Onbekend'
 
         sample_list = lims.get_samples(name=sample_name)
+
         if sample_list:
             sample = sample_list[0]
             if udf_data['Dx Stoftest code'] in sample.udf['Dx Stoftest code']:
-                print "ERROR: Duplicate sample and Stoftest code: {sample_name} - {stoftestcode}.".format(sample_name=sample_name, stoftestcode=udf_data['Dx Stoftest code'])
+                print "{0}\tERROR: Duplicate sample and Stoftest code: {1}.".format(sample_name, udf_data['Dx Stoftest code'])
             else:
-                print "Duplicate sample, new workflow."
-                # Add existing sample to new workflow
+                # Update existing sample if new workflow / Dx Stoftest code
+
                 # Append udf fields
+                append_udf = [
+                    'Dx Onderzoeknummer', 'Dx Onderzoeksindicatie', 'Dx Onderzoeksreden', 'Dx Werklijstnummer', 'Dx Protocolcode', 'Dx Protocolomschrijving',
+                    'Dx Meet ID', 'Dx Stoftest code', 'Dx Stoftest omschrijving'
+                ]
+                for udf in append_udf:
+                    sample.udf[udf] = ','.join([str(sample.udf[udf]), udf_data[udf]])
+
+                # Update udf fields
+                update_udf = ['Dx Overleden', 'Dx Spoed', 'Dx NICU Spoed', 'Dx Handmatig', 'Dx Opslaglocatie']
+                for udf in update_udf:
+                    sample.udf[udf] = udf_data[udf]
+
+                # Add to new workflow
+                workflow = utils.stofcode_to_workflow(lims, udf_data['Dx Stoftest code'])
+                if workflow:
+                    sample.put()
+                    lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
+                    print "{0}\tupdated and added to workflow: {1}".format(sample.name, workflow.name)
+                else:
+                    print "{0}\tERROR: Stoftest code {1} is not linked to a workflow.".format(sample.name, udf_data['Dx Stoftest code'])
+
         else:
-            container = Container.create(lims, type=container_type)
-            sample = Sample.create(lims, container=container, position='1:1', project=project, name=sample_name, udf=udf_data)
             workflow = utils.stofcode_to_workflow(lims, udf_data['Dx Stoftest code'])
-            lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
+            if workflow:
+                container = Container.create(lims, type=container_type, name=udf_data['Dx Fractienummer'])
+                sample = Sample.create(lims, container=container, position='1:1', project=project, name=sample_name, udf=udf_data)
+                lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
+                print "{0}\tcreated and added to workflow: {1}".format(sample.name, workflow.name)
+            else:
+                print "{0}\tERROR: Stoftest code {1} is not linked to a workflow.".format(sample.name, udf_data['Dx Stoftest code'])

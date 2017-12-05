@@ -2,30 +2,27 @@
 from genologics.entities import Workflow
 
 
-def letter_to_bool(letter):
-    """Transform letter (Y/N) to Bool."""
+def char_to_bool(letter):
+    """Transform character (J/N) to Bool."""
     if letter.upper() == 'J':
         return True
     elif letter.upper() == 'N':
         return False
-
-
-def foetus_to_bool(value):
-    """Transform helix foetus value to Bool."""
-    if value == ' - 1':
-        return True
     else:
-        return False
+        raise ValueError('Invalid character, only J or N allowed.')
 
 
 def transform_sex(value):
     """Transform helix sex/geslacht value to lims sex/geslacht value."""
-    if value.upper() == 'M':
-        return 'Man'
-    elif value.upper() == 'V':
-        return 'Vrouw'
-    elif value.upper() == 'O':
-        return 'Onbekend'
+    if value.strip():
+        if value.upper() == 'M':
+            return 'Man'
+        elif value.upper() == 'V':
+            return 'Vrouw'
+        elif value.upper() == 'O':
+            return 'Onbekend'
+        else:
+            raise ValueError('Invalid sex character, only M, V or O allowed.')
     else:
         return value
 
