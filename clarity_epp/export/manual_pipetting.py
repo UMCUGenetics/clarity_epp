@@ -188,8 +188,9 @@ def samplesheet_multiplex(lims, process_id, output_file):
 
     for pp in parent_parent_process:
         for placement, artifact in pp.output_containers()[0].placements.iteritems():
-            monsternummer = artifact.samples[0].name
-            family_status[monsternummer] = artifact.udf['Dx Familie status']
+            sample = artifact.samples[0]
+            monsternummer = sample.name
+            family_status[monsternummer] = sample.udf['Dx Familie status']
 
     for p in parent_process:
         for placement, artifact in p.output_containers()[0].placements.iteritems():
