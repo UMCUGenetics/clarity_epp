@@ -10,9 +10,10 @@ def copy_layout(lims, process_id):
     # Get parent container layout
     parent_container = None
     for parent_process in process.parent_processes():
-        for container in parent_process.output_containers():
-            if container.type != Containertype(lims, id='2'):  # skip tubes
-                parent_container = container
+        if parent_process:
+            for container in parent_process.output_containers():
+                if container.type != Containertype(lims, id='2'):  # skip tubes
+                    parent_container = container
 
     if parent_container:
         parent_placements = {}

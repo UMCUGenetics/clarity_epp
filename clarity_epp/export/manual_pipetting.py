@@ -194,12 +194,12 @@ def samplesheet_multiplex(lims, process_id, output_file):
     for p in parent_process:
         for placement, artifact in p.output_containers()[0].placements.iteritems():
             monsternummer = artifact.samples[0].name
-            if family_status[monsternummer] == 'Child':
+            if family_status[monsternummer] == 'Kind':
                 pedigree = 'C'
-            elif family_status[monsternummer] == 'Parent':
+            elif family_status[monsternummer] == 'Ouder':
                 pedigree = 'P'
-            elif family_status[monsternummer] == 'Unknown':
-                pedigree = 'C'
+            #elif family_status[monsternummer] == 'Unknown':
+            #    pedigree = 'C'
             samplenaam = "%s%s%s%s" % (Unummers_per_monster[monsternummer], pedigree, genders[monsternummer], monsternummer)
             samplenamen[monsternummer] = samplenaam
 
