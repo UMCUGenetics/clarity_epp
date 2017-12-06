@@ -11,7 +11,6 @@ import clarity_epp.upload
 import clarity_epp.export
 import clarity_epp.qc
 import clarity_epp.placement
-import clarity_epp.generate
 
 import config
 
@@ -118,12 +117,6 @@ def placement_barcode(args):
         clarity_epp.placement.barcode.check_family(lims, args.process_id)
 
 
-# Generate functions
-def generate_family_status(args):
-    """Generate family status."""
-    clarity_epp.generate.samplenames.family_status(lims, args.process_id)
-
-
 if __name__ == "__main__":
     # with utils.EppLogger(main_log=config.main_log):
     parser = argparse.ArgumentParser()
@@ -219,14 +212,6 @@ if __name__ == "__main__":
     parser_placement_barcode.add_argument('type', choices=['check_family'], help='Check type')
     parser_placement_barcode.add_argument('process_id', help='Clarity lims process id')
     parser_placement_barcode.set_defaults(func=placement_barcode)
-
-    # generate
-    parser_generate = subparser.add_parser('generate', help='Generate samplenames functions.')
-    subparser_generate = parser_generate.add_subparsers()
-
-    parser_generate_samplenames = subparser_generate.add_parser('family_status', help='Generate family status.')
-    parser_generate_samplenames.add_argument('process_id', help='Clarity lims process id')
-    parser_generate_samplenames.set_defaults(func=generate_family_status)
 
     args = parser.parse_args()
     args.func(args)
