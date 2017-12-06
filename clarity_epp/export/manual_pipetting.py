@@ -2,7 +2,6 @@
 
 from genologics.entities import Process
 import datetime
-import utils
 
 
 def samplesheet_purify(lims, process_id, output_file):
@@ -170,20 +169,22 @@ def samplesheet_multiplex(lims, process_id, output_file):
     for p in parent_process:
         plate = p.output_containers()[0].name
         for placement, artifact in p.output_containers()[0].placements.iteritems():
-            monsternummer = artifact.samples[0].name
+            sample = artifact.samples[0]
+            monsternummer = sample.name
             plate_per_monsternummer[monsternummer] = plate
-            Unummers_per_monster[monsternummer] = artifact.samples[0].udf['Dx Unummer']
-            years[monsternummer] = artifact.samples[0].udf['Dx Geboortejaar']
-            genders[monsternummer] = artifact.samples[0].udf['Dx Geslacht']
-            if genders[monsternummer] == 'V' or genders[monsternummer] == 'Vrouw' or genders[monsternummer] == 'vrouw':
-                genders[monsternummer] = 'F'
-            elif genders[monsternummer] == 'Man' or genders[monsternummer] == 'man':
+            Unummers_per_monster[monsternummer] = sample.udf['Dx Unummer']
+
+            if sample.udf['Dx Geslacht'].lower() == 'man':
                 genders[monsternummer] = 'M'
-            if artifact.samples[0].udf['Dx Foetus'] == True:
+            elif sample.udf['Dx Geslacht'].lower() == 'vrouw':
+                genders[monsternummer] = 'F'
+            elif sample.udf['Dx Geslacht'].lower() == 'onbekend':
                 genders[monsternummer] = 'O'
+
+            if sample.udf['Dx Foetus']:
                 years[monsternummer] = datetime.datetime.now().year
-            elif artifact.samples[0].udf['Dx Helix indicatie'] == 'DSD00':
-                genders[monsternummer] = 'O'
+            else:
+                years[monsternummer] = sample.udf['Dx Geboortejaar']
 
     for pp in parent_parent_process:
         for placement, artifact in pp.output_containers()[0].placements.iteritems():
