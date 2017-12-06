@@ -50,7 +50,7 @@ def from_helix(lims, input_file):
 
     # Parse samples
     for line in input_file:
-        data = line.rstrip().replace('"', '').split(',')
+        data = line.rstrip().strip('"').split('","')
         sample_name = data[header.index('Monsternummer')]
 
         udf_data = {'Sample Type': 'DNA isolated'}  # required lims input
@@ -62,6 +62,8 @@ def from_helix(lims, input_file):
                 udf_data[udf] = utils.transform_sex(data[udf_column[udf]['index']])
             elif udf == 'Dx Foetus':
                 udf_data[udf] = bool(data[udf_column[udf]['index']].strip())
+            elif udf == 'Dx Concentratie (ng/ul)':
+                udf_data[udf] = data[udf_column[udf]['index']].replace(',', '.')
             else:
                 udf_data[udf] = data[udf_column[udf]['index']]
 
@@ -127,4 +129,4 @@ def from_helix(lims, input_file):
                 lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
                 print "{0}\tcreated and added to workflow: {1}".format(sample.name, workflow.name)
             else:
-                print "{0}\tERROR: Stoftest code {1} is not linked to a workflow.".format(sample.name, udf_data['Dx Stoftest code'])
+                print "{0}\tERROR: Stoftest code {1} is not linked to a workflow.".format(sample_name, udf_data['Dx Stoftest code'])
