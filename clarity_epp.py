@@ -71,7 +71,7 @@ def export_tecan(args):
 # Upload Functions
 def upload_samples(args):
     """Upload samples from helix output file."""
-    clarity_epp.upload.samples.from_helix(lims, args.input_file)
+    clarity_epp.upload.samples.from_helix(lims, config.email, args.input_file)
 
 
 def upload_tecan_results(args):
@@ -118,7 +118,6 @@ def placement_barcode(args):
 
 
 if __name__ == "__main__":
-    # with utils.EppLogger(main_log=config.main_log):
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
 

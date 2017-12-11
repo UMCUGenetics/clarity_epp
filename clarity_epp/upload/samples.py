@@ -1,20 +1,35 @@
 """Sample upload epp functions."""
 import sys
+from requests.exceptions import ConnectionError
 from genologics.entities import Sample, Project, Containertype, Container, Researcher
 
+from .. import send_email
 import utils
 
 
-def from_helix(lims, input_file):
+def from_helix(lims, email_settings, input_file):
     """Upload samples from helix export file."""
-    # Create project
+
     project_name = input_file.name.rstrip('.csv').split('/')[-1]
+
+    # Try lims connection
+    try:
+        lims.check_version()
+    except ConnectionError:
+        subject = "Lims Helix Upload ERROR: {0}".format(project_name)
+        message = "Can't connect to lims server, please contact a lims administrator."
+        send_email(email_settings['from'], email_settings['to'], subject, message)
+        sys.exit(message)
+
+    # Create project
     if not lims.get_projects(name=project_name):
         researcher = Researcher(lims, id='254')  # DX_EPP user
         project = Project.create(lims, name=project_name, researcher=researcher, udf={'Application': 'DX'})
     else:
-        print "ERROR: Duplicate project / werklijst. Samples not loaded."
-        sys.exit()
+        subject = "Lims Helix Upload ERROR: {0}".format(project_name)
+        message = "Duplicate project / werklijst. Samples not loaded."
+        send_email(email_settings['from'], email_settings['to'], subject, message)
+        sys.exit(message)
 
     container_type = Containertype(lims, id='2')  # Tube
 
@@ -47,6 +62,10 @@ def from_helix(lims, input_file):
     header = input_file.readline().rstrip().split(',')  # expect header on first line
     for udf in udf_column:
         udf_column[udf]['index'] = header.index(udf_column[udf]['column'])
+
+    # Setup email
+    subject = "Lims Helix Upload: {0}".format(project_name)
+    message = ""
 
     # Parse samples
     for line in input_file:
@@ -95,7 +114,7 @@ def from_helix(lims, input_file):
         if sample_list:
             sample = sample_list[0]
             if udf_data['Dx Stoftest code'] in sample.udf['Dx Stoftest code']:
-                print "{0}\tERROR: Duplicate sample and Stoftest code: {1}.".format(sample_name, udf_data['Dx Stoftest code'])
+                message += "{0}\tERROR: Duplicate sample and Stoftest code: {1}.\n".format(sample_name, udf_data['Dx Stoftest code'])
             else:
                 # Update existing sample if new workflow / Dx Stoftest code
 
@@ -117,9 +136,9 @@ def from_helix(lims, input_file):
                 if workflow:
                     sample.put()
                     lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
-                    print "{0}\tupdated and added to workflow: {1}".format(sample.name, workflow.name)
+                    message += "{0}\tUpdated and added to workflow: {1}.\n".format(sample.name, workflow.name)
                 else:
-                    print "{0}\tERROR: Stoftest code {1} is not linked to a workflow.".format(sample.name, udf_data['Dx Stoftest code'])
+                    message += print "{0}\tERROR: Stoftest code {1} is not linked to a workflow.\n".format(sample.name, udf_data['Dx Stoftest code'])
 
         else:
             workflow = utils.stofcode_to_workflow(lims, udf_data['Dx Stoftest code'])
@@ -127,6 +146,10 @@ def from_helix(lims, input_file):
                 container = Container.create(lims, type=container_type, name=udf_data['Dx Fractienummer'])
                 sample = Sample.create(lims, container=container, position='1:1', project=project, name=sample_name, udf=udf_data)
                 lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
-                print "{0}\tcreated and added to workflow: {1}".format(sample.name, workflow.name)
+                message += "{0}\tCreated and added to workflow: {1}.\n".format(sample.name, workflow.name)
             else:
-                print "{0}\tERROR: Stoftest code {1} is not linked to a workflow.".format(sample_name, udf_data['Dx Stoftest code'])
+                message += "{0}\tERROR: Stoftest code {1} is not linked to a workflow.\n".format(sample_name, udf_data['Dx Stoftest code'])
+
+    # Send final email
+    send_email(email_settings['from'], email_settings['to'], subject, message)
+    print message
