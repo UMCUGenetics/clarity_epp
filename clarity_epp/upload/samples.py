@@ -9,14 +9,13 @@ import utils
 
 def from_helix(lims, email_settings, input_file):
     """Upload samples from helix export file."""
-
     project_name = input_file.name.rstrip('.csv').split('/')[-1]
 
     # Try lims connection
     try:
         lims.check_version()
     except ConnectionError:
-        subject = "Lims Helix Upload ERROR: {0}".format(project_name)
+        subject = "ERROR Lims Helix Upload: {0}".format(project_name)
         message = "Can't connect to lims server, please contact a lims administrator."
         send_email(email_settings['from'], email_settings['to'], subject, message)
         sys.exit(message)
@@ -26,7 +25,7 @@ def from_helix(lims, email_settings, input_file):
         researcher = Researcher(lims, id='254')  # DX_EPP user
         project = Project.create(lims, name=project_name, researcher=researcher, udf={'Application': 'DX'})
     else:
-        subject = "Lims Helix Upload ERROR: {0}".format(project_name)
+        subject = "ERROR Lims Helix Upload: {0}".format(project_name)
         message = "Duplicate project / werklijst. Samples not loaded."
         send_email(email_settings['from'], email_settings['to'], subject, message)
         sys.exit(message)
