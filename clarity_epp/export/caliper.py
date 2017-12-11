@@ -80,7 +80,7 @@ def samplesheet_normalise(lims, process_id, output_file):
         for well, number in order.iteritems():
             if number == x:
                 placement = well
-        monsternummer[placement] = ""
+        monsternummer[placement] = "Leeg"
         volume_DNA[placement] = 0
         volume_H2O[placement] = 0
 
