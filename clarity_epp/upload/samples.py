@@ -138,7 +138,7 @@ def from_helix(lims, email_settings, input_file):
                     lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
                     message += "{0}\tUpdated and added to workflow: {1}.\n".format(sample.name, workflow.name)
                 else:
-                    message += print "{0}\tERROR: Stoftest code {1} is not linked to a workflow.\n".format(sample.name, udf_data['Dx Stoftest code'])
+                    message += "{0}\tERROR: Stoftest code {1} is not linked to a workflow.\n".format(sample.name, udf_data['Dx Stoftest code'])
 
         else:
             workflow = utils.stofcode_to_workflow(lims, udf_data['Dx Stoftest code'])
