@@ -64,7 +64,7 @@ def from_helix(lims, email_settings, input_file):
 
     # Setup email
     subject = "Lims Helix Upload: {0}".format(project_name)
-    message = ""
+    message = "Project: {0}\n\nSamples:\n".format(project_name)
 
     # Parse samples
     for line in input_file:
