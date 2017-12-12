@@ -62,9 +62,9 @@ def library_dilution_calculator(concentration, size, pedigree, factor):
     ng_sample = []
 
     nM_DNA = (float(concentration)*(10.0**3.0)*(1.0/649.0)*(1.0/float(size)))*1000.0
-    if pedigree == 'Child':
+    if pedigree == 'Kind':
         ul_sample = (float(factor)/nM_DNA)*11.0
-    if pedigree == 'Parent':
+    if pedigree == 'Ouder':
         ul_sample = (float(factor)/nM_DNA)*10.0
     ng_sample = float(concentration)*ul_sample
     return ul_sample, ng_sample
@@ -92,9 +92,6 @@ def samplesheet_multiplex(lims, process_id, output_file):
     samples_measurements_tapestation = {}
     samples_measurements_bioanalyzer = {}
     sample_size = {}
-    Unummers_per_monster = {}
-    years = {}
-    genders = {}
     parent_parent_process = []
     for p in parent_process:
         for pp in p.parent_processes():
@@ -144,7 +141,7 @@ def samplesheet_multiplex(lims, process_id, output_file):
                     measurement = a.udf['Dx Fragmentlengte (bp)']
                     qcflag = a.qc_flag
                     if qcflag == 'UNKNOWN' or 'PASSED':
-                        if sample in samples_measurements_tapestaion:
+                        if sample in samples_measurements_tapestation:
                             samples_measurements_tapestation[sample].append(measurement)
                         else:
                             samples_measurements_tapestation[sample] = [measurement]
@@ -169,40 +166,16 @@ def samplesheet_multiplex(lims, process_id, output_file):
     for p in parent_process:
         plate = p.output_containers()[0].name
         for placement, artifact in p.output_containers()[0].placements.iteritems():
-            sample = artifact.samples[0]
-            monsternummer = sample.name
+            monsternummer = artifact.samples[0].udf['Dx Monsternummer']
             plate_per_monsternummer[monsternummer] = plate
-            Unummers_per_monster[monsternummer] = sample.udf['Dx Unummer']
-
-            if sample.udf['Dx Geslacht'].lower() == 'man':
-                genders[monsternummer] = 'M'
-            elif sample.udf['Dx Geslacht'].lower() == 'vrouw':
-                genders[monsternummer] = 'F'
-            elif sample.udf['Dx Geslacht'].lower() == 'onbekend':
-                genders[monsternummer] = 'O'
-
-            if sample.udf['Dx Foetus']:
-                years[monsternummer] = datetime.datetime.now().year
-            else:
-                years[monsternummer] = sample.udf['Dx Geboortejaar']
+            samplenaam = artifact.name
+            samplenamen[monsternummer] = samplenaam
 
     for pp in parent_parent_process:
         for placement, artifact in pp.output_containers()[0].placements.iteritems():
             sample = artifact.samples[0]
-            monsternummer = sample.name
+            monsternummer = sample.udf['Dx Monsternummer']
             family_status[monsternummer] = sample.udf['Dx Familie status']
-
-    for p in parent_process:
-        for placement, artifact in p.output_containers()[0].placements.iteritems():
-            monsternummer = artifact.samples[0].name
-            if family_status[monsternummer] == 'Kind':
-                pedigree = 'C'
-            elif family_status[monsternummer] == 'Ouder':
-                pedigree = 'P'
-            #elif family_status[monsternummer] == 'Unknown':
-            #    pedigree = 'C'
-            samplenaam = "%s%s%s%s" % (Unummers_per_monster[monsternummer], pedigree, genders[monsternummer], monsternummer)
-            samplenamen[monsternummer] = samplenaam
 
     for container in process.output_containers():
         artifact = container.placements['1:1']
@@ -214,7 +187,7 @@ def samplesheet_multiplex(lims, process_id, output_file):
             while (sum(ng_samples) > 800.0):
                 ng_samples = []
                 for sample in artifact.samples:
-                    monsternummer = sample.name
+                    monsternummer = sample.udf['Dx Monsternummer']
                     pool_per_monsternummer[monsternummer] = pool
                     average_concentration = sample_concentration[monsternummer]
                     average_size = sample_size[monsternummer]
@@ -222,33 +195,33 @@ def samplesheet_multiplex(lims, process_id, output_file):
                     ul_sample, ng_sample = library_dilution_calculator(average_concentration, average_size, pedigree, factor)
                     if ul_sample < 25:
                         if ul_sample > 23:
-                            pool_per_monsternummer[monsternummer] = "%s let op!: ul sample 23-25" % pool
+                            pool_per_monsternummer[monsternummer] = "%s let op!: sample 23-25 ul" % pool
                         ul_per_monsternummer[monsternummer] = ul_sample
                         ng_samples.append(ng_sample)
                     elif ul_sample > 25:
                         ul_per_monsternummer[monsternummer] = 0.0
-                        pool_per_monsternummer[monsternummer] = "%s error: ul sample > 25" % pool
+                        pool_per_monsternummer[monsternummer] = "%s error: sample > 25 ul" % pool
                 factor = factor - 5
             if sum(ng_samples) < 650:
-                output_file.write('Let op! De volgende pool heeft een totaal aantal ng < 650: {pool} (Mogelijke oorzaak is error ul sample > 25, zie {pool} hieronder.)\n'.format(
+                output_file.write('Let op! De volgende pool heeft een totaal aantal < 650 ng: {pool} (Mogelijke oorzaak is error sample > 25 ul, zie {pool} hieronder.)\n'.format(
                     pool=pool
                 ))
         else:
             for sample in artifact.samples:
-                monsternummer = sample.name
+                monsternummer = sample.udf['Dx Monsternummer']
                 pool_per_monsternummer[monsternummer] = "%s error: geen 3 samples in deze pool" % pool
                 ul_per_monsternummer[monsternummer] = 0.0
 
     for p in parent_process:
         for placement, artifact in p.output_containers()[0].placements.iteritems():
-            monsternummer = artifact.samples[0].name
+            monsternummer = artifact.samples[0].udf['Dx Monsternummer']
             placement = ''.join(placement.split(':'))
             well[monsternummer] = placement
 
     for container in process.output_containers():
         artifact = container.placements['1:1']
         for sample in artifact.samples:
-            monsternummer = sample.name
+            monsternummer = sample.udf['Dx Monsternummer']
             output_file.write('{sample}\t{ul_sample:.1f}\t{plate_id}\t{well_id}\t{pool}\n'.format(
                 sample=samplenamen[monsternummer],
                 ul_sample=ul_per_monsternummer[monsternummer],
