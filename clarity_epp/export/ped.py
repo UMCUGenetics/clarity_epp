@@ -70,8 +70,7 @@ def create_file(lims, process_id, output_file):
                 sex=ped_family['mother']['sex'],
                 affection=ped_family['mother']['affection'],
             ))
-        for child in ped_family['children']:
-            child_sample = ped_family['children'][child]
+        for child_sample in ped_family['children']:
             output_file.write('{family}\t{name}\t{paternal_sample}\t{maternal_sample}\t{sex}\t{affection}\n'.format(
                 family=family,
                 name=child_sample['name'],
