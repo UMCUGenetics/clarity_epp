@@ -10,6 +10,7 @@ import utils
 def from_helix(lims, email_settings, input_file):
     """Upload samples from helix export file."""
     project_name = input_file.name.rstrip('.csv').split('/')[-1]
+    helix_initials = project_name.split('_')[-1]
 
     # Try lims connection
     try:
@@ -20,9 +21,19 @@ def from_helix(lims, email_settings, input_file):
         send_email(email_settings['from'], email_settings['to'], subject, message)
         sys.exit(message)
 
+    # Get researcher using helix initials
+    for researcher in lims.get_researchers():
+        if researcher.initials == helix_initials:
+            email_settings['to'].append(researcher.email)
+            break
+    else:   # No researcher found
+        subject = "ERROR Lims Helix Upload: {0}".format(project_name)
+        message = "Can't find researcher with initials: {0}.".format(helix_initials)
+        send_email(email_settings['from'], email_settings['to'], subject, message)
+        sys.exit(message)
+
     # Create project
     if not lims.get_projects(name=project_name):
-        researcher = Researcher(lims, id='254')  # DX_EPP user
         project = Project.create(lims, name=project_name, researcher=researcher, udf={'Application': 'DX'})
     else:
         subject = "ERROR Lims Helix Upload: {0}".format(project_name)
