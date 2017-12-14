@@ -11,7 +11,7 @@ def set_qc_flag(lims, process_id, cutoff=10):
 
     for artifact in artifacts:
         sample = artifact.samples[0]
-        measurement = artifact.udf['Dx Qubit Concentratie fluorescentie (ng/ul)']
+        measurement = artifact.udf['Dx Conc. goedgekeurde meting (ng/ul)']
         if sample in samples_measurements:
             samples_measurements[sample].append(measurement)
         else:
@@ -19,7 +19,7 @@ def set_qc_flag(lims, process_id, cutoff=10):
 
     for artifact in artifacts:
         sample = artifact.samples[0]
-        measurement = artifact.udf['Dx Qubit Concentratie fluorescentie (ng/ul)']
+        measurement = artifact.udf['Dx Conc. goedgekeurde meting (ng/ul)']
 
         sample_measurements = samples_measurements[sample]
         sample_measurements_average = sum(sample_measurements) / float(len(sample_measurements))
