@@ -9,8 +9,12 @@ def samplesheet_normalise(lims, process_id, output_file):
     """Create Caliper samplesheet for normalising 96 well plate."""
     output_file.write('Monsternummer\tPlate_Id_input\tWell\tPlate_Id_output\tPipetteervolume DNA (ul)\tPipetteervolume H2O (ul)\n')
     process = Process(lims, id=process_id)
-    parent_process = process.parent_processes()[0]
-    parent_process_barcode = parent_process.output_containers()[0].name
+    parent_process = []
+    parent_process = process.parent_processes()
+    parent_process = list(set(parent_process))
+    for p in parent_process:
+        if p.type.name == 'Dx Hamilton zuiveren':
+            parent_process_barcode = p.output_containers()[0].name
     output_plate_barcode = process.output_containers()[0].name
     monsternummer = {}
     conc = {}
@@ -19,7 +23,11 @@ def samplesheet_normalise(lims, process_id, output_file):
     volume_H2O = {}
     output_ng = process.udf['Output genormaliseerd gDNA']
     output_ul = process.udf['Eindvolume (ul) genormaliseerd gDNA']
-    input_artifact_ids = [analyte.id for analyte in parent_process.all_outputs()]
+    input_artifact_ids = []
+    for p in parent_process:
+        for analyte in p.all_outputs():
+            input_artifact_ids.append(analyte.id)
+    input_artifact_ids = list(set(input_artifact_ids))
     qc_processes = lims.get_processes(
         type=['Dx Qubit QC', 'Dx Tecan Spark 10M QC'],
         inputartifactlimsid=input_artifact_ids
@@ -69,6 +77,9 @@ def samplesheet_normalise(lims, process_id, output_file):
                         sample_measurements = samples_measurements_qubit[sample]
                     sample_measurements_average = sum(sample_measurements) / float(len(sample_measurements))
                     sample_concentration[sample] = sample_measurements_average
+            elif 'Tecan' not in a.name and 'check' not in a.name:
+                sample = a.samples[0].name
+                sample_concentration[sample] = 'geen'
 
     for placement, artifact in process.output_containers()[0].placements.iteritems():
         placement = ''.join(placement.split(':'))
@@ -80,7 +91,7 @@ def samplesheet_normalise(lims, process_id, output_file):
         for well, number in order.iteritems():
             if number == x:
                 placement = well
-        monsternummer[placement] = "Leeg"
+        monsternummer[placement] = 'Leeg'
         volume_DNA[placement] = 0
         volume_H2O[placement] = 0
 
@@ -89,14 +100,13 @@ def samplesheet_normalise(lims, process_id, output_file):
         placement = ''.join(placement.split(':'))
         monsternummer[placement] = sample
         conc_measured[placement] = sample_concentration[sample]
-
-        if output_ng/conc_measured[placement] > 50:
-            conc[placement] = output_ng/50
-        else:
-            conc[placement] = conc_measured[placement]
-
-        volume_DNA[placement] = int(round(float(output_ng)/conc[placement]))
-        volume_H2O[placement] = output_ul-int(round(float(output_ng)/conc[placement]))
+        if conc_measured[placement] != 'geen':
+            if output_ng/conc_measured[placement] > 50:
+                conc[placement] = output_ng/50
+            else:
+                conc[placement] = conc_measured[placement]
+            volume_DNA[placement] = int(round(float(output_ng)/conc[placement]))
+            volume_H2O[placement] = output_ul-int(round(float(output_ng)/conc[placement]))
 
     for well in utils.sort_96_well_plate(monsternummer.keys()):
         output_file.write('{monsternummer}\t{plate_id_input}\t{position}\t{plate_id_output}\t{volume_DNA}\t{volume_H2O}\n'.format(
