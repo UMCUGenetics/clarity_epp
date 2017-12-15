@@ -127,13 +127,6 @@ def samplesheet_multiplex(lims, process_id, output_file):
                             samples_measurements_qubit[sample].append(measurement)
                         else:
                             samples_measurements_qubit[sample] = [measurement]
-                if sample not in sample_concentration or machine == 'Qubit':
-                    if machine == 'Tecan':
-                        sample_measurements = samples_measurements_tecan[sample]
-                    elif machine == 'Qubit':
-                        sample_measurements = samples_measurements_qubit[sample]
-                    sample_measurements_average = sum(sample_measurements) / float(len(sample_measurements))
-                    sample_concentration[sample] = sample_measurements_average
             if 'Dx Fragmentlengte (bp)' in a.udf:
                 if 'Tapestation' in a.parent_process.type.name:
                     machine = 'Tapestation'
@@ -162,6 +155,22 @@ def samplesheet_multiplex(lims, process_id, output_file):
                         sample_measurements = samples_measurements_bioanalyzer[sample]
                     sample_measurements_average = sum(sample_measurements) / float(len(sample_measurements))
                     sample_size[sample] = sample_measurements_average
+
+    for p in qc_processes:
+        for a in p.all_outputs():
+            if 'Dx Concentratie fluorescentie (ng/ul)' in a.udf:
+                if 'Tecan' in a.parent_process.type.name:
+                    machine = 'Tecan'
+                elif 'Qubit' in a.parent_process.type.name:
+                    machine = 'Qubit'
+                sample = a.samples[0].name
+                if sample not in sample_concentration or machine == 'Qubit':
+                    if machine == 'Tecan':
+                        sample_measurements = samples_measurements_tecan[sample]
+                    elif machine == 'Qubit':
+                        sample_measurements = samples_measurements_qubit[sample]
+                    sample_measurements_average = sum(sample_measurements) / float(len(sample_measurements))
+                    sample_concentration[sample] = sample_measurements_average
 
     for p in parent_process:
         plate = p.output_containers()[0].name

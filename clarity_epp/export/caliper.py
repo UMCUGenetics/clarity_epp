@@ -70,16 +70,25 @@ def samplesheet_normalise(lims, process_id, output_file):
                             samples_measurements_qubit[sample].append(measurement)
                         else:
                             samples_measurements_qubit[sample] = [measurement]
-                if sample not in sample_concentration or machine == 'Qubit':
-                    if machine == 'Tecan':
-                        sample_measurements = samples_measurements_tecan[sample]
-                    elif machine == 'Qubit':
-                        sample_measurements = samples_measurements_qubit[sample]
-                    sample_measurements_average = sum(sample_measurements) / float(len(sample_measurements))
-                    sample_concentration[sample] = sample_measurements_average
             elif 'Tecan' not in a.name and 'check' not in a.name:
                 sample = a.samples[0].name
                 sample_concentration[sample] = 'geen'
+
+    for p in qc_processes:
+        for a in p.all_outputs():
+            if 'Dx Concentratie fluorescentie (ng/ul)' in a.udf:
+                if 'Tecan' in a.parent_process.type.name:
+                    machine = 'Tecan'
+                if 'Qubit' in a.parent_process.type.name:
+                    machine = 'Qubit'
+                sample = a.samples[0].name
+            if sample not in sample_concentration or machine == 'Qubit':
+                if machine == 'Tecan':
+                    sample_measurements = samples_measurements_tecan[sample]
+                elif machine == 'Qubit':
+                    sample_measurements = samples_measurements_qubit[sample]
+                sample_measurements_average = sum(sample_measurements) / float(len(sample_measurements))
+                sample_concentration[sample] = sample_measurements_average
 
     for placement, artifact in process.output_containers()[0].placements.iteritems():
         placement = ''.join(placement.split(':'))
