@@ -10,7 +10,7 @@ def check_family(lims, process_id):
         sample = artifact.samples[0]
         barcode = artifact.reagent_labels[0]
 
-        query_udf = {'Dx Unummer': sample.udf['Dx Unummer']}
+        query_udf = {'Dx Familienummer': sample.udf['Dx Familienummer']}
 
         family_samples = lims.get_samples(udf=query_udf)
         for family_sample in family_samples:

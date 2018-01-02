@@ -24,8 +24,8 @@ def get_sequence_name(sample):
     elif sample.udf['Dx Geslacht'] == 'Onbekend':
         sex = 'O'
 
-    sequence_name = '{unummer}{fam_status}{sex}{monsternummer}'.format(
-        unummer=sample.udf['Dx Unummer'],
+    sequence_name = '{familienummer}{fam_status}{sex}{monsternummer}'.format(
+        familienummer=sample.udf['Dx Familienummer'],
         fam_status=fam_status,
         sex=sex,
         monsternummer=sample.udf['Dx Monsternummer']

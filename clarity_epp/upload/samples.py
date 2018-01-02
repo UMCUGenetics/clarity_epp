@@ -58,7 +58,7 @@ def from_helix(lims, email_settings, input_file):
         'Dx NICU Spoed': {'column': 'NICU Spoed'},
         'Dx Persoons ID': {'column': 'Persoons_id'},
         'Dx Werklijstnummer': {'column': 'Werklijstnummer'},
-        'Dx Unummer': {'column': 'Familienummer'},
+        'Dx Familienummer': {'column': 'Familienummer'},
         'Dx Geslacht': {'column': 'Geslacht'},
         'Dx Geboortejaar': {'column': 'Geboortejaar'},
         'Dx Meet ID': {'column': 'Stof_meet_id'},

@@ -68,6 +68,11 @@ def export_tecan(args):
     clarity_epp.export.tecan.samplesheet(lims, args.process_id, args.output_file)
 
 
+def export_workflow(args):
+    """Export workflow overview files."""
+    clarity_epp.export.workflow.helix(lims, args.process_id, args.output_file)
+
+
 # Upload Functions
 def upload_samples(args):
     """Upload samples from helix output file."""
@@ -162,6 +167,10 @@ if __name__ == "__main__":
     parser_export_ped = subparser_export.add_parser('ped', help='Export ped file.', parents=[output_parser])
     parser_export_ped.add_argument('process_id', help='Clarity lims process id')
     parser_export_ped.set_defaults(func=export_ped_file)
+
+    parser_export_workflow = subparser_export.add_parser('workflow', help='Export workflow result file.', parents=[output_parser])
+    parser_export_workflow.add_argument('process_id', help='Clarity lims process id')
+    parser_export_workflow.set_defaults(func=export_workflow)
 
     # Sample upload
     parser_upload = subparser.add_parser('upload', help='Upload samples or results to clarity lims')

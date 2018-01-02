@@ -8,3 +8,4 @@ import manual_pipetting
 import ped
 import tapestation
 import tecan
+import workflow
