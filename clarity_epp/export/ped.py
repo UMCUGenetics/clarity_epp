@@ -55,8 +55,8 @@ def create_file(lims, process_id, output_file):
             output_file.write('{family}\t{name}\t{paternal_sample}\t{maternal_sample}\t{sex}\t{affection}\n'.format(
                 family=family,
                 name=ped_family['father']['name'],
-                paternal_sample='',
-                maternal_sample='',
+                paternal_sample='0',
+                maternal_sample='0',
                 sex=ped_family['father']['sex'],
                 affection=ped_family['father']['affection'],
             ))
@@ -65,8 +65,8 @@ def create_file(lims, process_id, output_file):
             output_file.write('{family}\t{name}\t{paternal_sample}\t{maternal_sample}\t{sex}\t{affection}\n'.format(
                 family=family,
                 name=ped_family['mother']['name'],
-                paternal_sample='',
-                maternal_sample='',
+                paternal_sample='0',
+                maternal_sample='0',
                 sex=ped_family['mother']['sex'],
                 affection=ped_family['mother']['affection'],
             ))
