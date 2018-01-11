@@ -1,4 +1,5 @@
 """Automatic QC functions."""
 
-import qubit
 import fragment_length
+import illumina
+import qubit

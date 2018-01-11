@@ -100,15 +100,19 @@ def upload_bioanalyzer_results(args):
 
 
 # QC functions
-def qc_qubit(args):
-    """Set QC status based on qubit measurement."""
-    clarity_epp.qc.qubit.set_qc_flag(lims, args.process_id)
-
-
 def qc_fragment_length(args):
     """Set QC status based on fragment length measurement."""
     clarity_epp.qc.fragment_length.set_qc_flag(lims, args.process_id)
 
+
+def qc_illumina(args):
+    """Set QC status based on qubit measurement."""
+    clarity_epp.qc.illumina.set_avg_q30(lims, args.process_id)
+
+
+def qc_qubit(args):
+    """Set average % Bases >=Q30."""
+    clarity_epp.qc.qubit.set_avg_q30(lims, args.process_id)
 
 # Placement functions
 def placement_automatic(args):
@@ -206,13 +210,17 @@ if __name__ == "__main__":
     parser_qc = subparser.add_parser('qc', help='Set QC values/flags.')
     subparser_qc = parser_qc.add_subparsers()
 
-    parser_qc_qubit = subparser_qc.add_parser('qubit', help='Set qubit qc flag.')
-    parser_qc_qubit.add_argument('process_id', help='Clarity lims process id')
-    parser_qc_qubit.set_defaults(func=qc_qubit)
-
     parser_qc_fragment_length = subparser_qc.add_parser('fragment_length', help='Set fragment length qc flag.')
     parser_qc_fragment_length.add_argument('process_id', help='Clarity lims process id')
     parser_qc_fragment_length.set_defaults(func=qc_fragment_length)
+
+    parser_qc_illumina = subparser_qc.add_parser('illumina', help='Set average % Bases >=Q30.')
+    parser_qc_illumina.add_argument('process_id', help='Clarity lims process id')
+    parser_qc_illumina.set_defaults(func=qc_illumina)
+
+    parser_qc_qubit = subparser_qc.add_parser('qubit', help='Set qubit qc flag.')
+    parser_qc_qubit.add_argument('process_id', help='Clarity lims process id')
+    parser_qc_qubit.set_defaults(func=qc_qubit)
 
     # placement
     parser_placement = subparser.add_parser('placement', help='Container placement functions.')
