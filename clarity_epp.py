@@ -38,6 +38,11 @@ def export_hamilton(args):
         clarity_epp.export.hamilton.samplesheet_purify(lims, args.process_id, args.output_file)
 
 
+def export_illumina(args):
+    """Export (updated) illumina samplesheet."""
+    clarity_epp.export.illumina.update_samplesheet(lims, args.process_id, args.file_id, args.output_file)
+
+
 def export_labels(args):
     """Export container labels."""
     clarity_epp.export.labels.containers(lims, args.process_id, args.output_file)
@@ -171,6 +176,11 @@ if __name__ == "__main__":
     parser_export_workflow = subparser_export.add_parser('workflow', help='Export workflow result file.', parents=[output_parser])
     parser_export_workflow.add_argument('process_id', help='Clarity lims process id')
     parser_export_workflow.set_defaults(func=export_workflow)
+
+    parser_export_illumina = subparser_export.add_parser('illumina', help='Export updated illumina samplesheet.', parents=[output_parser])
+    parser_export_illumina.add_argument('process_id', help='Clarity lims process id')
+    parser_export_illumina.add_argument('file_id', help='Clarity lims samplesheet file id')
+    parser_export_illumina.set_defaults(func=export_illumina)
 
     # Sample upload
     parser_upload = subparser.add_parser('upload', help='Upload samples or results to clarity lims')
