@@ -1,8 +1,8 @@
 """Illumina export functions."""
-from genologics.entities import Process
+from genologics.entities import Process, Artifact
 
 
-def update_samplesheet(lims, process_id, file_id, output_file):
+def update_samplesheet(lims, process_id, artifact_id, output_file):
     """Update illumina samplesheet."""
     process = Process(lims, id=process_id)
     sample_project = {}
@@ -17,6 +17,8 @@ def update_samplesheet(lims, process_id, file_id, output_file):
 
     header = ''  # empty until [data] section
 
+    samplesheet_artifact = Artifact(lims, id=artifact_id)
+    file_id = samplesheet_artifact.files[0].id
     for line in lims.get_file_contents(id=file_id).rstrip().split('\n'):
         if line.startswith('Sample_ID'):
             header = line.rstrip().split(',')
