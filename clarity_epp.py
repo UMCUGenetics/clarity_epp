@@ -106,13 +106,14 @@ def qc_fragment_length(args):
 
 
 def qc_illumina(args):
-    """Set QC status based on qubit measurement."""
-    clarity_epp.qc.illumina.set_avg_q30(lims, args.process_id)
+    """Set average % Bases >=Q30."""
+    clarity_epp.qc.qubit.set_avg_q30(lims, args.process_id)
 
 
 def qc_qubit(args):
-    """Set average % Bases >=Q30."""
-    clarity_epp.qc.qubit.set_avg_q30(lims, args.process_id)
+    """Set QC status based on qubit measurement."""
+    clarity_epp.qc.qubit.set_qc_flag(lims, args.process_id)
+
 
 # Placement functions
 def placement_automatic(args):
