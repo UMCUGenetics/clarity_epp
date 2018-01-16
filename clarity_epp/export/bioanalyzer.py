@@ -9,10 +9,10 @@ def samplesheet(lims, process_id, output_file):
 
     # Default plate layout
     plate = {
-        'A1': {'name': 'sample 1', 'comment': 'HP+'}, 'A2': {'name': 'sample 2', 'comment': 'HP+'}, 'A3': {'name': 'sample 3', 'comment': 'HP+'},
-        'B1': {'name': 'sample 4', 'comment': 'HP+'}, 'B2': {'name': 'sample 5', 'comment': 'HP+'}, 'B3': {'name': 'sample 6', 'comment': 'HP+'},
-        'C1': {'name': 'sample 7', 'comment': 'HP+'}, 'C2': {'name': 'sample 8', 'comment': 'HP+'}, 'C3': {'name': 'sample 9', 'comment': 'HP+'},
-        'D1': {'name': 'sample 10', 'comment': 'HP+'}, 'D2': {'name': 'sample 11', 'comment': 'HP+'}
+        'A1': {'name': 'sample 1', 'comment': ''}, 'A2': {'name': 'sample 2', 'comment': ''}, 'A3': {'name': 'sample 3', 'comment': ''},
+        'B1': {'name': 'sample 4', 'comment': ''}, 'B2': {'name': 'sample 5', 'comment': ''}, 'B3': {'name': 'sample 6', 'comment': ''},
+        'C1': {'name': 'sample 7', 'comment': ''}, 'C2': {'name': 'sample 8', 'comment': ''}, 'C3': {'name': 'sample 9', 'comment': ''},
+        'D1': {'name': 'sample 10', 'comment': ''}, 'D2': {'name': 'sample 11', 'comment': ''}
     }
 
     # Get sample placement
