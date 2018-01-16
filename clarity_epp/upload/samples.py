@@ -1,7 +1,7 @@
 """Sample upload epp functions."""
 import sys
 from requests.exceptions import ConnectionError
-from genologics.entities import Sample, Project, Containertype, Container, Researcher
+from genologics.entities import Sample, Project, Containertype, Container
 
 from .. import send_email
 import utils
@@ -9,7 +9,7 @@ import utils
 
 def from_helix(lims, email_settings, input_file):
     """Upload samples from helix export file."""
-    project_name = input_file.name.rstrip('.csv').split('/')[-1]
+    project_name = 'Dx {filename}'.format(filename=input_file.name.rstrip('.csv').split('/')[-1])
     helix_initials = project_name.split('_')[-1]
 
     # Try lims connection
