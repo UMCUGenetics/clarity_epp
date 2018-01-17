@@ -119,9 +119,13 @@ def from_helix(lims, email_settings, input_file):
         if udf_data['Dx Onderzoeksindicatie'] == 'DSD00':
             udf_data['Dx Geslacht'] = 'Onbekend'
 
-        # Check 'Dx Familienummer'
+        # Check 'Dx Familienummer' and correct 
         if ';' in udf_data['Dx Familienummer']:
-            udf_data['Dx import warning'] = ';'.join(['Meerdere familienummers.', udf_data['Dx import warning']])
+            udf_data['Dx import warning'] = ';'.join([
+                'Meerdere familienummers, eerste wordt gebruikt. ({0})'.format(udf_data['Dx Familienummer']),
+                udf_data['Dx import warning']
+            ])
+            udf_data['Dx Familienummer'] = udf_data['Dx Familienummer'].split(';')[0].strip(' ')
 
         sample_list = lims.get_samples(name=sample_name)
 
