@@ -1,4 +1,6 @@
 """Illumina export functions."""
+import re
+
 from genologics.entities import Process, Artifact
 
 
@@ -28,7 +30,7 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
             sample_name_index = header.index('Sample_Name')
             sample_project_index = header.index('Sample_Project')
 
-            sample_name = data[sample_name_index][9:]
+            sample_name = re.search('\w*(\d{4}D\d{5})', data[sample_name_index]).group(1)
             data[sample_project_index] = sample_project[sample_name]
             output_file.write('{line}\n'.format(line=','.join(data)))
         else:
