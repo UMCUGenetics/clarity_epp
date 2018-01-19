@@ -1,8 +1,7 @@
 """Manual pipetting export functions."""
+import re
 
 from genologics.entities import Process
-import datetime
-import re
 
 
 def samplesheet_purify(lims, process_id, output_file):
@@ -41,7 +40,11 @@ def samplesheet_sequencing_pool(lims, process_id, output_file):
     """Create manual pipetting samplesheet for sequencing pools."""
     output_file.write('Sample pool\tul Sample\tul EB\n')
     process = Process(lims, id=process_id)
+
+    pool_lines = []  # save pool data to list, to be able to sort on pool number.
+
     for pool in process.all_inputs():
+        pool_number = int(re.search('Pool #(\d+)_', pool.name).group(1))
 
         size = float(pool.udf['Dx Fragmentlengte (bp)'])
         concentration = float(pool.udf['Dx Concentratie fluorescentie (ng/ul)'])
@@ -51,11 +54,15 @@ def samplesheet_sequencing_pool(lims, process_id, output_file):
         ul_sample = (nM_pool/nM_dna) * 20
         ul_EB = 20 - ul_sample
 
-        output_file.write('{pool_name}\t{ul_sample:.2f}\t{ul_EB:.2f}\n'.format(
+        pool_line = '{pool_name}\t{ul_sample:.2f}\t{ul_EB:.2f}\n'.format(
             pool_name=pool.name,
             ul_sample=ul_sample,
             ul_EB=ul_EB
-        ))
+        )
+        pool_lines.append((pool_number, pool_line))
+
+    for pool_number, pool_line in sorted(pool_lines):
+        output_file.write(pool_line)
 
 
 def library_dilution_calculator(concentration, size, pedigree, factor):
