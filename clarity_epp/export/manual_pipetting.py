@@ -2,6 +2,7 @@
 
 from genologics.entities import Process
 import datetime
+import re
 
 
 def samplesheet_purify(lims, process_id, output_file):
@@ -104,6 +105,7 @@ def samplesheet_multiplex(lims, process_id, output_file):
     ul_per_monsternummer = {}
     well = {}
     plate_per_monsternummer = {}
+    names = []
 
     for p in qc_processes:
         for a in p.all_outputs():
@@ -193,8 +195,8 @@ def samplesheet_multiplex(lims, process_id, output_file):
         ng_samples = []
         if len(artifact.samples) == 3:
             factor = 80
-            ng_samples.append(850.0)
-            while (sum(ng_samples) > 800.0):
+            ng_samples.append(851.0)
+            while (sum(ng_samples) > 850.0):
                 ng_samples = []
                 for sample in artifact.samples:
                     monsternummer = sample.udf['Dx Monsternummer']
@@ -230,12 +232,26 @@ def samplesheet_multiplex(lims, process_id, output_file):
 
     for container in process.output_containers():
         artifact = container.placements['1:1']
-        for sample in artifact.samples:
-            monsternummer = sample.udf['Dx Monsternummer']
-            output_file.write('{sample}\t{ul_sample:.1f}\t{plate_id}\t{well_id}\t{pool}\n'.format(
-                sample=samplenamen[monsternummer],
-                ul_sample=ul_per_monsternummer[monsternummer],
-                plate_id=plate_per_monsternummer[monsternummer],
-                well_id=well[monsternummer],
-                pool=pool_per_monsternummer[monsternummer]
-            ))
+        name = artifact.name
+        if re.search('#\d_', artifact.name):
+            name = re.sub('#', '#0', artifact.name)
+        names.append(name)
+
+    names = sorted(names)
+
+    for name in names:
+        for container in process.output_containers():
+            artifact = container.placements['1:1']
+            art_name = artifact.name
+            if re.search('#\d_', art_name):
+                art_name = re.sub('#', '#0', art_name)
+            if art_name == name:
+                for sample in artifact.samples:
+                    monsternummer = sample.udf['Dx Monsternummer']
+                    output_file.write('{sample}\t{ul_sample:.1f}\t{plate_id}\t{well_id}\t{pool}\n'.format(
+                        sample=samplenamen[monsternummer],
+                        ul_sample=ul_per_monsternummer[monsternummer],
+                        plate_id=plate_per_monsternummer[monsternummer],
+                        well_id=well[monsternummer],
+                        pool=pool_per_monsternummer[monsternummer]
+                    ))
