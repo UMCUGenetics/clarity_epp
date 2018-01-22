@@ -82,7 +82,7 @@ def from_helix(lims, email_settings, input_file):
         data = line.rstrip().strip('"').split('","')
         sample_name = data[header.index('Monsternummer')]
 
-        udf_data = {'Sample Type': 'DNA isolated', 'Dx import warning': ''}  # required lims input
+        udf_data = {'Sample Type': 'DNA isolated', 'Dx Import warning': ''}  # required lims input
         for udf in udf_column:
             # Transform specific udf
             if udf in ['Dx Overleden', 'Dx Spoed', 'Dx NICU Spoed']:
@@ -119,11 +119,11 @@ def from_helix(lims, email_settings, input_file):
         if udf_data['Dx Onderzoeksindicatie'] == 'DSD00':
             udf_data['Dx Geslacht'] = 'Onbekend'
 
-        # Check 'Dx Familienummer' and correct 
+        # Check 'Dx Familienummer' and correct
         if ';' in udf_data['Dx Familienummer']:
-            udf_data['Dx import warning'] = ';'.join([
+            udf_data['Dx Import warning'] = ';'.join([
                 'Meerdere familienummers, eerste wordt gebruikt. ({0})'.format(udf_data['Dx Familienummer']),
-                udf_data['Dx import warning']
+                udf_data['Dx Import warning']
             ])
             udf_data['Dx Familienummer'] = udf_data['Dx Familienummer'].split(';')[0].strip(' ')
 
@@ -145,7 +145,7 @@ def from_helix(lims, email_settings, input_file):
                     sample.udf[udf] = ';'.join([udf_data[udf], str(sample.udf[udf])])
 
                 # Update udf fields
-                update_udf = ['Dx Overleden', 'Dx Spoed', 'Dx NICU Spoed', 'Dx Handmatig', 'Dx Opslaglocatie', 'Dx import warning']
+                update_udf = ['Dx Overleden', 'Dx Spoed', 'Dx NICU Spoed', 'Dx Handmatig', 'Dx Opslaglocatie', 'Dx Import warning']
                 for udf in update_udf:
                     sample.udf[udf] = udf_data[udf]
 
@@ -163,7 +163,7 @@ def from_helix(lims, email_settings, input_file):
             sample_list = lims.get_samples(udf={'Dx Persoons ID': udf_data['Dx Persoons ID']})
             for sample in sample_list:
                 if sample.udf['Dx Protocolomschrijving'] == udf_data['Dx Protocolomschrijving']:
-                    udf_data['Dx import warning'] = ';'.join(['Onderzoek reeds uitgevoerd.', udf_data['Dx import warning']])
+                    udf_data['Dx Import warning'] = ';'.join(['Onderzoek reeds uitgevoerd.', udf_data['Dx Import warning']])
 
             # Add sample to workflow
             workflow = utils.stofcode_to_workflow(lims, udf_data['Dx Stoftest code'])
