@@ -32,7 +32,7 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
             sample_project_index = header.index('Sample_Project')
 
             # Set Sample_Project
-            sample_name = re.search('\w*(\d{4}D\d{5})', data[sample_name_index]).group(1)
+            sample_name = re.search('^U\d+[CP][MFO](\w+)$', data[sample_name_index]).group(1)
             data[sample_project_index] = sample_project[sample_name]
 
             # Overwrite Sample_ID with Sample_name to get correct conversion output folder structure
