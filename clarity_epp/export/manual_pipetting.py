@@ -212,17 +212,14 @@ def samplesheet_multiplex(lims, process_id, output_file):
                     average_size = sample_size[monsternummer]
                     pedigree = family_status[monsternummer]
                     ul_sample, ng_sample = library_dilution_calculator(average_concentration, average_size, pedigree, factor)
-                    if ul_sample < 25:
-                        if ul_sample > 23:
-                            pool_per_monsternummer[monsternummer] = "%s let op!: sample 23-25 ul" % pool
-                        ul_per_monsternummer[monsternummer] = ul_sample
+                    ul_per_monsternummer[monsternummer] = ul_sample
+                    if ul_sample < 18:
                         ng_samples.append(ng_sample)
-                    elif ul_sample > 25:
-                        ul_per_monsternummer[monsternummer] = 0.0
-                        pool_per_monsternummer[monsternummer] = "%s error: sample > 25 ul" % pool
+                    elif ul_sample > 18:
+                        ng_samples.append(851.0)
                 factor = factor - 5
             if sum(ng_samples) < 650:
-                output_file.write('Let op! De volgende pool heeft een totaal aantal < 650 ng: {pool} (Mogelijke oorzaak is error sample > 25 ul, zie {pool} hieronder.)\n'.format(
+                output_file.write('Let op! {pool}: Totaal aantal ng pool < 650. Mogelijke oorzaak is ul Sample > 18, wat zorgt voor factor verlaging.\n'.format(
                     pool=pool
                 ))
         else:
