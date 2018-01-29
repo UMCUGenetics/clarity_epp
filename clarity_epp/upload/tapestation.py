@@ -27,7 +27,7 @@ def results(lims, process_id):
 
     # Set UDF
     for artifact in process.all_outputs():
-        if artifact.name != 'TapeStation Output' and artifact.name != 'TapeStation Samplesheet' and artifact.name != 'TapeStation Sampleplots PDF':
+        if artifact.name not in ['TapeStation Output', 'TapeStation Samplesheet', 'TapeStation Sampleplots PDF']:
             sample_name = artifact.name.split('_')[0]
             artifact.udf['Dx Fragmentlengte (bp)'] = sample_measurements[sample_name]
             artifact.put()
