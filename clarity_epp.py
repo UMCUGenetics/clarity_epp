@@ -107,7 +107,7 @@ def qc_fragment_length(args):
 
 def qc_illumina(args):
     """Set average % Bases >=Q30."""
-    clarity_epp.qc.qubit.set_avg_q30(lims, args.process_id)
+    clarity_epp.qc.illumina.set_avg_q30(lims, args.process_id)
 
 
 def qc_qubit(args):
