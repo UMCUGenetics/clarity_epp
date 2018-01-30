@@ -11,7 +11,7 @@ def helix(lims, process_id, output_file):
     meetw_zui_processes = ['Dx sample registratie zuivering', 'Dx Hamilton uitvullen', 'Dx Hamilton zuiveren', 'Dx Zuiveren gDNA manueel', 'Dx gDNA Normalisatie Caliper']
     meetw_libprep_processes = ['Dx LibraryPrep Caliper', 'Dx Library Prep amplificatie & clean up']
     meetw_enrich_processes = ['Dx Multiplexen library prep', 'Dx Enrichment DNA fragments', 'Dx Post Enrichment clean up', 'Dx Post Enrichment PCR & clean up']
-    meetw_seq_processes = ['Dx Library pool verdunnen', 'Dx Multiplexen library pool', 'Dx Library pool denatureren en laden (Nextseq)', 'Dx NextSeq Run (NextSeq)', 'Dx QC controle Lab sequencen']
+    meetw_seq_processes = ['Dx Library pool verdunnen', 'Dx Multiplexen library pool', 'Dx Library pool denatureren en laden', 'Dx NextSeq Run (NextSeq)', 'Dx QC controle Lab sequencen']
 
     def determin_meetw(meetw_processes, sample_processes):
         meetw = 0
