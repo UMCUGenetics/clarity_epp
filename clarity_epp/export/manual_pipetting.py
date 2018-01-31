@@ -50,7 +50,7 @@ def samplesheet_sequencing_pool(lims, process_id, output_file):
         concentration = float(pool.udf['Dx Concentratie fluorescentie (ng/ul)'])
         nM_pool = process.udf['Dx Pool verdunning (nM)']
 
-        nM_dna = (concentration * 1000 * (1/649.0) * (1/size)) * 1000
+        nM_dna = (concentration * 1000 * (1/660.0) * (1/size)) * 1000
         ul_sample = (nM_pool/nM_dna) * 20
         ul_EB = 20 - ul_sample
 
