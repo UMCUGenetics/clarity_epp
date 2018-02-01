@@ -2,6 +2,7 @@
 
 from genologics.entities import Process, SampleHistory
 
+import config
 
 def determin_meetw(meetw_processes, sample_processes):
     """Determine meetw and meetw_herh based on list of processes."""
@@ -24,11 +25,6 @@ def helix(lims, process_id, output_file):
     output_file.write("<meet_id>\tOnderzoeksnummer\tmeetw_zui\tmeetw_zui_herh\tmeetw_libprep\tmeetw_libprep_herh\tmeetw_enrich\tmeetw_enrich_herh\tmeetw_seq\tmeetw_seq_herh\n")
     process = Process(lims, id=process_id)
 
-    meetw_zui_processes = ['Dx sample registratie zuivering', 'Dx Hamilton uitvullen', 'Dx Hamilton zuiveren', 'Dx Zuiveren gDNA manueel', 'Dx gDNA Normalisatie Caliper']
-    meetw_libprep_processes = ['Dx Fragmenteren & BBSS', 'Dx LibraryPrep Caliper KAPA', 'Dx Library Prep amplificatie & clean up KAPA']
-    meetw_enrich_processes = ['Dx Multiplexen library prep', 'Dx Enrichment DNA fragments', 'Dx Post Enrichment clean up', 'Dx Aliquot Post Enrichment (clean)', 'Dx Post Enrichment PCR & clean up', 'Dx Aliquot Post Enrichment PCR (clean)']
-    meetw_seq_processes = ['Dx Library pool verdunnen', 'Dx Multiplexen library pool', 'Dx Library pool denatureren en laden (NextSeq)', 'Dx NextSeq Run v0.1', 'Dx QC controle Lab sequencen']
-
     for artifact in process.all_inputs():
         for sample in artifact.samples:
             sample_processes = {}
@@ -43,10 +39,10 @@ def helix(lims, process_id, output_file):
                         sample_processes[process_name] = 1
 
             # Determine meetw
-            meetw_zui, meetw_zui_herh = determin_meetw(meetw_zui_processes, sample_processes)
-            meetw_libprep, meetw_libprep_herh = determin_meetw(meetw_libprep_processes, sample_processes)
-            meetw_enrich, meetw_enrich_herh = determin_meetw(meetw_enrich_processes, sample_processes)
-            meetw_seq, meetw_seq_herh = determin_meetw(meetw_seq_processes, sample_processes)
+            meetw_zui, meetw_zui_herh = determin_meetw(config.meetw_zui_processes, sample_processes)
+            meetw_libprep, meetw_libprep_herh = determin_meetw(config.meetw_libprep_processes, sample_processes)
+            meetw_enrich, meetw_enrich_herh = determin_meetw(config.meetw_enrich_processes, sample_processes)
+            meetw_seq, meetw_seq_herh = determin_meetw(config.meetw_seq_processes, sample_processes)
 
             output_file.write(
                 "{meet_id}\t{onderzoeksnummer}\t{meetw_zui}\t{meetw_zui_herh}\t{meetw_libprep}\t{meetw_libprep_herh}\t{meetw_enrich}\t{meetw_enrich_herh}\t{meetw_seq}\t{meetw_seq_herh}\n".format(
