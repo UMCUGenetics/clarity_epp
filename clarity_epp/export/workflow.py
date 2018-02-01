@@ -26,8 +26,8 @@ def helix(lims, process_id, output_file):
 
     meetw_zui_processes = ['Dx sample registratie zuivering', 'Dx Hamilton uitvullen', 'Dx Hamilton zuiveren', 'Dx Zuiveren gDNA manueel', 'Dx gDNA Normalisatie Caliper']
     meetw_libprep_processes = ['Dx Fragmenteren & BBSS', 'Dx LibraryPrep Caliper KAPA', 'Dx Library Prep amplificatie & clean up KAPA']
-    meetw_enrich_processes = ['Dx Multiplexen library prep', 'Dx Enrichment DNA fragments', 'Dx Post Enrichment clean up', 'Dx Post Enrichment PCR & clean up', 'Dx Aliquot Post Enrichment (clean)', 'Dx Aliquot Post Enrichment PCR (clean)']
-    meetw_seq_processes = ['Dx Library pool verdunnen', 'Dx Multiplexen library pool', 'Dx Library pool denatureren en laden (NextSeq)', 'Dx NextSeq Run (NextSeq)', 'Dx QC controle Lab sequencen']
+    meetw_enrich_processes = ['Dx Multiplexen library prep', 'Dx Enrichment DNA fragments', 'Dx Post Enrichment clean up', 'Dx Aliquot Post Enrichment (clean)', 'Dx Post Enrichment PCR & clean up', 'Dx Aliquot Post Enrichment PCR (clean)']
+    meetw_seq_processes = ['Dx Library pool verdunnen', 'Dx Multiplexen library pool', 'Dx Library pool denatureren en laden (NextSeq)', 'Dx NextSeq Run v0.1', 'Dx QC controle Lab sequencen']
 
     for artifact in process.all_inputs():
         for sample in artifact.samples:
