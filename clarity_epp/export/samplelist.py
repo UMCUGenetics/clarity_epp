@@ -90,8 +90,7 @@ def removed_samples(lims, output_file):
 
     for item in sorted(removed_samples_received.items(), key=lambda x: (x[1], x[0])):
         sample = item[0]
-        if removed_samples_new_sample[sample] == 'ja' and removed_samples_protocol[sample] in new_samples_protocol[sample]:
-        else:
+        if removed_samples_new_sample[sample] <> 'ja' or removed_samples_protocol[sample] not in new_samples_protocol[sample]:
             output_file.write('{received}\t{onderzoeksnummer}\t{indicatie}\t{sample}\t{stages}\n'.format(
                 received=removed_samples_received[sample],
                 onderzoeksnummer=removed_samples_onderzoeksnummer[sample],
