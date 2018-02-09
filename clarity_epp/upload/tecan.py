@@ -15,8 +15,7 @@ def results(lims, process_id):
             tecan_file_part = -1
 
             sample_measurements = {}
-
-            for line in lims.get_file_contents(tecan_result_file.id):
+            for line in lims.get_file_contents(tecan_result_file.id).data.split('\n'):
                 if not line.startswith('<>'):
                     data = line.rstrip().split('\t')
                     for index, value in enumerate(data[1:]):
