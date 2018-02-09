@@ -16,19 +16,20 @@ def results(lims, process_id):
 
             sample_measurements = {}
 
-            for line in lims.get_file_contents(tecan_result_file.id).split('\n'):
-
+            for line in lims.get_file_contents(tecan_result_file.id):
                 if not line.startswith('<>'):
                     data = line.rstrip().split('\t')
                     for index, value in enumerate(data[1:]):
-                        coordinate = '{0}{1}'.format(data[0], str(index))
-                        if coordinate not in sample_measurements:
-                            sample_measurements[coordinate] = {tecan_file_order[tecan_file_part]: float(value)}
-                        elif tecan_file_order[tecan_file_part] == 'sample_name':
-                            sample_measurements[value] = sample_measurements.pop(coordinate)
-                            sample_measurements[value]['coordinate'] = coordinate
-                        else:
-                            sample_measurements[coordinate][tecan_file_order[tecan_file_part]] = float(value)
+                        value = value.rstrip()
+                        if value:
+                            coordinate = '{0}{1}'.format(data[0], str(index))
+                            if coordinate not in sample_measurements:
+                                sample_measurements[coordinate] = {tecan_file_order[tecan_file_part]: float(value)}
+                            elif tecan_file_order[tecan_file_part] == 'sample_name':
+                                sample_measurements[value] = sample_measurements.pop(coordinate)
+                                sample_measurements[value]['coordinate'] = coordinate
+                            else:
+                                sample_measurements[coordinate][tecan_file_order[tecan_file_part]] = float(value)
                 else:
                     tecan_file_part += 1
 
@@ -61,7 +62,7 @@ def results(lims, process_id):
     process.udf['R-squared waarde'] = rsquared
     process.put()
     for artifact in process.all_outputs():
-        if artifact.name != 'Tecan Spark Output' and artifact.name != 'Tecan Spark Samplesheet':
+        if artifact.name not in ['Tecan Spark Output', 'Tecan Spark Samplesheet', 'check gemiddelde concentratie']:
             if artifact.name.startswith('Dx Tecan std'):
                 artifact.qc_flag = 'PASSED'
             else:
