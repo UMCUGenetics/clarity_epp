@@ -16,7 +16,7 @@ def results(lims, process_id):
             for line in lims.get_file_contents(tapestation_result_file.id).split('\n'):
                 if line.startswith('FileName'):
                     header = line.split(',')
-                    size_index = header.index('Size [bp]')
+                    size_index = header.index('Average Size [bp]')
                     sample_index = header.index('Sample Description')
                 elif line:
                     data = line.split(',')
