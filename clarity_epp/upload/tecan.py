@@ -62,26 +62,26 @@ def results(lims, process_id):
 
     for artifact in process.all_outputs():
         if artifact.name not in ['Tecan Spark Output', 'Tecan Spark Samplesheet', 'check gemiddelde concentratie']:
+            # Set Average Concentratie fluorescentie
+            sample_fluorescence = sum(sample_measurements[artifact.name]) / float(len(sample_measurements[artifact.name]))
+            sample_concentration = ((sample_fluorescence - baseline_fluorescence) * regression_slope) / 2.0
+            artifact.udf['Dx Concentratie fluorescentie (ng/ul)'] = sample_concentration
+
+            # Set artifact Concentratie fluorescentie
+            # Get artifact index == count
+            if artifact.name not in artifact_count:
+                artifact_count[artifact.name] = 0
+            else:
+                artifact_count[artifact.name] += 1
+
+            artifact_fluorescence = sample_measurements[artifact.name][artifact_count[artifact.name]]
+            artifact_concentration = ((artifact_fluorescence - baseline_fluorescence) * regression_slope) / 2.0
+            artifact.udf['Dx Conc. goedgekeurde meting (ng/ul)'] = artifact_concentration
+
+            # Set QC flags
             if artifact.name.startswith('Dx Tecan std'):
                 artifact.qc_flag = 'PASSED'
             else:
-                # Set Average Concentratie fluorescentie
-                sample_fluorescence = sum(sample_measurements[artifact.name]) / float(len(sample_measurements[artifact.name]))
-                sample_concentration = ((sample_fluorescence - baseline_fluorescence) * regression_slope) / 2.0
-                artifact.udf['Dx Concentratie fluorescentie (ng/ul)'] = sample_concentration
-
-                # Set artifact Concentratie fluorescentie
-                # Get artifact index == count
-                if artifact.name not in artifact_count:
-                    artifact_count[artifact.name] = 0
-                else:
-                    artifact_count[artifact.name] += 1
-
-                artifact_fluorescence = sample_measurements[artifact.name][artifact_count[artifact.name]]
-                artifact_concentration = ((artifact_fluorescence - baseline_fluorescence) * regression_slope) / 2.0
-                artifact.udf['Dx Conc. goedgekeurde meting (ng/ul)'] = artifact_concentration
-
-                # Set QC flags
                 cutoff_value = sample_concentration * 0.1
                 if artifact_concentration > (sample_concentration - cutoff_value) and artifact_concentration < (sample_concentration + cutoff_value):
                     artifact.qc_flag = 'PASSED'
