@@ -19,3 +19,6 @@ meetw_zui_processes = ['add', 'protocol', 'steps']
 meetw_libprep_processes = ['add', 'protocol', 'steps']
 meetw_enrich_processes = ['add', 'protocol', 'steps']
 meetw_seq_processes = ['add', 'protocol', 'steps']
+
+# Sequencer types
+sequence_process_types = ['add', 'sequencer', 'process', 'types']

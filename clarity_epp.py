@@ -121,9 +121,12 @@ def placement_automatic(args):
     clarity_epp.placement.plate.copy_layout(lims, args.process_id)
 
 
-def placement_artifact_set_sequence_name(args):
+def placement_artifact_set_name(args):
     """Change artifact name to sequence name."""
-    clarity_epp.placement.artifact.set_sequence_name(lims, args.process_id)
+    if args.type == 'sequence_name':
+        clarity_epp.placement.artifact.set_sequence_name(lims, args.process_id)
+    elif args.type == 'run_id':
+        clarity_epp.placement.artifact.set_runid_name(lims, args.process_id)
 
 
 def placement_barcode(args):
@@ -232,8 +235,9 @@ if __name__ == "__main__":
     parser_placement_automatic.set_defaults(func=placement_automatic)
 
     parser_placement_artifact = subparser_placement.add_parser('artifact', help='Change artifact name to sequence name.')
+    parser_placement_artifact.add_argument('type', choices=['sequence_name', 'run_id'], help='Check type')
     parser_placement_artifact.add_argument('process_id', help='Clarity lims process id')
-    parser_placement_artifact.set_defaults(func=placement_artifact_set_sequence_name)
+    parser_placement_artifact.set_defaults(func=placement_artifact_set_name)
 
     parser_placement_barcode = subparser_placement.add_parser('barcode_check', help='Check barcode clarity_epp.placement.')
     parser_placement_barcode.add_argument('type', choices=['check_family'], help='Check type')
