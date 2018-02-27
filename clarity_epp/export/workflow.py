@@ -1,8 +1,10 @@
 """Workflow export functions."""
+from sets import Set
 
-from genologics.entities import Process, SampleHistory
+from genologics.entities import Process
 
 import config
+
 
 def determin_meetw(meetw_processes, sample_processes):
     """Determine meetw and meetw_herh based on list of processes."""
@@ -11,7 +13,7 @@ def determin_meetw(meetw_processes, sample_processes):
 
     for process in meetw_processes:
         if process in sample_processes:
-            if sample_processes[process] == 1:
+            if len(sample_processes[process]) == 1:
                 meetw = 1
             else:
                 meetw = 0
@@ -27,16 +29,17 @@ def helix(lims, process_id, output_file):
 
     for artifact in process.all_inputs():
         for sample in artifact.samples:
+            sample_artifacts = lims.get_artifacts(samplelimsid=sample.id)
             sample_processes = {}
-            sample_history = SampleHistory(lims=lims, sample_name=sample.name, output_artifact=artifact.id)
 
-            for sample_artifact in sample_history.history:
-                for process in sample_history.history[sample_artifact]:
-                    process_name = sample_history.history[sample_artifact][process]['name']
+            for artifact in sample_artifacts:
+                if artifact.parent_process:
+                    process_id = artifact.parent_process.id
+                    process_name = artifact.parent_process.type.name
                     if process_name in sample_processes:
-                        sample_processes[process_name] += 1
+                        sample_processes[process_name].add(process_id)
                     else:
-                        sample_processes[process_name] = 1
+                        sample_processes[process_name] = Set([process_id])
 
             # Determine meetw
             meetw_zui, meetw_zui_herh = determin_meetw(config.meetw_zui_processes, sample_processes)
