@@ -110,8 +110,11 @@ def from_helix(lims, email_settings, input_file):
             udf_data['Dx Familie status'] = 'Kind'
         elif udf_data['Dx Onderzoeksreden'] == 'Informativiteitstest':
             udf_data['Dx Familie status'] = 'Ouder'
+        else:
+            udf_data['Dx Import warning'] = ';'.join(['Onbekende onderzoeksreden, familie status niet ingevuld.', udf_data['Dx Import warning']])
 
-        # Set 'Dx Geslacht' and 'Dx Geboortejaar' with 'Foetus' information if ''Dx Foetus == True'
+
+        # Set 'Dx Geslacht' and 'Dx Geboortejaar' with 'Foetus' information if 'Dx Foetus == True'
         if udf_data['Dx Foetus']:
             udf_data['Dx Geslacht'] = udf_data['Dx Foetus geslacht']
             udf_data['Dx Geboortejaar'] = ''
