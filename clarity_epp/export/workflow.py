@@ -1,6 +1,4 @@
 """Workflow export functions."""
-from sets import Set
-
 from genologics.entities import Process
 
 import config
@@ -39,7 +37,7 @@ def helix(lims, process_id, output_file):
                     if process_name in sample_processes:
                         sample_processes[process_name].add(process_id)
                     else:
-                        sample_processes[process_name] = Set([process_id])
+                        sample_processes[process_name] = set([process_id])
 
             # Determine meetw
             meetw_zui, meetw_zui_herh = determin_meetw(config.meetw_zui_processes, sample_processes)
