@@ -30,7 +30,6 @@ def transform_sex(value):
 def stofcode_to_workflow(lims, stofcode):
     """Return workflow based on helix stofcode."""
     if stofcode == 'NGS_008':
-        # return Workflow(lims, id='401')  # Dx Exoom HyperPlus v0.1
-        return Workflow(lims, id='451')  # Dx Exoom KAPA v0.1
+        return Workflow(lims, id='516')  # Dx Exoom KAPA v1.0
     else:
         return None
