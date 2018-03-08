@@ -166,7 +166,7 @@ def from_helix(lims, email_settings, input_file):
             # Check other samples from patient
             sample_list = lims.get_samples(udf={'Dx Persoons ID': udf_data['Dx Persoons ID']})
             for sample in sample_list:
-                if sample.udf['Dx Protocolomschrijving'] == udf_data['Dx Protocolomschrijving']:
+                if sample.udf['Dx Protocolomschrijving'] == udf_data['Dx Protocolomschrijving'] and sample.udf['Dx Foetus'] == udf_data['Dx Foetus']:
                     udf_data['Dx Import warning'] = ';'.join(['Onderzoek reeds uitgevoerd.', udf_data['Dx Import warning']])
 
             # Add sample to workflow
