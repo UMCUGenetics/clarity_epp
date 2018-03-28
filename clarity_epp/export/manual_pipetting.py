@@ -92,14 +92,10 @@ def samplesheet_multiplex(lims, process_id, output_file):
             input_artifact_ids.append(analyte.id)
     input_artifact_ids = list(set(input_artifact_ids))
     qc_processes = lims.get_processes(
-        type=['Dx Qubit QC', 'Dx Tecan Spark 10M QC', 'Dx Bioanalyzer QC', 'Dx Tapestation 2200 QC', 'Dx Tapestation 4200 QC'],
+        type=['Dx Aggregate QC'],
         inputartifactlimsid=input_artifact_ids
     )
-    samples_measurements_tecan = {}
-    samples_measurements_qubit = {}
     sample_concentration = {}
-    samples_measurements_tapestation = {}
-    samples_measurements_bioanalyzer = {}
     sample_size = {}
     parent_parent_process = []
     for p in parent_process:
@@ -115,72 +111,21 @@ def samplesheet_multiplex(lims, process_id, output_file):
     names = []
 
     for p in qc_processes:
-        for a in p.all_outputs():
+        for a in p.all_inputs():
             if 'Dx Concentratie fluorescentie (ng/ul)' in a.udf:
-                if 'Tecan' in a.parent_process.type.name:
-                    machine = 'Tecan'
-                    sample = a.samples[0].name
-                    measurement = a.udf['Dx Concentratie fluorescentie (ng/ul)']
-                    qcflag = a.qc_flag
-                    if qcflag == 'UNKNOWN' or 'PASSED':
-                        if sample in samples_measurements_tecan:
-                            samples_measurements_tecan[sample].append(measurement)
-                        else:
-                            samples_measurements_tecan[sample] = [measurement]
-                elif 'Qubit' in a.parent_process.type.name:
-                    machine = 'Qubit'
-                    sample = a.samples[0].name
-                    measurement = a.udf['Dx Concentratie fluorescentie (ng/ul)']
-                    qcflag = a.qc_flag
-                    if qcflag == 'PASSED':
-                        if sample in samples_measurements_qubit:
-                            samples_measurements_qubit[sample].append(measurement)
-                        else:
-                            samples_measurements_qubit[sample] = [measurement]
-            if 'Dx Fragmentlengte (bp)' in a.udf:
-                if 'Tapestation' in a.parent_process.type.name:
-                    machine = 'Tapestation'
-                    sample = a.samples[0].name
-                    measurement = a.udf['Dx Fragmentlengte (bp)']
-                    qcflag = a.qc_flag
-                    if qcflag == 'UNKNOWN' or 'PASSED':
-                        if sample in samples_measurements_tapestation:
-                            samples_measurements_tapestation[sample].append(measurement)
-                        else:
-                            samples_measurements_tapestation[sample] = [measurement]
-                elif 'Bioanalyzer' in a.parent_process.type.name:
-                    machine = 'Bioanalyzer'
-                    sample = a.samples[0].name
-                    measurement = a.udf['Dx Fragmentlengte (bp)']
-                    qcflag = a.qc_flag
-                    if qcflag == 'UNKNOWN' or 'PASSED':
-                        if sample in samples_measurements_bioanalyzer:
-                            samples_measurements_bioanalyzer[sample].append(measurement)
-                        else:
-                            samples_measurements_bioanalyzer[sample] = [measurement]
-                if sample not in sample_size or machine == 'Bioanalyzer':
-                    if machine == 'Tapestation':
-                        sample_measurements = samples_measurements_tapestation[sample]
-                    elif machine == 'Bioanalyzer':
-                        sample_measurements = samples_measurements_bioanalyzer[sample]
-                    sample_measurements_average = sum(sample_measurements) / float(len(sample_measurements))
-                    sample_size[sample] = sample_measurements_average
-
-    for p in qc_processes:
-        for a in p.all_outputs():
-            if 'Dx Concentratie fluorescentie (ng/ul)' in a.udf:
-                if 'Tecan' in a.parent_process.type.name:
-                    machine = 'Tecan'
-                elif 'Qubit' in a.parent_process.type.name:
-                    machine = 'Qubit'
                 sample = a.samples[0].name
-                if sample not in sample_concentration or machine == 'Qubit':
-                    if machine == 'Tecan':
-                        sample_measurements = samples_measurements_tecan[sample]
-                    elif machine == 'Qubit':
-                        sample_measurements = samples_measurements_qubit[sample]
-                    sample_measurements_average = sum(sample_measurements) / float(len(sample_measurements))
-                    sample_concentration[sample] = sample_measurements_average
+                measurement = a.udf['Dx Concentratie fluorescentie (ng/ul)']
+                qcflag = a.qc_flag
+                if qcflag == 'UNKNOWN' or 'PASSED':
+                    if sample not in sample_concentration:
+                        sample_concentration[sample] = measurement
+            if 'Dx Fragmentlengte (bp)' in a.udf:
+                sample = a.samples[0].name
+                measurement = a.udf['Dx Fragmentlengte (bp)']
+                qcflag = a.qc_flag
+                if qcflag == 'UNKNOWN' or 'PASSED':
+                    if sample not in sample_size:
+                        sample_size[sample] = measurement
 
     for p in parent_process:
         plate = p.output_containers()[0].name
@@ -217,10 +162,12 @@ def samplesheet_multiplex(lims, process_id, output_file):
                         ng_samples.append(ng_sample)
                     elif ul_sample > 18:
                         ng_samples.append(851.0)
-                factor = factor - 5
+                factor = factor - 1
             if sum(ng_samples) < 650:
-                output_file.write('Let op! {pool}: Totaal aantal ng pool < 650. Mogelijke oorzaak is ul Sample > 18, wat zorgt voor factor verlaging.\n'.format(
-                    pool=pool
+                ng_total = round(sum(ng_samples),1)
+                output_file.write('Let op! {pool}: Totaal aantal ng pool < 650 ({ng}). Mogelijke oorzaak is ul Sample > 18, wat zorgt voor factor verlaging.\n'.format(
+                    pool=pool,
+                    ng=ng_total
                 ))
         else:
             for sample in artifact.samples:
