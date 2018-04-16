@@ -11,7 +11,7 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
     for artifact in process.all_inputs():
         for sample in artifact.samples:
             if sample.udf['Dx NICU Spoed']:
-                sample_project[sample.name] = 'NICU_{fam}'.format('Dx Familienummer')
+                sample_project[sample.name] = 'NICU_{0}'.format(sample.udf['Dx Familienummer'])
             elif sample.udf['Dx Protocolomschrijving'] == 'Exoom.analy_IL_elidS30409818_Exoomver.':
                 sample_project[sample.name] = 'CREv2'
             else:
