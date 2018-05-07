@@ -11,7 +11,7 @@ def results(lims, process_id):
     sample_measurements = {}
 
     # Parse File
-    for output in process.result_files():
+    for output in process.shared_result_files():
         if output.name == 'Bioanalyzer Output':
             bioanalyzer_result_file = output.files[0]
 

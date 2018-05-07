@@ -8,7 +8,7 @@ def results(lims, process_id):
     process = Process(lims, id=process_id)
 
     # Parse output file
-    for output in process.result_files():
+    for output in process.shared_result_files():
         if output.name == 'Tecan Spark Output':
             tecan_result_file = output.files[0]
             tecan_file_order = ['Dx Fluorescentie (nM)', 'sample_name']
