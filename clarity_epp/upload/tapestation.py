@@ -9,7 +9,7 @@ def results(lims, process_id):
     sample_measurements = {}
 
     # Parse File
-    for output in process.shared_result_files():
+    for output in process.all_outputs(unique=True):
         if output.name == 'TapeStation Output':
             tapestation_result_file = output.files[0]
             for line in lims.get_file_contents(tapestation_result_file.id).split('\n'):
