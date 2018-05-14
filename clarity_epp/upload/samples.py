@@ -24,7 +24,7 @@ def from_helix(lims, email_settings, input_file):
 
     # Get researcher using helix initials
     for researcher in lims.get_researchers():
-        if researcher.initials == helix_initials:
+        if researcher.fax == helix_initials:  # Use FAX as intials field as the lims initials field can't be edited via the 5.0 web interface.
             email_settings['to'].append(researcher.email)
             break
     else:   # No researcher found
@@ -181,4 +181,3 @@ def from_helix(lims, email_settings, input_file):
 
     # Send final email
     send_email(email_settings['from'], email_settings['to'], subject, message)
-    print message
