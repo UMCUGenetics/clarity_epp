@@ -70,7 +70,7 @@ def library_dilution_calculator(concentration, size, pedigree, factor):
     ul_sample = []
     ng_sample = []
 
-    nM_DNA = (float(concentration)*(10.0**3.0)*(1.0/649.0)*(1.0/float(size)))*1000.0
+    nM_DNA = (float(concentration)*(10.0**3.0)*(1.0/660.0)*(1.0/float(size)))*1000.0
     if pedigree == 'Kind':
         ul_sample = (float(factor)/nM_DNA)*11.0
     if pedigree == 'Ouder':
