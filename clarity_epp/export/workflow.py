@@ -22,7 +22,7 @@ def determin_meetw(meetw_processes, sample_processes):
 
 def helix(lims, process_id, output_file):
     """Export workflow information in helix table format."""
-    output_file.write("<meet_id>\tOnderzoeksnummer\tMonsternummer\tWerklijst\tmeetw_zui\tmeetw_zui_herh\tmeetw_libprep\tmeetw_libprep_herh\tmeetw_enrich\tmeetw_enrich_herh\tmeetw_seq\tmeetw_seq_herh\n")
+    output_file.write("<meet_id>\tOnderzoeksnummer\tWerklijst\tMonsternummer\tmeetw_zui\tmeetw_zui_herh\tmeetw_libprep\tmeetw_libprep_herh\tmeetw_enrich\tmeetw_enrich_herh\tmeetw_seq\tmeetw_seq_herh\n")
     process = Process(lims, id=process_id)
 
     for artifact in process.all_inputs():
@@ -46,11 +46,11 @@ def helix(lims, process_id, output_file):
             meetw_seq, meetw_seq_herh = determin_meetw(config.meetw_seq_processes, sample_processes)
 
             output_file.write(
-                "{meet_id}\t{onderzoeksnummer}\t{monsternummer}\t{werklijst}\t{meetw_zui}\t{meetw_zui_herh}\t{meetw_libprep}\t{meetw_libprep_herh}\t{meetw_enrich}\t{meetw_enrich_herh}\t{meetw_seq}\t{meetw_seq_herh}\n".format(
+                "{meet_id}\t{onderzoeksnummer}\t{werklijst}\t{monsternummer}\t{meetw_zui}\t{meetw_zui_herh}\t{meetw_libprep}\t{meetw_libprep_herh}\t{meetw_enrich}\t{meetw_enrich_herh}\t{meetw_seq}\t{meetw_seq_herh}\n".format(
                     meet_id=sample.udf['Dx Meet ID'],
                     onderzoeksnummer=sample.udf['Dx Onderzoeknummer'],
-                    monsternummer=sample.udf['Dx Monsternummer'],
                     werklijst=sample.udf['Dx Werklijstnummer'],
+                    monsternummer=sample.udf['Dx Monsternummer'],
                     meetw_zui=meetw_zui, meetw_zui_herh=meetw_zui_herh,
                     meetw_libprep=meetw_libprep, meetw_libprep_herh=meetw_libprep_herh,
                     meetw_enrich=meetw_enrich, meetw_enrich_herh=meetw_enrich_herh,
