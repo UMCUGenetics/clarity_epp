@@ -135,6 +135,11 @@ def placement_barcode(args):
         clarity_epp.placement.barcode.check_family(lims, args.process_id)
 
 
+def placement_unpooling(args):
+    """Pool unpooling."""
+    clarity_epp.placement.pool.unpooling(lims, args.process_id)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
@@ -243,6 +248,10 @@ if __name__ == "__main__":
     parser_placement_barcode.add_argument('type', choices=['check_family'], help='Check type')
     parser_placement_barcode.add_argument('process_id', help='Clarity lims process id')
     parser_placement_barcode.set_defaults(func=placement_barcode)
+
+    parser_placement_unpooling = subparser_placement.add_parser('unpooling', help='Unpooling of sequencing pool.')
+    parser_placement_unpooling.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_unpooling.set_defaults(func=placement_unpooling)
 
     args = parser.parse_args()
     args.func(args)
