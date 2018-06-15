@@ -1,6 +1,7 @@
 """Caliper export functions."""
 
 from genologics.entities import Process
+from genologics.entities import Processtype
 
 import utils
 
@@ -9,32 +10,42 @@ def samplesheet_normalise(lims, process_id, output_file):
     """Create Caliper samplesheet for normalising 96 well plate."""
     output_file.write('Monsternummer\tPlate_Id_input\tWell\tPlate_Id_output\tPipetteervolume DNA (ul)\tPipetteervolume H2O (ul)\n')
     process = Process(lims, id=process_id)
-    parent_process = []
-    parent_process = process.parent_processes()
-    parent_process = list(set(parent_process))
-    for p in parent_process:
-        if p.type.name == 'Dx Hamilton zuiveren':
-            parent_process_barcode = p.output_containers()[0].name
-    output_plate_barcode = process.output_containers()[0].name
-    monsternummer = {}
-    conc = {}
-    conc_measured = {}
-    volume_DNA = {}
-    volume_H2O = {}
-    output_ng = process.udf['Output genormaliseerd gDNA']
-    output_ul = process.udf['Eindvolume (ul) genormaliseerd gDNA']
+    parent_processes = []
+    type_placement = Processtype(lims, id='774')
+    type_hamilton = Processtype(lims, id='215')
+    type_manual = Processtype(lims, id='205')
+    for p in process.parent_processes():
+        if p.type == type_placement:
+            for pp in p.parent_processes():
+                parent_processes.append(pp)
+            parent_process_barcode_manual = p.output_containers()[0].name
+        if p.type == type_hamilton:
+            parent_processes.append(p)
+            parent_process_barcode_hamilton = p.output_containers()[0].name
+        if p.type == type_manual:
+            parent_processes.append(p)
+    if parent_process_barcode_manual == None:
+        parent_process_barcode = parent_process_barcode_hamilton
+    else:
+        parent_process_barcode = parent_process_barcode_manual
+    parent_processes = list(set(parent_processes))
+    type_qubit = Processtype(lims, id='217')
+    qubit = type_qubit.name
+    type_tecan = Processtype(lims, id='218')
+    tecan = type_tecan.name
     input_artifact_ids = []
-    for p in parent_process:
+    for p in parent_processes:
         for analyte in p.all_outputs():
             input_artifact_ids.append(analyte.id)
     input_artifact_ids = list(set(input_artifact_ids))
     qc_processes = lims.get_processes(
-        type=['Dx Qubit QC', 'Dx Tecan Spark 10M QC'],
+        type=[qubit, tecan],
         inputartifactlimsid=input_artifact_ids
     )
+    qc_processes = list(set(qc_processes))
+    samples_measurements_qubit = {}
     sample_concentration = {}
     samples_measurements_tecan = {}
-    samples_measurements_qubit = {}
     filled_wells = []
     order = [
         'A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'G2', 'H2', 'A3', 'B3', 'C3', 'D3', 'E3', 'F3', 'G3',
@@ -45,43 +56,62 @@ def samplesheet_normalise(lims, process_id, output_file):
     ]
     order = dict(zip(order, range(len(order))))
     last_filled_well = 0
-    x = 0
+    monsternummer = {}
+    volume_DNA = {}
+    volume_H2O = {}
+    conc_measured = {}
+    output_ng = process.udf['Output genormaliseerd gDNA']
+    conc = {}
+    output_ul = process.udf['Eindvolume (ul) genormaliseerd gDNA']
+    output_plate_barcode = process.output_containers()[0].name
+
+    for p in qc_processes:
+        if p.type == type_qubit:
+            for a in p.all_outputs():
+                if 'Tecan' not in a.name and 'check' not in a.name:
+                    if 'Dx Concentratie fluorescentie (ng/ul)' in a.udf:
+                        machine = 'Qubit'
+                        sample = a.samples[0].name
+                        measurement = a.udf['Dx Concentratie fluorescentie (ng/ul)']
+                        qcflag = a.qc_flag
+                        if qcflag == 'PASSED':
+                            if sample in samples_measurements_qubit:
+                                samples_measurements_qubit[sample].append(measurement)
+                            else:
+                                samples_measurements_qubit[sample] = [measurement]
+                    else:
+                        sample = a.samples[0].name
+                        if sample not in sample_concentration:
+                            sample_concentration[sample] = 'geen'
+        elif p.type == type_tecan:
+            for a in p.all_outputs():
+                if 'Tecan' not in a.name and 'check' not in a.name:
+                    if 'Dx Conc. goedgekeurde meting (ng/ul)' in a.udf:
+                        machine = 'Tecan'
+                        sample = a.samples[0].name
+                        measurement = a.udf['Dx Conc. goedgekeurde meting (ng/ul)']
+                        qcflag = a.qc_flag
+                        if qcflag == 'UNKNOWN' or 'PASSED':
+                            if sample in samples_measurements_tecan:
+                                samples_measurements_tecan[sample].append(measurement)
+                            else:
+                                samples_measurements_tecan[sample] = [measurement]
+                    else:
+                        sample = a.samples[0].name
+                        if sample not in sample_concentration:
+                            sample_concentration[sample] = 'geen'
 
     for p in qc_processes:
         for a in p.all_outputs():
-            if 'Dx Concentratie fluorescentie (ng/ul)' in a.udf:
-                if 'Tecan' in a.parent_process.type.name:
-                    machine = 'Tecan'
+            if 'Tecan' not in a.name and 'check' not in a.name:
+                if p.type == type_tecan:
+                    if 'Dx Conc. goedgekeurde meting (ng/ul)' in a.udf:
+                        machine = 'Tecan'
                     sample = a.samples[0].name
-                    measurement = a.udf['Dx Concentratie fluorescentie (ng/ul)']
-                    qcflag = a.qc_flag
-                    if qcflag == 'UNKNOWN' or 'PASSED':
-                        if sample in samples_measurements_tecan:
-                            samples_measurements_tecan[sample].append(measurement)
-                        else:
-                            samples_measurements_tecan[sample] = [measurement]
-                if 'Qubit' in a.parent_process.type.name:
-                    machine = 'Qubit'
+                elif p.type == type_qubit:
+                    if 'Dx Concentratie fluorescentie (ng/ul)' in a.udf:
+                        machine = 'Qubit'
                     sample = a.samples[0].name
-                    measurement = a.udf['Dx Concentratie fluorescentie (ng/ul)']
-                    qcflag = a.qc_flag
-                    if qcflag == 'PASSED':
-                        if sample in samples_measurements_qubit:
-                            samples_measurements_qubit[sample].append(measurement)
-                        else:
-                            samples_measurements_qubit[sample] = [measurement]
-            elif 'Tecan' not in a.name and 'check' not in a.name:
-                sample = a.samples[0].name
-                sample_concentration[sample] = 'geen'
-
-    for p in qc_processes:
-        for a in p.all_outputs():
-            if 'Dx Concentratie fluorescentie (ng/ul)' in a.udf:
-                if 'Tecan' in a.parent_process.type.name:
-                    machine = 'Tecan'
-                if 'Qubit' in a.parent_process.type.name:
-                    machine = 'Qubit'
-                sample = a.samples[0].name
             if sample not in sample_concentration or machine == 'Qubit':
                 if machine == 'Tecan':
                     sample_measurements = samples_measurements_tecan[sample]
