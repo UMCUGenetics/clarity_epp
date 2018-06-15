@@ -69,10 +69,10 @@ def samplesheet_normalise(lims, process_id, output_file):
         if p.type == type_qubit:
             for a in p.all_outputs():
                 if 'Tecan' not in a.name and 'check' not in a.name:
-                    if 'Dx Concentratie fluorescentie (ng/ul)' in a.udf:
+                    if 'Dx Conc. goedgekeurde meting (ng/ul)' in a.udf:
                         machine = 'Qubit'
                         sample = a.samples[0].name
-                        measurement = a.udf['Dx Concentratie fluorescentie (ng/ul)']
+                        measurement = a.udf['Dx Conc. goedgekeurde meting (ng/ul)']
                         qcflag = a.qc_flag
                         if qcflag == 'PASSED':
                             if sample in samples_measurements_qubit:
@@ -109,7 +109,7 @@ def samplesheet_normalise(lims, process_id, output_file):
                         machine = 'Tecan'
                     sample = a.samples[0].name
                 elif p.type == type_qubit:
-                    if 'Dx Concentratie fluorescentie (ng/ul)' in a.udf:
+                    if 'Dx Conc. goedgekeurde meting (ng/ul)' in a.udf:
                         machine = 'Qubit'
                     sample = a.samples[0].name
             if sample not in sample_concentration or machine == 'Qubit':
