@@ -86,10 +86,13 @@ def results(lims, process_id):
                 artifact.udf['Dx Concentratie fluorescentie (ng/ul)'] = ng_values[std_number - 1]
             else:
                 # Calculate measurement deviation from average.
-                artifact_fluorescence_difference = abs(sample_measurements[artifact.name][0] - sample_measurements[artifact.name][1])
-                artifact_fluorescence_deviation = artifact_fluorescence_difference / sample_fluorescence
-                if artifact_fluorescence_deviation <= 0.1:
+                if len(sample_measurements[artifact.name]) == 1:
                     artifact.qc_flag = 'PASSED'
-                else:
-                    artifact.qc_flag = 'FAILED'
+                elif len(sample_measurements[artifact.name]) == 2:
+                    artifact_fluorescence_difference = abs(sample_measurements[artifact.name][0] - sample_measurements[artifact.name][1])
+                    artifact_fluorescence_deviation = artifact_fluorescence_difference / sample_fluorescence
+                    if artifact_fluorescence_deviation <= 0.1:
+                        artifact.qc_flag = 'PASSED'
+                    else:
+                        artifact.qc_flag = 'FAILED'
             artifact.put()
