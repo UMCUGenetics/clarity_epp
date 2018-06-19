@@ -11,35 +11,47 @@ def samplesheet_normalise(lims, process_id, output_file):
     output_file.write('Monsternummer\tPlate_Id_input\tWell\tPlate_Id_output\tPipetteervolume DNA (ul)\tPipetteervolume H2O (ul)\n')
     process = Process(lims, id=process_id)
     parent_processes = []
-    type_placement = Processtype(lims, id='774')
-    type_hamilton = Processtype(lims, id='215')
-    type_manual = Processtype(lims, id='205')
+    parent_process_barcode_manual = 'None'
+    parent_process_barcode_hamilton = 'None'
     for p in process.parent_processes():
-        if p.type == type_placement:
+        if 'Dx manueel gezuiverd placement' in p.type.name:
             for pp in p.parent_processes():
                 parent_processes.append(pp)
             parent_process_barcode_manual = p.output_containers()[0].name
-        if p.type == type_hamilton:
+        if 'Dx Hamilton zuiveren' in p.type.name:
             parent_processes.append(p)
             parent_process_barcode_hamilton = p.output_containers()[0].name
-        if p.type == type_manual:
+        if 'Dx Zuiveren gDNA manueel' in p.type.name:
             parent_processes.append(p)
-    if parent_process_barcode_manual == None:
+    if parent_process_barcode_hamilton != 'None':
         parent_process_barcode = parent_process_barcode_hamilton
     else:
         parent_process_barcode = parent_process_barcode_manual
     parent_processes = list(set(parent_processes))
-    type_qubit = Processtype(lims, id='217')
-    qubit = type_qubit.name
-    type_tecan = Processtype(lims, id='218')
-    tecan = type_tecan.name
+    ids = []
+    pt_names = []
+    types = []
+    for i in range(1,2000):
+        d = str(i)
+        ids.append(d)
+    for i in ids:
+        try:
+            pt = Processtype(lims, id=i)
+            pt_names.append(pt.name)
+        except:
+            pt = 'None'
+    for pt_name in pt_names:
+        if 'Dx Qubit QC' in pt_name:
+            types.append(pt_name)
+        elif 'Dx Tecan Spark 10M QC' in pt_name:
+            types.append(pt_name)
     input_artifact_ids = []
     for p in parent_processes:
         for analyte in p.all_outputs():
             input_artifact_ids.append(analyte.id)
     input_artifact_ids = list(set(input_artifact_ids))
     qc_processes = lims.get_processes(
-        type=[qubit, tecan],
+        type=[types],
         inputartifactlimsid=input_artifact_ids
     )
     qc_processes = list(set(qc_processes))
@@ -66,7 +78,7 @@ def samplesheet_normalise(lims, process_id, output_file):
     output_plate_barcode = process.output_containers()[0].name
 
     for p in qc_processes:
-        if p.type == type_qubit:
+        if 'Dx Qubit QC' in p.type.name:
             for a in p.all_outputs():
                 if 'Tecan' not in a.name and 'check' not in a.name:
                     if 'Dx Conc. goedgekeurde meting (ng/ul)' in a.udf:
@@ -83,7 +95,7 @@ def samplesheet_normalise(lims, process_id, output_file):
                         sample = a.samples[0].name
                         if sample not in sample_concentration:
                             sample_concentration[sample] = 'geen'
-        elif p.type == type_tecan:
+        elif 'Dx Tecan Spark 10M QC' in p.type.name:
             for a in p.all_outputs():
                 if 'Tecan' not in a.name and 'check' not in a.name:
                     if 'Dx Conc. goedgekeurde meting (ng/ul)' in a.udf:
@@ -104,11 +116,11 @@ def samplesheet_normalise(lims, process_id, output_file):
     for p in qc_processes:
         for a in p.all_outputs():
             if 'Tecan' not in a.name and 'check' not in a.name:
-                if p.type == type_tecan:
+                if 'Dx Tecan Spark 10M QC' in p.type.name:
                     if 'Dx Conc. goedgekeurde meting (ng/ul)' in a.udf:
                         machine = 'Tecan'
                     sample = a.samples[0].name
-                elif p.type == type_qubit:
+                elif 'Dx Qubit QC' in p.type.name:
                     if 'Dx Conc. goedgekeurde meting (ng/ul)' in a.udf:
                         machine = 'Qubit'
                     sample = a.samples[0].name
