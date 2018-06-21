@@ -92,7 +92,7 @@ def samplesheet_multiplex(lims, process_id, output_file):
             input_artifact_ids.append(analyte.id)
     input_artifact_ids = list(set(input_artifact_ids))
     qc_processes = lims.get_processes(
-        type=['Dx Aggregate QC'],
+        type=['Dx Aggregate QC v1.0'],
         inputartifactlimsid=input_artifact_ids
     )
     sample_concentration = {}
