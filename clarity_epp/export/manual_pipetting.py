@@ -45,9 +45,10 @@ def samplesheet_sequencing_pool(lims, process_id, output_file):
 
     for pool in process.all_inputs():
         pool_number = int(re.search('Pool #(\d+)_', pool.name).group(1))
+        pool_input_artifact = pool.input_artifact_list()[0]
 
-        size = float(pool.udf['Dx Fragmentlengte (bp)'])
-        concentration = float(pool.udf['Dx Concentratie fluorescentie (ng/ul)'])
+        size = float(pool_input_artifact.udf['Dx Fragmentlengte (bp)'])
+        concentration = float(pool_input_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
         nM_pool = process.udf['Dx Pool verdunning (nM)']
 
         nM_dna = (concentration * 1000 * (1/660.0) * (1/size)) * 1000
