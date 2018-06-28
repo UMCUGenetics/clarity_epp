@@ -66,144 +66,182 @@ def samplesheet_sequencing_pool(lims, process_id, output_file):
         output_file.write(pool_line)
 
 
-def library_dilution_calculator(concentration, size, pedigree, factor):
+def library_dilution_calculator(concentration, size, trio, pedigree, ng):
+# toevoegen ul_sample input en nieuwe berekening toevoegen
     """Calculate ul per sample needed for multiplexing."""
-    ul_sample = []
-    ng_sample = []
+    if trio == 'CCC':
+        ng_sample = 250
+    elif trio == 'CPP' or trio == 'CCP':
+        if pedigree == 'Kind':
+            ng_sample = 266.1
+        elif pedigree == 'Ouder':
+            ng_sample = 241.9
+    elif trio == 'not_3':
+        ng_sample = 0
+    elif trio == 'adapted':
+        ng_sample = ng
+    nM_DNA = (float(concentration)*(10.0**6.0))/(660*float(size))
+    ul_sample = (float(ng_sample)*(10.0**6.0))/(660*float(size)*nM_DNA)
+    return ul_sample
 
-    nM_DNA = (float(concentration)*(10.0**3.0)*(1.0/660.0)*(1.0/float(size)))*1000.0
-    if pedigree == 'Kind':
-        ul_sample = (float(factor)/nM_DNA)*11.0
-    if pedigree == 'Ouder':
-        ul_sample = (float(factor)/nM_DNA)*10.0
-    ng_sample = float(concentration)*ul_sample
-    return ul_sample, ng_sample
+def library_dilution_calculator_fixed_volume(concentration, size, ul):
+    """Calculate ng per sample (based on given ul_sample) needed for multiplexing."""
+    nM_DNA = (float(concentration)*(10.0**6.0))/(660*float(size))
+    ng_sample = (660*float(size)*nM_DNA*ul)/(10.0**6.0)
+    return ng_sample
 
+def library_dilution_calculator_fixed_ng(concentration, size, pedigree, ng, ped_given_ul):
+    """Calculate ng per sample (based on calculated ng from given ul_sample) needed for multiplexing."""
+    if pedigree == ped_given_ul:
+        ng_sample = ng
+    elif ped_given_ul == 'Kind' and pedigree == 'Ouder':
+        ng_sample = ng/1.1
+    elif ped_given_ul == 'Ouder' and pedigree == 'Kind':
+        ng_sample = ng*1.1
+    return ng_sample
 
 def samplesheet_multiplex(lims, process_id, output_file):
     """Create manual pipetting samplesheet for multiplexing(pooling) samples."""
-    output_file.write('Sample\tul Sample\tPlaat_id\twell_id\tpool\n')
     process = Process(lims, id=process_id)
-    parent_process = []
-    parent_process = process.parent_processes()
-    parent_process = list(set(parent_process))
-    input_artifact_ids = []
-    for p in parent_process:
-        for analyte in p.all_outputs():
-            input_artifact_ids.append(analyte.id)
-    input_artifact_ids = list(set(input_artifact_ids))
-    qc_processes = lims.get_processes(
-        type=['Dx Aggregate QC v1.0'],
-        inputartifactlimsid=input_artifact_ids
-    )
+    inputs = process.all_inputs()
+    inputs = list(set(inputs))
     sample_concentration = {}
     sample_size = {}
-    parent_parent_process = []
-    for p in parent_process:
-        for pp in p.parent_processes():
-            parent_parent_process.append(pp)
-    parent_parent_process = list(set(parent_parent_process))
-    family_status = {}
-    samplenamen = {}
-    pool_per_monsternummer = {}
-    ul_per_monsternummer = {}
-    well = {}
-    plate_per_monsternummer = {}
+    outputs = process.all_outputs()
+    outputs = list(set(outputs))
+    trio_statuses = {}
+    ul_sample = {}
+    ng_sample = {}
+    udf_output = []
+    udf_ul_sample = {}
+    udf_name_ul_sample = {}
+    plate_id = {}
+    well_id = {}
+    not_3 = []
     names = []
 
-    for p in qc_processes:
-        for a in p.all_inputs():
-            if 'Dx Concentratie fluorescentie (ng/ul)' in a.udf:
-                sample = a.samples[0].name
-                measurement = a.udf['Dx Concentratie fluorescentie (ng/ul)']
-                qcflag = a.qc_flag
-                if qcflag == 'UNKNOWN' or 'PASSED':
-                    if sample not in sample_concentration:
-                        sample_concentration[sample] = measurement
-            if 'Dx Fragmentlengte (bp)' in a.udf:
-                sample = a.samples[0].name
-                measurement = a.udf['Dx Fragmentlengte (bp)']
-                qcflag = a.qc_flag
-                if qcflag == 'UNKNOWN' or 'PASSED':
-                    if sample not in sample_size:
-                        sample_size[sample] = measurement
+    # get input udfs 'Dx sample volume ul' and 'Dx Samplenaam' per output analyte
+    for output in outputs:
+        if output.type == 'Analyte':
+            if 'Dx sample volume (ul)' in output.udf and 'Dx Samplenaam' in output.udf:
+                udf_ul_sample[output.name] = output.udf['Dx sample volume (ul)']
+                # if samplename is complete sequencename take only monsternummer
+                if re.search('U\d\d\d\d\d\d\D\D', output.udf['Dx Samplenaam']):
+                    udf_name_ul_sample[output.name] = output.udf['Dx Samplenaam'][9:]
+                else:
+                    udf_name_ul_sample[output.name] = output.udf['Dx Samplenaam']
+                udf_output.append(output.name)
 
-    for p in parent_process:
-        plate = p.output_containers()[0].name
-        for placement, artifact in p.output_containers()[0].placements.iteritems():
-            monsternummer = artifact.samples[0].udf['Dx Monsternummer']
-            plate_per_monsternummer[monsternummer] = plate
-            samplenaam = artifact.name
-            samplenamen[monsternummer] = samplenaam
+    # get concentration, size, containername and well per input artifact
+    for input in inputs:
+        sample = input.samples[0]
+        samplename = sample.name
+        if 'Dx Concentratie fluorescentie (ng/ul)' in input.udf:
+            measurement = input.udf['Dx Concentratie fluorescentie (ng/ul)']
+            qcflag = input.qc_flag
+            if qcflag == 'UNKNOWN' or 'PASSED':
+                sample_concentration[samplename] = measurement
+        if 'Dx Fragmentlengte (bp)' in input.udf:
+            measurement = input.udf['Dx Fragmentlengte (bp)']
+            qcflag = input.qc_flag
+            if qcflag == 'UNKNOWN' or 'PASSED':
+                sample_size[samplename] = measurement
+        plate_id[samplename] = input.container.name
+        placement = input.location[1]
+        placement = ''.join(placement.split(':'))
+        well_id[samplename] = placement
 
-    for pp in parent_parent_process:
-        for placement, artifact in pp.output_containers()[0].placements.iteritems():
-            sample = artifact.samples[0]
-            monsternummer = sample.udf['Dx Monsternummer']
-            family_status[monsternummer] = sample.udf['Dx Familie status']
+    # get familystatus per sample in output analyte and determine trio composition if number of samples in pool = 3
+    for output in outputs:
+        if output.type == 'Analyte':
+            sample_given_ul = ''
+            if len(output.samples) == 3:
+                samplestatus_1 = output.samples[0].udf['Dx Familie status']
+                samplestatus_2 = output.samples[1].udf['Dx Familie status']
+                samplestatus_3 = output.samples[2].udf['Dx Familie status']
+                if samplestatus_1 == 'Kind' and samplestatus_2 == 'Kind' and samplestatus_3 == 'Kind' or \
+                    samplestatus_1 == 'Ouder' and samplestatus_2 == 'Ouder' and samplestatus_3 == 'Ouder':
+                    trio_statuses[output.name] = 'CCC'
+                elif samplestatus_1 == 'Kind' and samplestatus_2 == 'Ouder' and samplestatus_3 == 'Ouder' or \
+                    samplestatus_1 == 'Ouder' and samplestatus_2 == 'Kind' and samplestatus_3 == 'Ouder' or \
+                    samplestatus_1 == 'Ouder' and samplestatus_2 == 'Ouder' and samplestatus_3 == 'Kind': 
+                    trio_statuses[output.name] = 'CPP'
+                elif samplestatus_1 == 'Kind' and samplestatus_2 == 'Kind' and samplestatus_3 == 'Ouder' or \
+                    samplestatus_1 == 'Kind' and samplestatus_2 == 'Ouder' and samplestatus_3 == 'Kind' or \
+                    samplestatus_1 == 'Ouder' and samplestatus_2 == 'Kind' and samplestatus_3 == 'Kind':
+                    trio_statuses[output.name] = 'CCP'
+                # if udfs 'Dx sample volume ul' and 'Dx Samplenaam' are not empty change trio status and do pre-calculation
+                if output.name in udf_output:
+                    trio_statuses[output.name] = 'adapted'
+                    for sample in output.samples:
+                        if sample.name == udf_name_ul_sample[output.name]:
+                            sample_given_ul = sample
+                            ng_sample[sample.name] = \
+                                library_dilution_calculator_fixed_volume(sample_concentration[sample.name], \
+                                                                         sample_size[sample.name], \
+                                                                         udf_ul_sample[output.name]\
+                                )
+                    for sample in output.samples:
+                        if sample.name != udf_name_ul_sample[output.name]:
+                            ng_sample[sample.name] = \
+                                library_dilution_calculator_fixed_ng(sample_concentration[sample.name], \
+                                                                     sample_size[sample.name], \
+                                                                     sample.udf['Dx Familie status'], \
+                                                                     ng_sample[udf_name_ul_sample[output.name]], \
+                                                                     sample_given_ul.udf['Dx Familie status']\
+                                )
+                    output.udf['Dx input pool (ng)'] = round(ng_sample[output.samples[0].name] + \
+                                                             ng_sample[output.samples[1].name] + \
+                                                             ng_sample[output.samples[2].name], 2)
+                    output.put()
+            # if number of samples in pool is not 3 set trio status and prepare error warning output file
+            else:
+                trio_statuses[output.name] = 'not_3'
+                not_3.append(output.name)
+            # calculation if udfs 'Dx sample volume ul' and 'Dx Samplenaam' are empty and not empty
+            if sample_given_ul == '':
+                for sample in output.samples:
+                    ul_sample[sample.name] = \
+                        library_dilution_calculator(sample_concentration[sample.name], \
+                                                    sample_size[sample.name], \
+                                                    trio_statuses[output.name], \
+                                                    sample.udf['Dx Familie status'], \
+                                                    0\
+                        )
+            elif sample_given_ul != '':
+                for sample in output.samples:
+                    ul_sample[sample.name] = \
+                        library_dilution_calculator(sample_concentration[sample.name], \
+                                                    sample_size[sample.name], \
+                                                    trio_statuses[output.name], \
+                                                    sample.udf['Dx Familie status'], \
+                                                    ng_sample[sample.name]\
+                        )
+            # sorting pools for output file
+            name = output.name
+            if re.search('#\d_', output.name):
+                name = re.sub('#', '#0', output.name)
+            names.append(name)
+            names = sorted(names)
 
-    for container in process.output_containers():
-        artifact = container.placements['1:1']
-        pool = artifact.name
-        ng_samples = []
-        if len(artifact.samples) == 3:
-            factor = 80
-            ng_samples.append(851.0)
-            while (sum(ng_samples) > 850.0):
-                ng_samples = []
-                for sample in artifact.samples:
-                    monsternummer = sample.udf['Dx Monsternummer']
-                    pool_per_monsternummer[monsternummer] = pool
-                    average_concentration = sample_concentration[monsternummer]
-                    average_size = sample_size[monsternummer]
-                    pedigree = family_status[monsternummer]
-                    ul_sample, ng_sample = library_dilution_calculator(average_concentration, average_size, pedigree, factor)
-                    ul_per_monsternummer[monsternummer] = ul_sample
-                    if ul_sample < 18:
-                        ng_samples.append(ng_sample)
-                    elif ul_sample > 18:
-                        ng_samples.append(851.0)
-                factor = factor - 1
-            if sum(ng_samples) < 650:
-                ng_total = round(sum(ng_samples),1)
-                output_file.write('Let op! {pool}: Totaal aantal ng pool < 650 ({ng}). Mogelijke oorzaak is ul Sample > 18, wat zorgt voor factor verlaging.\n'.format(
-                    pool=pool,
-                    ng=ng_total
-                ))
-        else:
-            for sample in artifact.samples:
-                monsternummer = sample.udf['Dx Monsternummer']
-                pool_per_monsternummer[monsternummer] = "%s error: geen 3 samples in deze pool" % pool
-                ul_per_monsternummer[monsternummer] = 0.0
-
-    for p in parent_process:
-        for placement, artifact in p.output_containers()[0].placements.iteritems():
-            monsternummer = artifact.samples[0].udf['Dx Monsternummer']
-            placement = ''.join(placement.split(':'))
-            well[monsternummer] = placement
-
-    for container in process.output_containers():
-        artifact = container.placements['1:1']
-        name = artifact.name
-        if re.search('#\d_', artifact.name):
-            name = re.sub('#', '#0', artifact.name)
-        names.append(name)
-
-    names = sorted(names)
-
+    # write output file per output analyte sorted on pool number
+    output_file.write('Sample\tul Sample\tPlaat_id\twell_id\tpool\n')
+    if len(not_3) >= 1:
+        output_file.write('De volgende pool(s) hebben een ander aantal samples dan 3: {pools}\n'.format(
+            pools=not_3
+        ))
     for name in names:
-        for container in process.output_containers():
-            artifact = container.placements['1:1']
-            art_name = artifact.name
-            if re.search('#\d_', art_name):
-                art_name = re.sub('#', '#0', art_name)
-            if art_name == name:
-                for sample in artifact.samples:
-                    monsternummer = sample.udf['Dx Monsternummer']
-                    output_file.write('{sample}\t{ul_sample:.1f}\t{plate_id}\t{well_id}\t{pool}\n'.format(
-                        sample=samplenamen[monsternummer],
-                        ul_sample=ul_per_monsternummer[monsternummer],
-                        plate_id=plate_per_monsternummer[monsternummer],
-                        well_id=well[monsternummer],
-                        pool=pool_per_monsternummer[monsternummer]
-                    ))
+        for output in outputs:
+            if output.type == 'Analyte':
+                output_name = output.name
+                if re.search('#\d_', output.name):
+                    output_name = re.sub('#', '#0', output.name)
+                if output_name == name:
+                    for sample in output.samples:
+                        output_file.write('{sample}\t{ul_sample:.2f}\t{plate_id}\t{well_id}\t{pool}\n'.format(
+                            sample=sample.name,
+                            ul_sample=ul_sample[sample.name],
+                            plate_id=plate_id[sample.name],
+                            well_id=well_id[sample.name],
+                            pool=output.name
+                        ))
