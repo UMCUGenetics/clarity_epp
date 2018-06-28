@@ -118,7 +118,17 @@ def samplesheet_multiplex(lims, process_id, output_file):
     plate_id = {}
     well_id = {}
     not_3 = []
-    names = []
+    order = [
+        'A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'G2', 'H2', 'A3', 'B3', 'C3', 'D3', 'E3', 'F3', 'G3',
+        'H3', 'A4', 'B4', 'C4', 'D4', 'E4', 'F4', 'G4', 'H4', 'A5', 'B5', 'C5', 'D5', 'E5', 'F5', 'G5', 'H5', 'A6', 'B6', 'C6', 'D6', 'E6', 'F6',
+        'G6', 'H6', 'A7', 'B7', 'C7', 'D7', 'E7', 'F7', 'G7', 'H7', 'A8', 'B8', 'C8', 'D8', 'E8', 'F8', 'G8', 'H8', 'A9', 'B9', 'C9', 'D9', 'E9',
+        'F9', 'G9', 'H9', 'A10', 'B10', 'C10', 'D10', 'E10', 'F10', 'G10', 'H10', 'A11', 'B11', 'C11', 'D11', 'E11', 'F11', 'G11', 'H11', 'A12',
+        'B12', 'C12', 'D12', 'E12', 'F12', 'G12', 'H12'
+    ]
+    order = dict(zip(order, range(len(order))))
+    well_order = {}
+    pools = {}
+    sample_well_pool = []
 
     # get input udfs 'Dx sample volume ul' and 'Dx Samplenaam' per output analyte
     for output in outputs:
@@ -150,6 +160,7 @@ def samplesheet_multiplex(lims, process_id, output_file):
         placement = input.location[1]
         placement = ''.join(placement.split(':'))
         well_id[samplename] = placement
+        well_order[sample.name] = order[placement]
 
     # get familystatus per sample in output analyte and determine trio composition if number of samples in pool = 3
     for output in outputs:
@@ -217,12 +228,14 @@ def samplesheet_multiplex(lims, process_id, output_file):
                                                     sample.udf['Dx Familie status'], \
                                                     ng_sample[sample.name]\
                         )
-            # sorting pools for output file
+            # sorting pools then wells for output file
             name = output.name
             if re.search('#\d_', output.name):
                 name = re.sub('#', '#0', output.name)
-            names.append(name)
-            names = sorted(names)
+            for sample in output.samples:
+                pools[sample.name] = name
+                sample_well_pool.append([sample.name, well_order[sample.name], pools[sample.name]])
+    sorted_samples = sorted(sample_well_pool, key=lambda sample: (sample[2], sample[1]))
 
     # write output file per output analyte sorted on pool number
     output_file.write('Sample\tul Sample\tPlaat_id\twell_id\tpool\n')
@@ -230,14 +243,12 @@ def samplesheet_multiplex(lims, process_id, output_file):
         output_file.write('De volgende pool(s) hebben een ander aantal samples dan 3: {pools}\n'.format(
             pools=not_3
         ))
-    for name in names:
+    for sorted_sample in sorted_samples:
+        name = sorted_sample[0]
         for output in outputs:
             if output.type == 'Analyte':
-                output_name = output.name
-                if re.search('#\d_', output.name):
-                    output_name = re.sub('#', '#0', output.name)
-                if output_name == name:
-                    for sample in output.samples:
+                for sample in output.samples:
+                    if sample.name == name:
                         output_file.write('{sample}\t{ul_sample:.2f}\t{plate_id}\t{well_id}\t{pool}\n'.format(
                             sample=sample.name,
                             ul_sample=ul_sample[sample.name],
