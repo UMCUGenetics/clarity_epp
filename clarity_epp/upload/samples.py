@@ -124,12 +124,12 @@ def from_helix(lims, email_settings, input_file):
             udf_data['Dx Geslacht'] = 'Onbekend'
 
         # Check 'Dx Familienummer' and correct
-        if ';' in udf_data['Dx Familienummer']:
+        if '/' in udf_data['Dx Familienummer']:
             udf_data['Dx Import warning'] = ';'.join([
-                'Meerdere familienummers, eerste wordt gebruikt. ({0})'.format(udf_data['Dx Familienummer']),
+                'Meerdere familienummers, laatste wordt gebruikt. ({0})'.format(udf_data['Dx Familienummer']),
                 udf_data['Dx Import warning']
             ])
-            udf_data['Dx Familienummer'] = udf_data['Dx Familienummer'].split(';')[0].strip(' ')
+            udf_data['Dx Familienummer'] = udf_data['Dx Familienummer'].split('/')[-1].strip(' ')
 
         sample_list = lims.get_samples(name=sample_name)
 
