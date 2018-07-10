@@ -205,6 +205,9 @@ def samplesheet_multiplex(lims, process_id, output_file):
                                                              ng_sample[output.samples[1].name] + \
                                                              ng_sample[output.samples[2].name], 2)
                     output.put()
+                else:
+                    output.udf['Dx input pool (ng)'] = 750
+                    output.put()
             # if number of samples in pool is not 3 set trio status and prepare error warning output file
             else:
                 trio_statuses[output.name] = 'not_3'
