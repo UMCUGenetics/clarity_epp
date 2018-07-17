@@ -7,15 +7,45 @@ from genologics.entities import Process, Artifact
 def update_samplesheet(lims, process_id, artifact_id, output_file):
     """Update illumina samplesheet."""
     process = Process(lims, id=process_id)
-    sample_project = {}
+
+    # Parse families
+    families = {}
     for artifact in process.all_inputs():
         for sample in artifact.samples:
-            if sample.udf['Dx NICU Spoed']:
-                sample_project[sample.name] = 'NICU_{0}'.format(sample.udf['Dx Familienummer'])
-            elif sample.udf['Dx Protocolomschrijving'] == 'Exoom.analy_IL_elidS30409818_Exoomver.':
-                sample_project[sample.name] = 'CREv2'
+            family = sample.udf['Dx Familienummer']
+            sample_name = sample.name
+
+            if family not in families:
+                if sample.udf['Dx NICU Spoed']:
+                    project_type = 'NICU_{0}'.format(sample.udf['Dx Familienummer'])
+                elif 'elidS30409818' in sample.udf['Dx Protocolomschrijving']:
+                    project_type = 'CREv2'
+                else:
+                    project_type = 'Unkown_project'
+                families[family] = {'samples': [], 'project_type': project_type, 'nicu': sample.udf['Dx NICU Spoed']}
+            families[family]['samples'].append(sample)
+
+    # Define projects
+    sample_project = {}
+    projects = {
+        'CREv2': {'count': 1, 'samples': 0},
+        'Unkown_project': {'count': 1, 'samples': 0}
+    }
+
+    for i, family in families.iteritems():
+        if family['nicu']:
+            family_project = family['project_type']
+        else:
+            if projects[family['project_type']]['samples'] + len(family['samples']) <= 9:
+                projects[family['project_type']]['samples'] += len(family['samples'])
             else:
-                sample_project[sample.name] = 'Unkown_project'
+                projects[family['project_type']]['count'] += 1
+                projects[family['project_type']]['samples'] = len(family['samples'])
+            family_project = '{0}_{1}'.format(family['project_type'], projects[family['project_type']]['count'])
+
+        # Set samples project
+        for sample in family['samples']:
+            sample_project[sample.name] = family_project
 
     header = ''  # empty until [data] section
 
