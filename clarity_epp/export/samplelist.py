@@ -61,7 +61,7 @@ def removed_samples(lims, output_file):
                                 proces = artifact.parent_process
                                 date = proces.date_run
                                 if samplename in last_removed:
-                                    if date > last_removed[samplename]:
+                                    if date >= last_removed[samplename]:
                                         last_removed[samplename] = date
                                         last_removed_stage[samplename] = stage
                                 else:
