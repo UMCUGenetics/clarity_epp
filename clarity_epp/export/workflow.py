@@ -47,9 +47,9 @@ def helix(lims, process_id, output_file):
 
             output_file.write(
                 "{meet_id}\t{onderzoeksnummer}\t{werklijst}\t{monsternummer}\t{meetw_zui}\t{meetw_zui_herh}\t{meetw_libprep}\t{meetw_libprep_herh}\t{meetw_enrich}\t{meetw_enrich_herh}\t{meetw_seq}\t{meetw_seq_herh}\n".format(
-                    meet_id=sample.udf['Dx Meet ID'],
-                    onderzoeksnummer=sample.udf['Dx Onderzoeknummer'],
-                    werklijst=sample.udf['Dx Werklijstnummer'],
+                    meet_id=sample.udf['Dx Meet ID'].split(';')[0],
+                    onderzoeksnummer=sample.udf['Dx Onderzoeknummer'].split(';')[0],
+                    werklijst=sample.udf['Dx Werklijstnummer'].split(';')[0],
                     monsternummer=sample.udf['Dx Monsternummer'],
                     meetw_zui=meetw_zui, meetw_zui_herh=meetw_zui_herh,
                     meetw_libprep=meetw_libprep, meetw_libprep_herh=meetw_libprep_herh,
