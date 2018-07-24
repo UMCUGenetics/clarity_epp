@@ -63,6 +63,11 @@ def export_ped_file(args):
     clarity_epp.export.ped.create_file(lims, args.process_id, args.output_file)
 
 
+def export_samplelist(args):
+    """Generate samplelist."""
+    clarity_epp.export.samplelist.removed_samples(lims, args.output_file)
+
+
 def export_tapestation(args):
     """Export samplesheets for Tapestation machine."""
     clarity_epp.export.tapestation.samplesheet(lims, args.process_id, args.output_file)
@@ -197,6 +202,9 @@ if __name__ == "__main__":
     parser_export_illumina.add_argument('process_id', help='Clarity lims process id')
     parser_export_illumina.add_argument('artifact_id', help='Clarity lims samplesheet artifact id')
     parser_export_illumina.set_defaults(func=export_illumina)
+
+    parser_export_samplelist = subparser_export.add_parser('samplelist', help='Export samplelist.', parents=[output_parser])
+    parser_export_samplelist.set_defaults(func=export_samplelist)
 
     # Sample upload
     parser_upload = subparser.add_parser('upload', help='Upload samples or results to clarity lims')
