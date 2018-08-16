@@ -28,7 +28,7 @@ def main():
             log(cmd)
             tmp.write(cmd)
 
-        cmd = "cd /tmp && /usr/bin/at -f " + path + " now"
+        cmd = "cd /tmp && /usr/bin/at -f " + path + " now >>/opt/gls/clarity/customextensions/logs/runLater.log 2>>/opt/gls/clarity/customextensions/logs/runLater.log"
         log(cmd)
         os.system(cmd)
         print("This step will be finished for you. Press the 'Lab View' button on the main Clarity Tool Bar")
