@@ -6,7 +6,7 @@ from genologics.entities import Process, Container, Containertype
 def copy_layout(lims, process_id):
     """Copy placement layout from previous steps."""
     process = Process(lims, id=process_id)
-
+    used_placements = []
     # Get parent container layout
     parent_container = None
     for parent_process in process.parent_processes():
@@ -24,11 +24,13 @@ def copy_layout(lims, process_id):
         # Create new container and copy layout
         new_container = Container.create(lims, type=parent_container.type)
         placement_list = []
-        for artifact in process.all_outputs():
+        for artifact in process.analytes()[0]:
             sample_name = artifact.samples[0].name
             if sample_name in parent_placements:
                 placement = parent_placements[sample_name]
-                placement_list.append([artifact, (new_container, placement)])
+                if placement not in used_placements:
+                    placement_list.append([artifact, (new_container, placement)])
+                    used_placements.append(placement)
 
         process.step.placements.set_placement_list(placement_list)
         process.step.placements.post()
