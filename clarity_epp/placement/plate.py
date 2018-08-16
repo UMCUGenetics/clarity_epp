@@ -24,7 +24,7 @@ def copy_layout(lims, process_id):
         # Create new container and copy layout
         new_container = Container.create(lims, type=parent_container.type)
         placement_list = []
-        for artifact in process.all_outputs():
+        for artifact in process.analytes()[0]:
             sample_name = artifact.samples[0].name
             if sample_name in parent_placements:
                 placement = parent_placements[sample_name]
