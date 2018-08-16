@@ -12,9 +12,9 @@ def finish_protocol_complete(lims, process_id):
     # Check all analytes
     for analyte in process.analytes()[0]:
         analyte_workflow_stages_and_statuses = analyte.workflow_stages_and_statuses
-        if analyte_workflow_stages_and_statuses[0][2] == 'Dx Mark protocol complete' and analyte_workflow_stages_and_statuses[0][1] == 'QUEUED':
+        if analyte_workflow_stages_and_statuses[-1][2] == 'Dx Mark protocol complete' and analyte_workflow_stages_and_statuses[-1][1] == 'QUEUED':
             actions.append({'action': 'complete', 'artifact': analyte})
-            step_uri = analyte_workflow_stages_and_statuses[0][0].step.uri
+            step_uri = analyte_workflow_stages_and_statuses[-1][0].step.uri
             inputs += '<input uri="{0}" replicates="1"/>'.format(analyte.uri)
 
     # Generate start step XML
