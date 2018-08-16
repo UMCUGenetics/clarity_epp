@@ -5,7 +5,7 @@ import tempfile
 
 
 def log(msg):
-    f = open("/opt/gls/clarity/customextensions/logs/runLater.log", "w")
+    f = open("/opt/gls/clarity/customextensions/logs/runLater.log", "a")
     f.write(msg + "\n")
     f.close()
 
@@ -24,7 +24,9 @@ def main():
     if len(args["command"]) > 0:
         fd, path = tempfile.mkstemp()
         with os.fdopen(fd, 'w') as tmp:
-            tmp.write('bash -l -c "' + args["command"] + '"')
+            cmd = 'bash -l -c "' + args["command"] + '"'
+            log(cmd)
+            tmp.write(cmd)
 
         cmd = "cd /tmp && /usr/bin/at -f " + path + " now"
         log(cmd)
