@@ -148,6 +148,11 @@ def placement_unpooling(args):
     clarity_epp.placement.pool.unpooling(lims, args.process_id)
 
 
+def placement_complete_step(args):
+    """Complete protocol step (Dx Mark protocol complete)."""
+    clarity_epp.placement.step.finish_protocol_complete(lims, args.process_id)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
@@ -264,6 +269,10 @@ if __name__ == "__main__":
     parser_placement_unpooling = subparser_placement.add_parser('unpooling', help='Unpooling of sequencing pool.')
     parser_placement_unpooling.add_argument('process_id', help='Clarity lims process id')
     parser_placement_unpooling.set_defaults(func=placement_unpooling)
+
+    parser_placement_complete_step = subparser_placement.add_parser('complete_step', help='Complete step Dx Mark protocol complete.')
+    parser_placement_complete_step.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_complete_step.set_defaults(func=placement_complete_step)
 
     args = parser.parse_args()
     args.func(args)
