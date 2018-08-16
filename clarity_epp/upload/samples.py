@@ -119,7 +119,7 @@ def from_helix(lims, email_settings, input_file):
             udf_data['Dx Geboortejaar'] = ''
 
         # Set 'Dx Geslacht = Onbekend' if 'Dx Onderzoeksindicatie == DSD00'
-        if udf_data['Dx Onderzoeksindicatie'] == 'DSD00':
+        if udf_data['Dx Onderzoeksindicatie'] == 'DSD00' and udf_data['Dx Familie status'] == 'Kind':
             udf_data['Dx Geslacht'] = 'Onbekend'
 
         # Check 'Dx Familienummer' and correct
