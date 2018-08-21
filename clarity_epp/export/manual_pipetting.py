@@ -67,7 +67,7 @@ def samplesheet_sequencing_pool(lims, process_id, output_file):
 
 
 def library_dilution_calculator(concentration, size, trio, pedigree, ng):
-# toevoegen ul_sample input en nieuwe berekening toevoegen
+    # toevoegen ul_sample input en nieuwe berekening toevoegen
     """Calculate ul per sample needed for multiplexing."""
     if trio == 'CCC':
         ng_sample = 250
@@ -84,11 +84,13 @@ def library_dilution_calculator(concentration, size, trio, pedigree, ng):
     ul_sample = (float(ng_sample)*(10.0**6.0))/(660*float(size)*nM_DNA)
     return ul_sample
 
+
 def library_dilution_calculator_fixed_volume(concentration, size, ul):
     """Calculate ng per sample (based on given ul_sample) needed for multiplexing."""
     nM_DNA = (float(concentration)*(10.0**6.0))/(660*float(size))
     ng_sample = (660*float(size)*nM_DNA*ul)/(10.0**6.0)
     return ng_sample
+
 
 def library_dilution_calculator_fixed_ng(concentration, size, pedigree, ng, ped_given_ul):
     """Calculate ng per sample (based on calculated ng from given ul_sample) needed for multiplexing."""
@@ -99,6 +101,7 @@ def library_dilution_calculator_fixed_ng(concentration, size, pedigree, ng, ped_
     elif ped_given_ul == 'Ouder' and pedigree == 'Kind':
         ng_sample = ng*1.1
     return ng_sample
+
 
 def samplesheet_multiplex(lims, process_id, output_file):
     """Create manual pipetting samplesheet for multiplexing(pooling) samples."""
@@ -167,19 +170,27 @@ def samplesheet_multiplex(lims, process_id, output_file):
         if output.type == 'Analyte':
             sample_given_ul = ''
             if len(output.samples) == 3:
-                samplestatus_1 = output.samples[0].udf['Dx Familie status']
-                samplestatus_2 = output.samples[1].udf['Dx Familie status']
-                samplestatus_3 = output.samples[2].udf['Dx Familie status']
-                if samplestatus_1 == 'Kind' and samplestatus_2 == 'Kind' and samplestatus_3 == 'Kind' or \
-                    samplestatus_1 == 'Ouder' and samplestatus_2 == 'Ouder' and samplestatus_3 == 'Ouder':
+                samplestatus = []
+
+                for sample in output.samples:
+                    # First check GIAB controls
+                    if 'CFGIAB' in sample.name.upper():
+                        sample.udf['Dx Familie status'] = 'Kind'
+                    elif 'PFGIAB' in sample.name.upper() or 'PMGIAB' in sample.name.upper():
+                        sample.udf['Dx Familie status'] = 'Ouder'
+
+                    samplestatus.append(sample.udf['Dx Familie status'])
+
+                if samplestatus[0] == 'Kind' and samplestatus[1] == 'Kind' and samplestatus[2] == 'Kind' or \
+                    samplestatus[0] == 'Ouder' and samplestatus[1] == 'Ouder' and samplestatus[2] == 'Ouder':
                     trio_statuses[output.name] = 'CCC'
-                elif samplestatus_1 == 'Kind' and samplestatus_2 == 'Ouder' and samplestatus_3 == 'Ouder' or \
-                    samplestatus_1 == 'Ouder' and samplestatus_2 == 'Kind' and samplestatus_3 == 'Ouder' or \
-                    samplestatus_1 == 'Ouder' and samplestatus_2 == 'Ouder' and samplestatus_3 == 'Kind': 
+                elif samplestatus[0] == 'Kind' and samplestatus[1] == 'Ouder' and samplestatus[2] == 'Ouder' or \
+                    samplestatus[0] == 'Ouder' and samplestatus[1] == 'Kind' and samplestatus[2] == 'Ouder' or \
+                    samplestatus[0] == 'Ouder' and samplestatus[1] == 'Ouder' and samplestatus[2] == 'Kind':
                     trio_statuses[output.name] = 'CPP'
-                elif samplestatus_1 == 'Kind' and samplestatus_2 == 'Kind' and samplestatus_3 == 'Ouder' or \
-                    samplestatus_1 == 'Kind' and samplestatus_2 == 'Ouder' and samplestatus_3 == 'Kind' or \
-                    samplestatus_1 == 'Ouder' and samplestatus_2 == 'Kind' and samplestatus_3 == 'Kind':
+                elif samplestatus[0] == 'Kind' and samplestatus[1] == 'Kind' and samplestatus[2] == 'Ouder' or \
+                    samplestatus[0] == 'Kind' and samplestatus[1] == 'Ouder' and samplestatus[2] == 'Kind' or \
+                    samplestatus[0] == 'Ouder' and samplestatus[1] == 'Kind' and samplestatus[2] == 'Kind':
                     trio_statuses[output.name] = 'CCP'
                 # if udfs 'Dx sample volume ul' and 'Dx Samplenaam' are not empty change trio status and do pre-calculation
                 if output.name in udf_output:
@@ -188,22 +199,22 @@ def samplesheet_multiplex(lims, process_id, output_file):
                         if sample.name == udf_name_ul_sample[output.name]:
                             sample_given_ul = sample
                             ng_sample[sample.name] = \
-                                library_dilution_calculator_fixed_volume(sample_concentration[sample.name], \
-                                                                         sample_size[sample.name], \
-                                                                         udf_ul_sample[output.name]\
+                                library_dilution_calculator_fixed_volume(
+                                    sample_concentration[sample.name],
+                                    sample_size[sample.name],
+                                    udf_ul_sample[output.name]
                                 )
                     for sample in output.samples:
                         if sample.name != udf_name_ul_sample[output.name]:
                             ng_sample[sample.name] = \
-                                library_dilution_calculator_fixed_ng(sample_concentration[sample.name], \
-                                                                     sample_size[sample.name], \
-                                                                     sample.udf['Dx Familie status'], \
-                                                                     ng_sample[udf_name_ul_sample[output.name]], \
-                                                                     sample_given_ul.udf['Dx Familie status']\
+                                library_dilution_calculator_fixed_ng(
+                                    sample_concentration[sample.name],
+                                    sample_size[sample.name],
+                                    sample.udf['Dx Familie status'],
+                                    ng_sample[udf_name_ul_sample[output.name]],
+                                    sample_given_ul.udf['Dx Familie status']
                                 )
-                    output.udf['Dx input pool (ng)'] = round(ng_sample[output.samples[0].name] + \
-                                                             ng_sample[output.samples[1].name] + \
-                                                             ng_sample[output.samples[2].name], 2)
+                    output.udf['Dx input pool (ng)'] = round(ng_sample[output.samples[0].name] + ng_sample[output.samples[1].name] + ng_sample[output.samples[2].name], 2)
                     output.put()
                 else:
                     output.udf['Dx input pool (ng)'] = 750
@@ -216,20 +227,22 @@ def samplesheet_multiplex(lims, process_id, output_file):
             if sample_given_ul == '':
                 for sample in output.samples:
                     ul_sample[sample.name] = \
-                        library_dilution_calculator(sample_concentration[sample.name], \
-                                                    sample_size[sample.name], \
-                                                    trio_statuses[output.name], \
-                                                    sample.udf['Dx Familie status'], \
-                                                    0\
+                        library_dilution_calculator(
+                            sample_concentration[sample.name],
+                            sample_size[sample.name],
+                            trio_statuses[output.name],
+                            sample.udf['Dx Familie status'],
+                            0
                         )
             elif sample_given_ul != '':
                 for sample in output.samples:
                     ul_sample[sample.name] = \
-                        library_dilution_calculator(sample_concentration[sample.name], \
-                                                    sample_size[sample.name], \
-                                                    trio_statuses[output.name], \
-                                                    sample.udf['Dx Familie status'], \
-                                                    ng_sample[sample.name]\
+                        library_dilution_calculator(
+                            sample_concentration[sample.name],
+                            sample_size[sample.name],
+                            trio_statuses[output.name],
+                            sample.udf['Dx Familie status'],
+                            ng_sample[sample.name]
                         )
             # sorting pools then wells for output file
             name = output.name
