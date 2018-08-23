@@ -67,7 +67,6 @@ def samplesheet_sequencing_pool(lims, process_id, output_file):
 
 
 def library_dilution_calculator(concentration, size, trio, pedigree, ng):
-    # toevoegen ul_sample input en nieuwe berekening toevoegen
     """Calculate ul per sample needed for multiplexing."""
     if trio == 'CCC':
         ng_sample = 250
