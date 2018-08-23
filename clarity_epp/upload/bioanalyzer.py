@@ -25,7 +25,6 @@ def results(lims, process_id):
 
     # Set UDF
     for artifact in process.all_outputs():
-        if artifact.name not in ['Bioanalyzer Output', 'Bioanalyzer Samplesheet', 'Bioanalyzer Sampleplots PDF']:
-            sample_name = artifact.name
-            artifact.udf['Dx Fragmentlengte (bp)'] = sample_measurements[sample_name]
+        if artifact.name in sample_measurements:
+            artifact.udf['Dx Fragmentlengte (bp)'] = sample_measurements[artifact.name]
             artifact.put()
