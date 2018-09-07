@@ -26,16 +26,20 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
                     families[family]['NICU'] = True
                     project_type = 'NICU_{0}'.format(sample.udf['Dx Familienummer'])
                     families[family]['project_type'] = project_type
+                    families[family]['split_project_type'] = False
 
                 elif 'elidS30409818' in sample.udf['Dx Protocolomschrijving'] and not families[family]['NICU']:
                     project_type = 'CREv2'
                     families[family]['project_type'] = project_type
+                    families[family]['split_project_type'] = True
 
-                # Add sample to family
-                families[family]['samples'].append(sample)
             else:
-                # TODO: Handle non dx samples
-                continue
+                family = sample.project.name
+                if family not in families:
+                    families[family] = {'samples': [], 'NICU': False, 'project_type': family, 'split_project_type': False}
+
+            # Add sample to family
+            families[family]['samples'].append(sample)
 
     # Get all project types and count samples
     project_types = {}
@@ -43,13 +47,16 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
         if family['project_type'] in project_types:
             project_types[family['project_type']]['sample_count'] += len(family['samples'])
         else:
-            project_types[family['project_type']] = {'sample_count': len(family['samples']), 'projects': []}
+            project_types[family['project_type']] = {'sample_count': len(family['samples']), 'projects': [], 'split_project_type': family['split_project_type']}
 
     # Define projects per project_type
     for project_type in project_types:
         project_types[project_type]['index'] = 0
-        for i in range(0, project_types[project_type]['sample_count']/9+1):
-            project_types[project_type]['projects'].append('{0}_{1}'.format(project_type, i+1))
+        if project_types[project_type]['split_project_type']:
+            for i in range(0, project_types[project_type]['sample_count']/9+1):
+                project_types[project_type]['projects'].append('{0}_{1}'.format(project_type, i+1))
+        else:
+            project_types[project_type]['projects'] = [project_type]
 
     # Set sample projects
     sample_projects = {}
