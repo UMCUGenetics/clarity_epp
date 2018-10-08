@@ -54,8 +54,8 @@ def export_manual_pipetting(args):
         clarity_epp.export.manual_pipetting.samplesheet_purify(lims, args.process_id, args.output_file)
     elif args.type == 'sequencing_pool':
         clarity_epp.export.manual_pipetting.samplesheet_sequencing_pool(lims, args.process_id, args.output_file)
-    elif args.type == 'multiplex':
-        clarity_epp.export.manual_pipetting.samplesheet_multiplex(lims, args.process_id, args.output_file)
+    elif args.type == 'multiplex_library_pool':
+        clarity_epp.export.manual_pipetting.samplesheet_multiplex_library_pool(lims, args.process_id, args.output_file)
 
 
 def export_ped_file(args):

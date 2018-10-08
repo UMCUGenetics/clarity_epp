@@ -102,7 +102,7 @@ def library_dilution_calculator_fixed_ng(concentration, size, pedigree, ng, ped_
     return ng_sample
 
 
-def samplesheet_multiplex(lims, process_id, output_file):
+def samplesheet_multiplex_library_pool(lims, process_id, output_file):
     """Create manual pipetting samplesheet for multiplexing(pooling) samples."""
     process = Process(lims, id=process_id)
     inputs = process.all_inputs()
