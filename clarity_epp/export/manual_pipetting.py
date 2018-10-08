@@ -271,3 +271,9 @@ def samplesheet_multiplex_library_pool(lims, process_id, output_file):
                             well_id=well_id[sample.name],
                             pool=output.name
                         ))
+
+
+def samplesheet_multiplex_sequence_pool(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for multiplex sequence pools."""
+
+    print process_id
