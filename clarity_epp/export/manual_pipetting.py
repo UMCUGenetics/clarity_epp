@@ -36,7 +36,7 @@ def samplesheet_purify(lims, process_id, output_file):
         ))
 
 
-def samplesheet_sequencing_pool(lims, process_id, output_file):
+def samplesheet_dilute_library_pool(lims, process_id, output_file):
     """Create manual pipetting samplesheet for sequencing pools."""
     output_file.write('Sample pool\tul Sample\tul EB\n')
     process = Process(lims, id=process_id)
