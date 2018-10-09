@@ -276,4 +276,41 @@ def samplesheet_multiplex_library_pool(lims, process_id, output_file):
 def samplesheet_multiplex_sequence_pool(lims, process_id, output_file):
     """Create manual pipetting samplesheet for multiplex sequence pools."""
 
-    print process_id
+    process = Process(lims, id=process_id)
+    input_pools = []
+    total_sample_count = 0
+    total_load_uL = 0
+
+    for input_pool in process.all_inputs():
+        input_pool_conc = float(input_pool.udf['Dx Concentratie fluorescentie (ng/ul)'])
+        input_pool_size = float(input_pool.udf['Dx Fragmentlengte (bp)'])
+        input_pool_nM = (input_pool_conc * 1000 * (1.0/660.0) * (1/input_pool_size)) * 1000
+        input_pool_pM = (input_pool_nM * 1000) / 5
+
+        input_pool_sample_count = 0
+
+        for sample in input_pool.samples:
+            if 'Dx Exoomequivalent' in sample.udf:
+                input_pool_sample_count += sample.udf['Dx Exoomequivalent']
+            else:
+                input_pool_sample_count += 1
+        total_sample_count += input_pool_sample_count
+        input_pools.append({
+            'name': input_pool.name,
+            'nM': input_pool_nM,
+            'pM': input_pool_pM,
+            'sample_count': input_pool_sample_count
+        })
+
+    # print header
+    output_file.write('Naam\tuL\n')
+
+    # Last calcuations and print sample
+    for input_pool in input_pools:
+        input_pool_load_pM = (process.udf['Dx Laadconcentratie (pM)']/total_sample_count) * input_pool['sample_count']
+        input_pool_load_uL = 150.0 / (input_pool['pM']/input_pool_load_pM)
+        total_load_uL += input_pool_load_uL
+        output_file.write('{0}\t{1}\n'.format(input_pool['name'], input_pool_load_uL))
+
+    tris_HCL_uL = 150 - total_load_uL
+    output_file.write('{0}\t{1}\n'.format('Tris-HCL', tris_HCL_uL))
