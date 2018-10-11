@@ -307,10 +307,10 @@ def samplesheet_multiplex_sequence_pool(lims, process_id, output_file):
 
     # Last calcuations and print sample
     for input_pool in input_pools:
-        input_pool_load_pM = (process.udf['Dx Laadconcentratie (pM)']/total_sample_count) * input_pool['sample_count']
+        input_pool_load_pM = (float(process.udf['Dx Laadconcentratie (pM)'])/total_sample_count) * input_pool['sample_count']
         input_pool_load_uL = 150.0 / (input_pool['pM']/input_pool_load_pM)
         total_load_uL += input_pool_load_uL
-        output_file.write('{0}\t{1}\n'.format(input_pool['name'], input_pool_load_uL))
+        output_file.write('{0}\t{1:.2f}\n'.format(input_pool['name'], input_pool_load_uL))
 
     tris_HCL_uL = 150 - total_load_uL
-    output_file.write('{0}\t{1}\n'.format('Tris-HCL', tris_HCL_uL))
+    output_file.write('{0}\t{1:.2f}\n'.format('Tris-HCL', tris_HCL_uL))
