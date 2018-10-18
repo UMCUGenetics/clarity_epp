@@ -45,15 +45,6 @@ def create_file(lims, process_id, output_file):
                 ped_families[family]['mother'] = ped_sample
             else:
                 ped_families[family]['children'].append(ped_sample)
-        else:
-            output_file.write('{family}\t{name}\t{paternal_sample}\t{maternal_sample}\t{sex}\t{affection}\n'.format(
-                family='UNKOWN',
-                name=get_sequence_name(sample),
-                paternal_sample='0',
-                maternal_sample='0',
-                sex='0',
-                affection='0',
-            ))
 
     for family in ped_families:
         ped_family = ped_families[family]
