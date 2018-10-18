@@ -28,7 +28,6 @@ def removed_samples(lims, output_file):
         # 1a: Save usefull info if sample has udf 'Dx Fractienummer'.
         if 'Dx Fractienummer' in all_samples[teller].udf:
             samplename = all_samples[teller].name
-            completed = all_samples[teller].date_completed
             restarted[samplename] = 'NB'
             new_sample[samplename] = 'NB'
             onderzoeksnummers[samplename] = 'NB'
@@ -42,7 +41,7 @@ def removed_samples(lims, output_file):
                 query_udf = {'Dx Persoons ID': all_samples[teller].udf['Dx Persoons ID']}
                 samples_person = lims.get_samples(udf=query_udf)
             else:
-                samples_person = []
+                samples_person = [all_samples[teller]]
             for person_sample in samples_person:
                 if person_sample <> all_samples[teller]:
                     if all_samples[teller].name in person_samples:
@@ -59,31 +58,30 @@ def removed_samples(lims, output_file):
                 wl[samplename] = all_samples[teller].udf['Dx Werklijstnummer']
             artifacts = lims.get_artifacts(type="Analyte", sample_name=all_samples[teller].name)
 
-            # 1b: Ad sample to removed samples list if removed and determine when last removed.
+            # 1b: Add sample to removed samples list if removed and not completed, and determine when last removed.
             for artifact in artifacts:
                 statuses = artifact._get_workflow_stages_and_statuses()
                 for item in statuses:
                     status = item[1]
                     stage = item[2]
                     if status == 'REMOVED':
-                        if completed is None:
-                            if artifact.parent_process is not None:
-                                proces = artifact.parent_process
-                                date = proces.date_run
-                                udf[samplename] = 'Niet bekend'
-                                if samplename in last_removed:
-                                    if date >= last_removed[samplename]:
-                                        last_removed[samplename] = date
-                                        last_removed_stage[samplename] = stage
-                                        if 'Fouten registratie (oorzaak)' in proces.udf:
-                                            udf[samplename] = proces.udf['Fouten registratie (oorzaak)']
-                                else:
+                        if artifact.parent_process is not None:
+                            proces = artifact.parent_process
+                            date = proces.date_run
+                            udf[samplename] = 'Niet bekend'
+                            if samplename in last_removed:
+                                if date >= last_removed[samplename]:
                                     last_removed[samplename] = date
                                     last_removed_stage[samplename] = stage
                                     if 'Fouten registratie (oorzaak)' in proces.udf:
                                         udf[samplename] = proces.udf['Fouten registratie (oorzaak)']
-                            if all_samples[teller] not in removed_samples:
-                                removed_samples.append(all_samples[teller])
+                            else:
+                                last_removed[samplename] = date
+                                last_removed_stage[samplename] = stage
+                                if 'Fouten registratie (oorzaak)' in proces.udf:
+                                    udf[samplename] = proces.udf['Fouten registratie (oorzaak)']
+                        if all_samples[teller] not in removed_samples:
+                            removed_samples.append(all_samples[teller])
 
             # 1c: Determine if removed sample is restarted after last removal.
             for artifact in artifacts:
