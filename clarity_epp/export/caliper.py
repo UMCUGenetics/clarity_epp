@@ -28,23 +28,14 @@ def samplesheet_normalise(lims, process_id, output_file):
     else:
         parent_process_barcode = parent_process_barcode_manual
     parent_processes = list(set(parent_processes))
-    ids = []
-    pt_names = []
+    process_types = []
     types = []
-    for i in range(1,2000):
-        d = str(i)
-        ids.append(d)
-    for i in ids:
-        try:
-            pt = Processtype(lims, id=i)
-            pt_names.append(pt.name)
-        except:
-            pt = 'None'
-    for pt_name in pt_names:
-        if 'Dx Qubit QC' in pt_name:
-            types.append(pt_name)
-        elif 'Dx Tecan Spark 10M QC' in pt_name:
-            types.append(pt_name)
+    process_types = lims.get_process_types()
+    for pt in process_types:
+        if 'Dx Qubit QC' in pt.name:
+            types.append(pt.name)
+        elif 'Dx Tecan Spark 10M QC' in pt.name:
+            types.append(pt.name)
     input_artifact_ids = []
     for p in parent_processes:
         for analyte in p.all_outputs():
@@ -60,11 +51,12 @@ def samplesheet_normalise(lims, process_id, output_file):
     samples_measurements_tecan = {}
     filled_wells = []
     order = [
-        'A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'G2', 'H2', 'A3', 'B3', 'C3', 'D3', 'E3', 'F3', 'G3',
-        'H3', 'A4', 'B4', 'C4', 'D4', 'E4', 'F4', 'G4', 'H4', 'A5', 'B5', 'C5', 'D5', 'E5', 'F5', 'G5', 'H5', 'A6', 'B6', 'C6', 'D6', 'E6', 'F6',
-        'G6', 'H6', 'A7', 'B7', 'C7', 'D7', 'E7', 'F7', 'G7', 'H7', 'A8', 'B8', 'C8', 'D8', 'E8', 'F8', 'G8', 'H8', 'A9', 'B9', 'C9', 'D9', 'E9',
-        'F9', 'G9', 'H9', 'A10', 'B10', 'C10', 'D10', 'E10', 'F10', 'G10', 'H10', 'A11', 'B11', 'C11', 'D11', 'E11', 'F11', 'G11', 'H11', 'A12',
-        'B12', 'C12', 'D12', 'E12', 'F12', 'G12', 'H12'
+        'A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'G2', 'H2',
+        'A3', 'B3', 'C3', 'D3', 'E3', 'F3', 'G3', 'H3', 'A4', 'B4', 'C4', 'D4', 'E4', 'F4', 'G4', 'H4',
+        'A5', 'B5', 'C5', 'D5', 'E5', 'F5', 'G5', 'H5', 'A6', 'B6', 'C6', 'D6', 'E6', 'F6', 'G6', 'H6',
+        'A7', 'B7', 'C7', 'D7', 'E7', 'F7', 'G7', 'H7', 'A8', 'B8', 'C8', 'D8', 'E8', 'F8', 'G8', 'H8',
+        'A9', 'B9', 'C9', 'D9', 'E9', 'F9', 'G9', 'H9', 'A10', 'B10', 'C10', 'D10', 'E10', 'F10', 'G10', 'H10',
+        'A11', 'B11', 'C11', 'D11', 'E11', 'F11', 'G11', 'H11', 'A12', 'B12', 'C12', 'D12', 'E12', 'F12', 'G12', 'H12'
     ]
     order = dict(zip(order, range(len(order))))
     last_filled_well = 0
