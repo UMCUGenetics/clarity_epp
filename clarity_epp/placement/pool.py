@@ -33,5 +33,6 @@ def unpooling(lims, process_id):
                 sample_artifact.udf['Dx Sequencing Run ID'] = run_id
                 sample_artifact.udf['Dx Sequencing Run Project'] = sample_projects[sample_artifact.name]
                 sample_artifact.put()
-                sample_artifacts.append(sample_artifact)
-    lims.route_artifacts(sample_artifacts, workflow_uri=Workflow(lims, id=config.post_seq_workflow).uri)  # Dx Post sequencing v1.0
+                if sample_artifact.samples[0].project.udf['Application'] == 'DX':  # Only move DX samples to post sequencing workflow
+                    sample_artifacts.append(sample_artifact)
+    lims.route_artifacts(sample_artifacts, workflow_uri=Workflow(lims, id=config.post_seq_workflow).uri)
