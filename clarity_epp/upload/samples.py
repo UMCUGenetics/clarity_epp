@@ -153,7 +153,7 @@ def from_helix(lims, email_settings, input_file):
                     sample.udf[udf] = udf_data[udf]
 
                 # Add to new workflow
-                workflow = utils.stofcode_to_workflow(lims, udf_data['Dx Stoftest code'])
+                workflow = utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])
                 if workflow:
                     sample.put()
                     lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
@@ -169,7 +169,7 @@ def from_helix(lims, email_settings, input_file):
                     udf_data['Dx Import warning'] = ';'.join(['Onderzoek reeds uitgevoerd.', udf_data['Dx Import warning']])
 
             # Add sample to workflow
-            workflow = utils.stofcode_to_workflow(lims, udf_data['Dx Stoftest code'])
+            workflow = utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])
             if workflow:
                 container = Container.create(lims, type=container_type, name=udf_data['Dx Fractienummer'])
                 sample = Sample.create(lims, container=container, position='1:1', project=project, name=sample_name, udf=udf_data)
