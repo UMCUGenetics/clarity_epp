@@ -45,7 +45,12 @@ def export_illumina(args):
 
 def export_labels(args):
     """Export container labels."""
-    clarity_epp.export.labels.containers(lims, args.process_id, args.output_file)
+    if args.type == 'container':
+        clarity_epp.export.labels.container(lims, args.process_id, args.output_file, args.description)
+    elif args.type == 'container_sample':
+        clarity_epp.export.labels.container_sample(lims, args.process_id, args.output_file)
+    elif args.type == 'storage_location':
+        clarity_epp.export.labels.storage_location(lims, args.process_id, args.output_file)
 
 
 def export_manual_pipetting(args):
@@ -193,7 +198,10 @@ if __name__ == "__main__":
     parser_export_bioanalyzer.set_defaults(func=export_bioanalyzer)
 
     parser_export_labels = subparser_export.add_parser('labels', help='Export container labels.', parents=[output_parser])
+    parser_export_labels.add_argument('type', choices=['container', 'container_sample', 'storage_location'], help='Label type')
     parser_export_labels.add_argument('process_id', help='Clarity lims process id')
+    parser_export_labels.add_argument('-d', '--description',  nargs='?', help='Container name description')
+
     parser_export_labels.set_defaults(func=export_labels)
 
     parser_export_ped = subparser_export.add_parser('ped', help='Export ped file.', parents=[output_parser])
