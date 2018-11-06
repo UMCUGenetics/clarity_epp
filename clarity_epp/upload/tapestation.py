@@ -22,12 +22,14 @@ def results(lims, process_id):
                     data = line.split(',')
                     sample = data[sample_index]
                     if sample != 'Ladder':
-                        size = int(data[size_index])
-                        sample_measurements[sample] = size
+                        if data[size_index]:
+                            size = int(data[size_index])
+                            sample_measurements[sample] = size
 
     # Set UDF
     for artifact in process.all_outputs():
         if artifact.name not in ['TapeStation Output', 'TapeStation Samplesheet', 'TapeStation Sampleplots PDF']:
             sample_name = artifact.name.split('_')[0]
-            artifact.udf['Dx Fragmentlengte (bp)'] = sample_measurements[sample_name]
-            artifact.put()
+            if sample_name in sample_measurements:
+                artifact.udf['Dx Fragmentlengte (bp)'] = sample_measurements[sample_name]
+                artifact.put()
