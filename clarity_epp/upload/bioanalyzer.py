@@ -19,7 +19,7 @@ def results(lims, process_id):
                 if line.startswith('Sample Name'):
                     sample = line.rstrip().split(',')[1]
                 elif line.startswith('Region 1'):
-                    line = re.sub(r'("[0-9]+),([0-9\.]+")', r'\1\2', line)  # Fix
+                    line = re.sub(r'"([0-9]+),([0-9\.]+)"', r'\1\2', line)  # Fix remove thousands seperator (,) and quotes ("")
                     size = line.rstrip().split(',')[5]
                     sample_measurements[sample] = int(size)
 
