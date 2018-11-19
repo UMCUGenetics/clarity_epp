@@ -32,11 +32,13 @@ def create_file(lims, process_id, output_file):
                 ped_sample['sex'] = 0
 
             # Determine affection
-            ped_sample['affection'] = 0
+            ped_sample['affection'] = 0  # unkown
             if 'Bevestiging diagnose' in sample.udf['Dx Onderzoeksreden']:
-                ped_sample['affection'] = 2
+                ped_sample['affection'] = 2  # affected
             elif 'Informativiteitstest' in sample.udf['Dx Onderzoeksreden']:
-                ped_sample['affection'] = 1
+                ped_sample['affection'] = 1  # unaffected
+            elif 'Partner onderzoek' in sample.udf['Dx Onderzoeksreden']:
+                ped_sample['affection'] = 1  # unaffected
 
             # Determine family relationships
             if sample.udf['Dx Familie status'] == 'Ouder' and ped_sample['sex'] == 1:
