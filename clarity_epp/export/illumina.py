@@ -19,7 +19,7 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
                 family = sample.udf['Dx Familienummer']
                 # Create family if not exist
                 if family not in families:
-                    families[family] = {'samples': [], 'NICU': False}
+                    families[family] = {'samples': [], 'NICU': False, 'project_type': 'unknown_project', 'split_project_type': False}
 
                 # Update family information
                 if sample.udf['Dx NICU Spoed']:
