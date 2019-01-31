@@ -20,9 +20,9 @@ def determin_meetw(meetw_processes, sample_processes):
     return meetw, meetw_herh
 
 
-def helix(lims, process_id, output_file):
-    """Export workflow information in helix table format."""
-    output_file.write("<meet_id>\tOnderzoeksnummer\tMonsternummer\tWerklijst\tmeetw_zui\tmeetw_zui_herh\tmeetw_libprep\tmeetw_libprep_herh\tmeetw_enrich\tmeetw_enrich_herh\tmeetw_seq\tmeetw_seq_herh\n")
+def helix_lab(lims, process_id, output_file):
+    """Export lab workflow information in helix table format."""
+    output_file.write("<meet_id>\tWerklijstnummer\tOnderzoeksnummer\tMonsternummer\tmeetw_zui\tmeetw_zui_herh\tmeetw_libprep\tmeetw_libprep_herh\tmeetw_enrich\tmeetw_enrich_herh\tmeetw_seq\tmeetw_seq_herh\n")
     process = Process(lims, id=process_id)
 
     for artifact in process.all_inputs():
@@ -46,14 +46,42 @@ def helix(lims, process_id, output_file):
             meetw_seq, meetw_seq_herh = determin_meetw(config.meetw_seq_processes, sample_processes)
 
             output_file.write(
-                "{meet_id}\t{onderzoeksnummer}\t{monsternummer}\t{werklijst}\t{meetw_zui}\t{meetw_zui_herh}\t{meetw_libprep}\t{meetw_libprep_herh}\t{meetw_enrich}\t{meetw_enrich_herh}\t{meetw_seq}\t{meetw_seq_herh}\n".format(
-                    meet_id=sample.udf['Dx Meet ID'],
-                    onderzoeksnummer=sample.udf['Dx Onderzoeknummer'],
+                "{meet_id}\t{werklijst}\t{onderzoeksnummer}\t{monsternummer}\t{meetw_zui}\t{meetw_zui_herh}\t{meetw_libprep}\t{meetw_libprep_herh}\t{meetw_enrich}\t{meetw_enrich_herh}\t{meetw_seq}\t{meetw_seq_herh}\n".format(
+                    meet_id=sample.udf['Dx Meet ID'].split(';')[0],
+                    werklijst=sample.udf['Dx Werklijstnummer'].split(';')[0],
+                    onderzoeksnummer=sample.udf['Dx Onderzoeknummer'].split(';')[0],
                     monsternummer=sample.udf['Dx Monsternummer'],
-                    werklijst=sample.udf['Dx Werklijstnummer'],
                     meetw_zui=meetw_zui, meetw_zui_herh=meetw_zui_herh,
                     meetw_libprep=meetw_libprep, meetw_libprep_herh=meetw_libprep_herh,
                     meetw_enrich=meetw_enrich, meetw_enrich_herh=meetw_enrich_herh,
                     meetw_seq=meetw_seq, meetw_seq_herh=meetw_seq_herh,
+                )
+            )
+
+
+def helix_data_analysis(lims, process_id, output_file):
+    """Export data analysis workflow information in helix table format."""
+    output_file.write("<meet_id>\tWerklijstnummer\tOnderzoeksnummer\tMonsternummer\tmeetw_bfx\tmeetw_SNPmatch\n")
+    process = Process(lims, id=process_id)
+
+    for artifact in process.analytes()[0]:
+
+        # Set SNP match meetw
+        if 'Dx SNPmatch' in list(artifact.udf):
+            meetw_snp_match = int(artifact.udf['Dx SNPmatch'])
+        else:
+            meetw_snp_match = '0'
+
+        # Print meetw row
+        for sample in artifact.samples:
+            output_file.write(
+                "{meet_id}\t{werklijst}\t{onderzoeksnummer}\t{monsternummer}\t{meetw_bfx}\t{meetw_snp_match}\n".format(
+                    meet_id=sample.udf['Dx Meet ID'].split(';')[0],
+                    werklijst=sample.udf['Dx Werklijstnummer'].split(';')[0],
+                    onderzoeksnummer=sample.udf['Dx Onderzoeknummer'].split(';')[0],
+                    monsternummer=sample.udf['Dx Monsternummer'],
+                    meetw_bfx='1',
+                    meetw_snp_match=meetw_snp_match,
+
                 )
             )

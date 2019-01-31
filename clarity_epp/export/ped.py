@@ -12,38 +12,41 @@ def create_file(lims, process_id, output_file):
     ped_families = {}
 
     for sample in samples:
-        family = sample.udf['Dx Familienummer']
-        sample_name = get_sequence_name(sample)
-        ped_sample = {'name': sample_name}
+        if 'Dx Familienummer' in sample.udf:
+            family = sample.udf['Dx Familienummer']
+            sample_name = get_sequence_name(sample)
+            ped_sample = {'name': sample_name}
 
-        if family not in ped_families:
-            ped_families[family] = {
-                'father': {},
-                'mother': {},
-                'children': []
-            }
+            if family not in ped_families:
+                ped_families[family] = {
+                    'father': {},
+                    'mother': {},
+                    'children': []
+                }
 
-        if sample.udf['Dx Geslacht'].lower() == 'man':
-            ped_sample['sex'] = 1
-        elif sample.udf['Dx Geslacht'].lower() == 'vrouw':
-            ped_sample['sex'] = 2
-        elif sample.udf['Dx Geslacht'].lower() == 'onbekend':
-            ped_sample['sex'] = 0
+            if sample.udf['Dx Geslacht'].lower() == 'man':
+                ped_sample['sex'] = 1
+            elif sample.udf['Dx Geslacht'].lower() == 'vrouw':
+                ped_sample['sex'] = 2
+            elif sample.udf['Dx Geslacht'].lower() == 'onbekend':
+                ped_sample['sex'] = 0
 
-        # Determine affection
-        ped_sample['affection'] = 0
-        if sample.udf['Dx Onderzoeksreden'] == 'Bevestiging diagnose':
-            ped_sample['affection'] = 2
-        elif sample.udf['Dx Onderzoeksreden'] == 'Informativiteitstest':
-            ped_sample['affection'] = 1
+            # Determine affection
+            ped_sample['affection'] = 0  # unkown
+            if 'Bevestiging diagnose' in sample.udf['Dx Onderzoeksreden']:
+                ped_sample['affection'] = 2  # affected
+            elif 'Informativiteitstest' in sample.udf['Dx Onderzoeksreden']:
+                ped_sample['affection'] = 1  # unaffected
+            elif 'Partner onderzoek' in sample.udf['Dx Onderzoeksreden']:
+                ped_sample['affection'] = 1  # unaffected
 
-        # Determine family relationships
-        if sample.udf['Dx Familie status'] == 'Ouder' and ped_sample['sex'] == 1:
-            ped_families[family]['father'] = ped_sample
-        elif sample.udf['Dx Familie status'] == 'Ouder' and ped_sample['sex'] == 2:
-            ped_families[family]['mother'] = ped_sample
-        else:
-            ped_families[family]['children'].append(ped_sample)
+            # Determine family relationships
+            if sample.udf['Dx Familie status'] == 'Ouder' and ped_sample['sex'] == 1:
+                ped_families[family]['father'] = ped_sample
+            elif sample.udf['Dx Familie status'] == 'Ouder' and ped_sample['sex'] == 2:
+                ped_families[family]['mother'] = ped_sample
+            else:
+                ped_families[family]['children'].append(ped_sample)
 
     for family in ped_families:
         ped_family = ped_families[family]

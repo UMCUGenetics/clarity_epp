@@ -21,10 +21,13 @@ def set_runid_name(lims, process_id):
     analyte = process.analytes()[0][0]
     input_artifact = process.all_inputs()[0]
 
+    container_name = analyte.container.name
+
     # Find sequencing process
     # Assume one sequence process per input artifact
     for sequence_process_type in config.sequence_process_types:
-        sequence_process = lims.get_processes(type=sequence_process_type, inputartifactlimsid=input_artifact.id)[0]
-        if sequence_process:
-            analyte.name = sequence_process.udf['Run ID']
-            analyte.put()
+        sequence_processes = lims.get_processes(type=sequence_process_type, inputartifactlimsid=input_artifact.id)
+        for sequence_process in sequence_processes:
+            if sequence_process.analytes()[0][0].container.name == container_name:
+                analyte.name = sequence_process.udf['Run ID']
+                analyte.put()

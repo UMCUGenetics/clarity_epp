@@ -45,22 +45,33 @@ def export_illumina(args):
 
 def export_labels(args):
     """Export container labels."""
-    clarity_epp.export.labels.containers(lims, args.process_id, args.output_file)
+    if args.type == 'container':
+        clarity_epp.export.labels.container(lims, args.process_id, args.output_file, args.description)
+    elif args.type == 'container_sample':
+        clarity_epp.export.labels.container_sample(lims, args.process_id, args.output_file)
+    elif args.type == 'storage_location':
+        clarity_epp.export.labels.storage_location(lims, args.process_id, args.output_file)
 
 
 def export_manual_pipetting(args):
     """Export samplesheets for manual pipetting."""
     if args.type == 'purify':
         clarity_epp.export.manual_pipetting.samplesheet_purify(lims, args.process_id, args.output_file)
-    elif args.type == 'sequencing_pool':
-        clarity_epp.export.manual_pipetting.samplesheet_sequencing_pool(lims, args.process_id, args.output_file)
-    elif args.type == 'multiplex':
-        clarity_epp.export.manual_pipetting.samplesheet_multiplex(lims, args.process_id, args.output_file)
-
+    elif args.type == 'dilute_library_pool':
+        clarity_epp.export.manual_pipetting.samplesheet_dilute_library_pool(lims, args.process_id, args.output_file)
+    elif args.type == 'multiplex_library_pool':
+        clarity_epp.export.manual_pipetting.samplesheet_multiplex_library_pool(lims, args.process_id, args.output_file)
+    elif args.type == 'multiplex_sequence_pool':
+        clarity_epp.export.manual_pipetting.samplesheet_multiplex_sequence_pool(lims, args.process_id, args.output_file)
 
 def export_ped_file(args):
     """Export ped file."""
     clarity_epp.export.ped.create_file(lims, args.process_id, args.output_file)
+
+
+def export_samplelist(args):
+    """Generate samplelist."""
+    clarity_epp.export.samplelist.removed_samples(lims, args.output_file)
 
 
 def export_tapestation(args):
@@ -75,7 +86,10 @@ def export_tecan(args):
 
 def export_workflow(args):
     """Export workflow overview files."""
-    clarity_epp.export.workflow.helix(lims, args.process_id, args.output_file)
+    if args.type == 'lab':
+        clarity_epp.export.workflow.helix_lab(lims, args.process_id, args.output_file)
+    elif args.type == 'data_analysis':
+        clarity_epp.export.workflow.helix_data_analysis(lims, args.process_id, args.output_file)
 
 
 # Upload Functions
@@ -135,6 +149,16 @@ def placement_barcode(args):
         clarity_epp.placement.barcode.check_family(lims, args.process_id)
 
 
+def placement_unpooling(args):
+    """Pool unpooling."""
+    clarity_epp.placement.pool.unpooling(lims, args.process_id)
+
+
+def placement_complete_step(args):
+    """Complete protocol step (Dx Mark protocol complete)."""
+    clarity_epp.placement.step.finish_protocol_complete(lims, args.process_id)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
@@ -156,7 +180,7 @@ if __name__ == "__main__":
     parser_export_tecan.set_defaults(func=export_tecan)
 
     parser_export_manual_pipetting = subparser_export.add_parser('manual', help='Create manual pipetting _exports', parents=[output_parser])
-    parser_export_manual_pipetting.add_argument('type', choices=['purify', 'sequencing_pool', 'multiplex'], help='Samplesheet type')
+    parser_export_manual_pipetting.add_argument('type', choices=['purify', 'dilute_library_pool', 'multiplex_library_pool', 'multiplex_sequence_pool'], help='Samplesheet type')
     parser_export_manual_pipetting.add_argument('process_id', help='Clarity lims process id')
     parser_export_manual_pipetting.set_defaults(func=export_manual_pipetting)
 
@@ -174,7 +198,10 @@ if __name__ == "__main__":
     parser_export_bioanalyzer.set_defaults(func=export_bioanalyzer)
 
     parser_export_labels = subparser_export.add_parser('labels', help='Export container labels.', parents=[output_parser])
+    parser_export_labels.add_argument('type', choices=['container', 'container_sample', 'storage_location'], help='Label type')
     parser_export_labels.add_argument('process_id', help='Clarity lims process id')
+    parser_export_labels.add_argument('-d', '--description',  nargs='?', help='Container name description')
+
     parser_export_labels.set_defaults(func=export_labels)
 
     parser_export_ped = subparser_export.add_parser('ped', help='Export ped file.', parents=[output_parser])
@@ -182,6 +209,7 @@ if __name__ == "__main__":
     parser_export_ped.set_defaults(func=export_ped_file)
 
     parser_export_workflow = subparser_export.add_parser('workflow', help='Export workflow result file.', parents=[output_parser])
+    parser_export_workflow.add_argument('type', choices=['lab', 'data_analysis'], help='Workflow type')
     parser_export_workflow.add_argument('process_id', help='Clarity lims process id')
     parser_export_workflow.set_defaults(func=export_workflow)
 
@@ -189,6 +217,9 @@ if __name__ == "__main__":
     parser_export_illumina.add_argument('process_id', help='Clarity lims process id')
     parser_export_illumina.add_argument('artifact_id', help='Clarity lims samplesheet artifact id')
     parser_export_illumina.set_defaults(func=export_illumina)
+
+    parser_export_samplelist = subparser_export.add_parser('samplelist', help='Export samplelist.', parents=[output_parser])
+    parser_export_samplelist.set_defaults(func=export_samplelist)
 
     # Sample upload
     parser_upload = subparser.add_parser('upload', help='Upload samples or results to clarity lims')
@@ -243,6 +274,14 @@ if __name__ == "__main__":
     parser_placement_barcode.add_argument('type', choices=['check_family'], help='Check type')
     parser_placement_barcode.add_argument('process_id', help='Clarity lims process id')
     parser_placement_barcode.set_defaults(func=placement_barcode)
+
+    parser_placement_unpooling = subparser_placement.add_parser('unpooling', help='Unpooling of sequencing pool.')
+    parser_placement_unpooling.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_unpooling.set_defaults(func=placement_unpooling)
+
+    parser_placement_complete_step = subparser_placement.add_parser('complete_step', help='Complete step Dx Mark protocol complete.')
+    parser_placement_complete_step.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_complete_step.set_defaults(func=placement_complete_step)
 
     args = parser.parse_args()
     args.func(args)

@@ -10,12 +10,16 @@ def check_family(lims, process_id):
         sample = artifact.samples[0]
         barcode = artifact.reagent_labels[0]
 
-        query_udf = {'Dx Familienummer': sample.udf['Dx Familienummer']}
-
-        family_samples = lims.get_samples(udf=query_udf)
-        for family_sample in family_samples:
-            if family_sample.id != sample.id:
-                family_sample_artifacts = lims.get_artifacts(samplelimsid=family_sample.id, reagent_label=barcode, process_type=process.type.name)
-                if family_sample_artifacts:
-                    artifact.udf['Dx monster met BC duplicaat'] = "{sample}".format(sample=family_sample.name)
-                    artifact.put()
+        try:
+            query_udf = {'Dx Familienummer': sample.udf['Dx Familienummer']}
+        except KeyError:
+            artifact.udf['Dx monster met BC duplicaat'] = "Barcode niet gecontroleerd."
+            artifact.put()
+        else:
+            family_samples = lims.get_samples(udf=query_udf)
+            for family_sample in family_samples:
+                if family_sample.id != sample.id:
+                    family_sample_artifacts = lims.get_artifacts(samplelimsid=family_sample.id, reagent_label=barcode, process_type=process.type.name)
+                    if family_sample_artifacts:
+                        artifact.udf['Dx monster met BC duplicaat'] = "{sample}".format(sample=family_sample.name)
+                        artifact.put()

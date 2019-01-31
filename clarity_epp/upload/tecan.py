@@ -8,7 +8,7 @@ def results(lims, process_id):
     process = Process(lims, id=process_id)
 
     # Parse output file
-    for output in process.shared_result_files():
+    for output in process.all_outputs(unique=True):
         if output.name == 'Tecan Spark Output':
             tecan_result_file = output.files[0]
             tecan_file_order = ['Dx Fluorescentie (nM)', 'sample_name']
@@ -81,10 +81,18 @@ def results(lims, process_id):
             # Set QC flags
             if artifact.name.startswith('Dx Tecan std'):
                 artifact.qc_flag = 'PASSED'
+                std_number = int(artifact.name.split(' ')[3])
+                artifact.udf['Dx Conc. goedgekeurde meting (ng/ul)'] = ng_values[std_number - 1]
+                artifact.udf['Dx Concentratie fluorescentie (ng/ul)'] = ng_values[std_number - 1]
             else:
-                cutoff_value = sample_concentration * 0.1
-                if artifact_concentration > (sample_concentration - cutoff_value) and artifact_concentration < (sample_concentration + cutoff_value):
+                # Calculate measurement deviation from average.
+                if len(sample_measurements[artifact.name]) == 1:
                     artifact.qc_flag = 'PASSED'
-                else:
-                    artifact.qc_flag = 'FAILED'
+                elif len(sample_measurements[artifact.name]) == 2:
+                    artifact_fluorescence_difference = abs(sample_measurements[artifact.name][0] - sample_measurements[artifact.name][1])
+                    artifact_fluorescence_deviation = artifact_fluorescence_difference / sample_fluorescence
+                    if artifact_fluorescence_deviation <= 0.1:
+                        artifact.qc_flag = 'PASSED'
+                    else:
+                        artifact.qc_flag = 'FAILED'
             artifact.put()

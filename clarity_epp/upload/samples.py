@@ -24,7 +24,7 @@ def from_helix(lims, email_settings, input_file):
 
     # Get researcher using helix initials
     for researcher in lims.get_researchers():
-        if researcher.initials == helix_initials:
+        if researcher.fax == helix_initials:  # Use FAX as intials field as the lims initials field can't be edited via the 5.0 web interface.
             email_settings['to'].append(researcher.email)
             break
     else:   # No researcher found
@@ -113,23 +113,22 @@ def from_helix(lims, email_settings, input_file):
         else:
             udf_data['Dx Import warning'] = ';'.join(['Onbekende onderzoeksreden, familie status niet ingevuld.', udf_data['Dx Import warning']])
 
-
         # Set 'Dx Geslacht' and 'Dx Geboortejaar' with 'Foetus' information if 'Dx Foetus == True'
         if udf_data['Dx Foetus']:
             udf_data['Dx Geslacht'] = udf_data['Dx Foetus geslacht']
             udf_data['Dx Geboortejaar'] = ''
 
         # Set 'Dx Geslacht = Onbekend' if 'Dx Onderzoeksindicatie == DSD00'
-        if udf_data['Dx Onderzoeksindicatie'] == 'DSD00':
+        if udf_data['Dx Onderzoeksindicatie'] == 'DSD00' and udf_data['Dx Familie status'] == 'Kind':
             udf_data['Dx Geslacht'] = 'Onbekend'
 
         # Check 'Dx Familienummer' and correct
-        if ';' in udf_data['Dx Familienummer']:
+        if '/' in udf_data['Dx Familienummer']:
             udf_data['Dx Import warning'] = ';'.join([
-                'Meerdere familienummers, eerste wordt gebruikt. ({0})'.format(udf_data['Dx Familienummer']),
+                'Meerdere familienummers, laatste wordt gebruikt. ({0})'.format(udf_data['Dx Familienummer']),
                 udf_data['Dx Import warning']
             ])
-            udf_data['Dx Familienummer'] = udf_data['Dx Familienummer'].split(';')[0].strip(' ')
+            udf_data['Dx Familienummer'] = udf_data['Dx Familienummer'].split('/')[-1].strip(' ')
 
         sample_list = lims.get_samples(name=sample_name)
 
@@ -154,7 +153,7 @@ def from_helix(lims, email_settings, input_file):
                     sample.udf[udf] = udf_data[udf]
 
                 # Add to new workflow
-                workflow = utils.stofcode_to_workflow(lims, udf_data['Dx Stoftest code'])
+                workflow = utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])
                 if workflow:
                     sample.put()
                     lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
@@ -170,7 +169,7 @@ def from_helix(lims, email_settings, input_file):
                     udf_data['Dx Import warning'] = ';'.join(['Onderzoek reeds uitgevoerd.', udf_data['Dx Import warning']])
 
             # Add sample to workflow
-            workflow = utils.stofcode_to_workflow(lims, udf_data['Dx Stoftest code'])
+            workflow = utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])
             if workflow:
                 container = Container.create(lims, type=container_type, name=udf_data['Dx Fractienummer'])
                 sample = Sample.create(lims, container=container, position='1:1', project=project, name=sample_name, udf=udf_data)
@@ -181,4 +180,3 @@ def from_helix(lims, email_settings, input_file):
 
     # Send final email
     send_email(email_settings['from'], email_settings['to'], subject, message)
-    print message

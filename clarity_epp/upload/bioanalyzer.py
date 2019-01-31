@@ -11,7 +11,7 @@ def results(lims, process_id):
     sample_measurements = {}
 
     # Parse File
-    for output in process.shared_result_files():
+    for output in process.all_outputs(unique=True):
         if output.name == 'Bioanalyzer Output':
             bioanalyzer_result_file = output.files[0]
 
@@ -19,13 +19,12 @@ def results(lims, process_id):
                 if line.startswith('Sample Name'):
                     sample = line.rstrip().split(',')[1]
                 elif line.startswith('Region 1'):
-                    line = re.sub(r'("[0-9]+),([0-9\.]+")', r'\1\2', line)  # Fix
+                    line = re.sub(r'"([0-9]+),([0-9\.]+)"', r'\1\2', line)  # Fix remove thousands seperator (,) and quotes ("")
                     size = line.rstrip().split(',')[5]
                     sample_measurements[sample] = int(size)
 
     # Set UDF
     for artifact in process.all_outputs():
-        if artifact.name not in ['Bioanalyzer Output', 'Bioanalyzer Samplesheet', 'Bioanalyzer Sampleplots PDF']:
-            sample_name = artifact.name
-            artifact.udf['Dx Fragmentlengte (bp)'] = sample_measurements[sample_name]
+        if artifact.name in sample_measurements:
+            artifact.udf['Dx Fragmentlengte (bp)'] = sample_measurements[artifact.name]
             artifact.put()
