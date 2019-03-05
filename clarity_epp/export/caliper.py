@@ -1,7 +1,6 @@
 """Caliper export functions."""
 
 from genologics.entities import Process
-from genologics.entities import Processtype
 
 import utils
 
@@ -104,7 +103,6 @@ def samplesheet_normalise(lims, process_id, output_file):
                         sample = a.samples[0].name
                         if sample not in sample_concentration:
                             sample_concentration[sample] = 'geen'
-
     for p in qc_processes:
         for a in p.all_outputs():
             if 'Tecan' not in a.name and 'check' not in a.name:
@@ -117,12 +115,13 @@ def samplesheet_normalise(lims, process_id, output_file):
                         machine = 'Qubit'
                     sample = a.samples[0].name
             if sample not in sample_concentration or machine == 'Qubit':
-                if machine == 'Tecan':
-                    sample_measurements = samples_measurements_tecan[sample]
-                elif machine == 'Qubit':
-                    sample_measurements = samples_measurements_qubit[sample]
-                sample_measurements_average = sum(sample_measurements) / float(len(sample_measurements))
-                sample_concentration[sample] = sample_measurements_average
+                if sample in samples_measurements_tecan or sample in samples_measurements_qubit:
+                    if machine == 'Tecan':
+                        sample_measurements = samples_measurements_tecan[sample]
+                    elif machine == 'Qubit':
+                        sample_measurements = samples_measurements_qubit[sample]
+                    sample_measurements_average = sum(sample_measurements) / float(len(sample_measurements))
+                    sample_concentration[sample] = sample_measurements_average
 
     for placement, artifact in process.output_containers()[0].placements.iteritems():
         placement = ''.join(placement.split(':'))
@@ -130,7 +129,7 @@ def samplesheet_normalise(lims, process_id, output_file):
         if order[placement] > last_filled_well:
             last_filled_well = order[placement]
 
-    for x in range(0 ,last_filled_well):
+    for x in range(0, last_filled_well):
         for well, number in order.iteritems():
             if number == x:
                 placement = well
