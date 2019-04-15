@@ -4,19 +4,19 @@ from genologics.entities import Process
 import config
 
 
-def determin_meetw(meetw_processes, sample_processes):
-    """Determine meetw and meetw_herh based on list of processes."""
+def determin_meetw(meetw_processes, sample_processes, repeat_cutoff=2):
+    """Determine meetwaarde and meetwaarde herhaling (reapeat) based on list of processes and repeat cutoff."""
     meetw = 0
     meetw_herh = 0
 
     for process in meetw_processes:
         if process in sample_processes:
-            if len(sample_processes[process]) == 1:
-                meetw = 1
-            else:
+            if len(sample_processes[process]) >= repeat_cutoff:
                 meetw = 0
                 meetw_herh = 1
                 break
+            else:
+                meetw = 1
     return meetw, meetw_herh
 
 
@@ -40,10 +40,11 @@ def helix_lab(lims, process_id, output_file):
                         sample_processes[process_name] = set([process_id])
 
             # Determine meetw
-            meetw_zui, meetw_zui_herh = determin_meetw(config.meetw_zui_processes, sample_processes)
-            meetw_libprep, meetw_libprep_herh = determin_meetw(config.meetw_libprep_processes, sample_processes)
-            meetw_enrich, meetw_enrich_herh = determin_meetw(config.meetw_enrich_processes, sample_processes)
-            meetw_seq, meetw_seq_herh = determin_meetw(config.meetw_seq_processes, sample_processes)
+            repeat_cutoff = len(sample.udf['Dx Werklijstnummer'].split(';')) * 2
+            meetw_zui, meetw_zui_herh = determin_meetw(config.meetw_zui_processes, sample_processes, repeat_cutoff)
+            meetw_libprep, meetw_libprep_herh = determin_meetw(config.meetw_libprep_processes, sample_processes, repeat_cutoff)
+            meetw_enrich, meetw_enrich_herh = determin_meetw(config.meetw_enrich_processes, sample_processes, repeat_cutoff)
+            meetw_seq, meetw_seq_herh = determin_meetw(config.meetw_seq_processes, sample_processes, repeat_cutoff)
 
             output_file.write(
                 "{meet_id}\t{werklijst}\t{onderzoeksnummer}\t{monsternummer}\t{meetw_zui}\t{meetw_zui_herh}\t{meetw_libprep}\t{meetw_libprep_herh}\t{meetw_enrich}\t{meetw_enrich_herh}\t{meetw_seq}\t{meetw_seq_herh}\n".format(
