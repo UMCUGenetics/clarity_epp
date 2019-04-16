@@ -6,6 +6,7 @@ import hamilton
 import illumina
 import labels
 import manual_pipetting
+import merge
 import ped
 import samplelist
 import tapestation
