@@ -44,7 +44,7 @@ def samplesheet_dilute_library_pool(lims, process_id, output_file):
     pool_lines = []  # save pool data to list, to be able to sort on pool number.
 
     for pool in process.all_inputs():
-        pool_number = int(re.search('Pool #(\d+)_', pool.name).group(1))
+        pool_number = int(re.search(r'Pool #(\d+)_', pool.name).group(1))
         pool_input_artifact = pool.input_artifact_list()[0]
 
         size = float(pool_input_artifact.udf['Dx Fragmentlengte (bp)'])
@@ -118,7 +118,7 @@ def samplesheet_multiplex_library_pool(lims, process_id, output_file):
     udf_name_ul_sample = {}
     plate_id = {}
     well_id = {}
-    not_3 = []
+    pools_not_3 = []
     order = [
         'A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'G2', 'H2', 'A3', 'B3', 'C3', 'D3', 'E3', 'F3', 'G3',
         'H3', 'A4', 'B4', 'C4', 'D4', 'E4', 'F4', 'G4', 'H4', 'A5', 'B5', 'C5', 'D5', 'E5', 'F5', 'G5', 'H5', 'A6', 'B6', 'C6', 'D6', 'E6', 'F6',
@@ -128,7 +128,6 @@ def samplesheet_multiplex_library_pool(lims, process_id, output_file):
     ]
     order = dict(zip(order, range(len(order))))
     well_order = {}
-    pools = {}
     sample_well_pool = []
 
     # get input udfs 'Dx sample volume ul' and 'Dx Samplenaam' per output analyte
@@ -137,7 +136,7 @@ def samplesheet_multiplex_library_pool(lims, process_id, output_file):
             if 'Dx sample volume (ul)' in output.udf and 'Dx Samplenaam' in output.udf:
                 udf_ul_sample[output.name] = output.udf['Dx sample volume (ul)']
                 # if samplename is complete sequencename take only monsternummer
-                if re.search('U\d{6}\D{2}', output.udf['Dx Samplenaam']):
+                if re.search(r'U\d{6}\D{2}', output.udf['Dx Samplenaam']):
                     udf_name_ul_sample[output.name] = output.udf['Dx Samplenaam'][9:]
                 else:
                     udf_name_ul_sample[output.name] = output.udf['Dx Samplenaam']
@@ -147,16 +146,19 @@ def samplesheet_multiplex_library_pool(lims, process_id, output_file):
     for input in inputs:
         sample = input.samples[0]
         samplename = sample.name
+
         if 'Dx Concentratie fluorescentie (ng/ul)' in input.udf:
             measurement = input.udf['Dx Concentratie fluorescentie (ng/ul)']
             qcflag = input.qc_flag
             if qcflag == 'UNKNOWN' or 'PASSED':
                 sample_concentration[samplename] = measurement
+
         if 'Dx Fragmentlengte (bp)' in input.udf:
             measurement = input.udf['Dx Fragmentlengte (bp)']
             qcflag = input.qc_flag
             if qcflag == 'UNKNOWN' or 'PASSED':
                 sample_size[samplename] = measurement
+
         plate_id[samplename] = input.container.name
         placement = input.location[1]
         placement = ''.join(placement.split(':'))
@@ -182,16 +184,11 @@ def samplesheet_multiplex_library_pool(lims, process_id, output_file):
                     else:
                         samplestatus.append(sample.udf['Dx Familie status'])
 
-                if samplestatus[0] == 'Kind' and samplestatus[1] == 'Kind' and samplestatus[2] == 'Kind' or \
-                    samplestatus[0] == 'Ouder' and samplestatus[1] == 'Ouder' and samplestatus[2] == 'Ouder':
+                if samplestatus == ['Kind']*3 or samplestatus == ['Ouder']*3:
                     trio_statuses[output.name] = 'CCC'
-                elif samplestatus[0] == 'Kind' and samplestatus[1] == 'Ouder' and samplestatus[2] == 'Ouder' or \
-                    samplestatus[0] == 'Ouder' and samplestatus[1] == 'Kind' and samplestatus[2] == 'Ouder' or \
-                    samplestatus[0] == 'Ouder' and samplestatus[1] == 'Ouder' and samplestatus[2] == 'Kind':
+                elif sorted(samplestatus) == ['Kind', 'Ouder', 'Ouder']:
                     trio_statuses[output.name] = 'CPP'
-                elif samplestatus[0] == 'Kind' and samplestatus[1] == 'Kind' and samplestatus[2] == 'Ouder' or \
-                    samplestatus[0] == 'Kind' and samplestatus[1] == 'Ouder' and samplestatus[2] == 'Kind' or \
-                    samplestatus[0] == 'Ouder' and samplestatus[1] == 'Kind' and samplestatus[2] == 'Kind':
+                elif sorted(samplestatus) == ['Kind', 'Kind', 'Ouder']:
                     trio_statuses[output.name] = 'CCP'
 
                 # if udfs 'Dx sample volume ul' and 'Dx Samplenaam' are not empty change trio status and do pre-calculation
@@ -227,7 +224,7 @@ def samplesheet_multiplex_library_pool(lims, process_id, output_file):
             # if number of samples in pool is not 3 set trio status and prepare error warning output file
             else:
                 trio_statuses[output.name] = 'not_3'
-                not_3.append(output.name)
+                pools_not_3.append(output.name)
 
             # calculation if udfs 'Dx sample volume ul' and 'Dx Samplenaam' are empty and not empty
             if not sample_given_ul:
@@ -258,34 +255,29 @@ def samplesheet_multiplex_library_pool(lims, process_id, output_file):
                     )
 
             # sorting pools then wells for output file
-            name = output.name
-            if re.search('#\d_', output.name):
-                name = re.sub('#', '#0', output.name)
-
+            sort_pool_name = output.name
+            if re.search(r'#\d_', sort_pool_name):
+                sort_pool_name = re.sub('#', '#0', sort_pool_name)
             for sample in output.samples:
-                pools[sample.name] = name
-                sample_well_pool.append([sample.name, well_order[sample.name], pools[sample.name]])
+                sample_well_pool.append([sample, well_order[sample.name], sort_pool_name, output.name])
 
     sorted_samples = sorted(sample_well_pool, key=lambda sample: (sample[2], sample[1]))
 
     # write output file per output analyte sorted on pool number
     output_file.write('Sample\tul Sample\tPlaat_id\twell_id\tpool\n')
-    if len(not_3) >= 1:
-        output_file.write('De volgende pool(s) hebben een ander aantal samples dan 3: {pools}\n'.format(pools=not_3))
+    if pools_not_3:
+        output_file.write('De volgende pool(s) hebben een ander aantal samples dan 3: {pools}\n'.format(pools=pools_not_3))
 
     for sorted_sample in sorted_samples:
-        name = sorted_sample[0]
-        for output in outputs:
-            if output.type == 'Analyte':
-                for sample in output.samples:
-                    if sample.name == name:
-                        output_file.write('{sample}\t{ul_sample:.2f}\t{plate_id}\t{well_id}\t{pool}\n'.format(
-                            sample=sample.name,
-                            ul_sample=ul_sample[sample.name],
-                            plate_id=plate_id[sample.name],
-                            well_id=well_id[sample.name],
-                            pool=output.name
-                        ))
+        sample = sorted_sample[0]
+
+        output_file.write('{sample}\t{ul_sample:.2f}\t{plate_id}\t{well_id}\t{pool}\n'.format(
+            sample=sample.name,
+            ul_sample=ul_sample[sample.name],
+            plate_id=plate_id[sample.name],
+            well_id=well_id[sample.name],
+            pool=sorted_sample[3]
+        ))
 
 
 def samplesheet_multiplex_sequence_pool(lims, process_id, output_file):
