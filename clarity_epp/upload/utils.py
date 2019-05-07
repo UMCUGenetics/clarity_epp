@@ -1,4 +1,7 @@
 """Utility functions."""
+from datetime import datetime
+import re
+
 from genologics.entities import Workflow
 
 
@@ -27,11 +30,26 @@ def transform_sex(value):
         return value
 
 
+def transform_sample_name(value):
+    """Transform legacy name to new sample name."""
+    if '/' in value:
+        match = re.search("D(\d\d)/(.+)", value)
+        sample_name = '{year}D{sample_id}'.format(
+            year=datetime.strptime(match.group(1), '%y').year,
+            sample_id=match.group(2)
+        )
+        return sample_name
+    else:
+        return value
+
+
 def stoftestcode_to_workflow(lims, stoftestcode):
     """Return workflow based on helix stoftestcode."""
     if stoftestcode == 'NGS_008':
-        return Workflow(lims, id='751')  # Dx Exoom KAPA v1.5
+        return Workflow(lims, id='702')  # DEV Dx Exoom KAPA v1.5
     elif stoftestcode == 'NGS_022':
-        return Workflow(lims, id='751')  # Dx Exoom KAPA v1.5
+        return Workflow(lims, id='702')  # DEV Dx Exoom KAPA v1.5
+    elif stoftestcode == 'NGS_023':
+        return Workflow(lims, id='801')  # DEV Dx Exoom KAPA_labflow v1.0
     else:
         return None
