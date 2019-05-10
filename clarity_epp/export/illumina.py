@@ -1,6 +1,4 @@
 """Illumina export functions."""
-import re
-
 from genologics.entities import Process, Artifact
 
 from .. import get_sequence_name
@@ -73,20 +71,26 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
             family_project_type['index'] += 1
 
     # Edit clarity samplesheet
-    header = ''  # empty until [data] section
+    sample_header = ''  # empty until [data] section
     samplesheet_artifact = Artifact(lims, id=artifact_id)
     file_id = samplesheet_artifact.files[0].id
 
     for line in lims.get_file_contents(id=file_id).rstrip().split('\n'):
-        if line.startswith('Sample_ID'):  # Samples header line
-            header = line.rstrip().split(',')
+        if line.startswith('[Data]'):
+            output_file.write('[Settings]\n')
+            output_file.write('Read1EndWithCycle,{value}\n'.format(value=process.udf['Read 1 Cycles']-1))
+            output_file.write('Read2EndWithCycle,{value}\n'.format(value=process.udf['Read 2 Cycles']-1))
             output_file.write('{line}\n'.format(line=line))
 
-        elif header:  # Samples header seen, so continue with samples.
+        elif line.startswith('Sample_ID'):  # Samples header line
+            sample_header = line.rstrip().split(',')
+            output_file.write('{line}\n'.format(line=line))
+
+        elif sample_header:  # Samples header seen, so continue with samples.
             data = line.rstrip().split(',')
-            sample_id_index = header.index('Sample_ID')
-            sample_name_index = header.index('Sample_Name')
-            sample_project_index = header.index('Sample_Project')
+            sample_id_index = sample_header.index('Sample_ID')
+            sample_name_index = sample_header.index('Sample_Name')
+            sample_project_index = sample_header.index('Sample_Project')
 
             # Set Sample_Project
             try:
