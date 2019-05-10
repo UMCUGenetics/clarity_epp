@@ -1,10 +1,10 @@
-"""Samplelist functioins"""
+"""Samplelist functions"""
 
 from genologics.entities import Artifact
 import datetime
 
 def removed_samples(lims, output_file):
-    """Generates list with samples removed frow a workflow and not restarted and where there is no new sample from the same person in a workflow"""
+    """Generates list with samples removed from a workflow and not restarted and where there is no new sample from the same person in a workflow"""
     output_file.write('Datum verwijderd\tOnderzoeks nummer\tOnderzoeks indicatie\tSample\tSample project\tLaatst verwijderd uit stap\tWerklijst nummer\tFouten registratie (oorzaak)\n')
     all_samples = lims.get_samples()
     teller = 0
@@ -73,13 +73,13 @@ def removed_samples(lims, output_file):
                                 if date >= last_removed[samplename]:
                                     last_removed[samplename] = date
                                     last_removed_stage[samplename] = stage
-                                    if 'Fouten registratie (oorzaak)' in proces.udf:
-                                        udf[samplename] = proces.udf['Fouten registratie (oorzaak)']
+                                    if 'Dx Fouten registratie (oorzaak)' in proces.udf:
+                                        udf[samplename] = proces.udf['Dx Fouten registratie (oorzaak)']
                             else:
                                 last_removed[samplename] = date
                                 last_removed_stage[samplename] = stage
-                                if 'Fouten registratie (oorzaak)' in proces.udf:
-                                    udf[samplename] = proces.udf['Fouten registratie (oorzaak)']
+                                if 'Dx Fouten registratie (oorzaak)' in proces.udf:
+                                    udf[samplename] = proces.udf['Dx Fouten registratie (oorzaak)']
                         if all_samples[teller] not in removed_samples:
                             removed_samples.append(all_samples[teller])
 
