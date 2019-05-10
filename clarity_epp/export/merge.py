@@ -14,7 +14,7 @@ def create_file(lims, process_id, output_file):
     for sample in samples:
         sample_merge = []
         if 'Dx Mergen' in sample.udf and sample.udf['Dx Mergen']:
-            for udf in ['Dx Merg 1 Runnaam', 'Dx Merg 1 Samplenaam', 'Dx Merg 2 Runnaam', 'Dx Merg 2 Samplenaam']:
+            for udf in ['Dx Merge 1 Runnaam', 'Dx Merge 1 Samplenaam', 'Dx Merge 2 Runnaam', 'Dx Merge 2 Samplenaam']:
                 if udf in sample.udf:
                     sample_merge.append(sample.udf[udf])
                 else:
