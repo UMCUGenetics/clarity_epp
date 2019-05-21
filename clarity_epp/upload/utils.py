@@ -4,6 +4,8 @@ import re
 
 from genologics.entities import Workflow
 
+import config
+
 
 def char_to_bool(letter):
     """Transform character (J/N) to Bool."""
@@ -45,11 +47,7 @@ def transform_sample_name(value):
 
 def stoftestcode_to_workflow(lims, stoftestcode):
     """Return workflow based on helix stoftestcode."""
-    if stoftestcode == 'NGS_008':
-        return Workflow(lims, id='702')  # DEV Dx Exoom KAPA v1.5
-    elif stoftestcode == 'NGS_022':
-        return Workflow(lims, id='702')  # DEV Dx Exoom KAPA v1.5
-    elif stoftestcode == 'NGS_023':
-        return Workflow(lims, id='801')  # DEV Dx Exoom KAPA_labflow v1.0
+    if stoftestcode in config.stoftestcode_workflow:
+        return Workflow(lims, id=config.stoftestcode_workflow[stoftestcode])
     else:
         return None
