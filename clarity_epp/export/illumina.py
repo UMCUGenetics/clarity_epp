@@ -2,6 +2,7 @@
 from genologics.entities import Process, Artifact
 
 from .. import get_sequence_name
+import utils
 
 
 def update_samplesheet(lims, process_id, artifact_id, output_file):
@@ -70,13 +71,26 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
         else:
             family_project_type['index'] += 1
 
+    # Check sequencer type -> NextSeq runs need to reverse complement 'index2' for dual barcodes and 'index' for single barcodes.
+    if 'nextseq' in process.type.name.lower():
+        nextseq_run = True
+    else:
+        nextseq_run = False
+
     # Edit clarity samplesheet
     sample_header = ''  # empty until [data] section
+    settings_section = False
     samplesheet_artifact = Artifact(lims, id=artifact_id)
     file_id = samplesheet_artifact.files[0].id
 
     for line in lims.get_file_contents(id=file_id).rstrip().split('\n'):
-        if line.startswith('[Data]'):
+        if line.startswith('[Settings]'):
+            output_file.write('{line}\n'.format(line=line))
+            output_file.write('Read1EndWithCycle,{value}\n'.format(value=process.udf['Read 1 Cycles']-1))
+            output_file.write('Read2EndWithCycle,{value}\n'.format(value=process.udf['Read 2 Cycles']-1))
+            settings_section = True
+
+        elif line.startswith('[Data]') and not settings_section:
             output_file.write('[Settings]\n')
             output_file.write('Read1EndWithCycle,{value}\n'.format(value=process.udf['Read 1 Cycles']-1))
             output_file.write('Read2EndWithCycle,{value}\n'.format(value=process.udf['Read 2 Cycles']-1))
@@ -84,13 +98,19 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
 
         elif line.startswith('Sample_ID'):  # Samples header line
             sample_header = line.rstrip().split(',')
+            sample_id_index = sample_header.index('Sample_ID')
+            sample_name_index = sample_header.index('Sample_Name')
+            sample_project_index = sample_header.index('Sample_Project')
+
+            if 'index2' in sample_header:
+                index_index = sample_header.index('index2')
+            else:
+                index_index = sample_header.index('index')
+
             output_file.write('{line}\n'.format(line=line))
 
         elif sample_header:  # Samples header seen, so continue with samples.
             data = line.rstrip().split(',')
-            sample_id_index = sample_header.index('Sample_ID')
-            sample_name_index = sample_header.index('Sample_Name')
-            sample_project_index = sample_header.index('Sample_Project')
 
             # Set Sample_Project
             try:
@@ -100,6 +120,10 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
 
             # Overwrite Sample_ID with Sample_name to get correct conversion output folder structure
             data[sample_id_index] = data[sample_name_index]
+
+            # Reverse complement index for NextSeq runs
+            if nextseq_run:
+                data[index_index] = utils.reverse_complement(data[index_index])
 
             output_file.write('{line}\n'.format(line=','.join(data)))
         else:  # Leave other lines untouched.
