@@ -26,3 +26,10 @@ def reverse_complement(dna_sequence):
     complement = [{'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}[base] for base in dna_sequence]
     reverse_complement = reversed(complement)
     return ''.join(reverse_complement)
+
+
+def sort_artifact_list(artifact):
+    if '-' in artifact.id:
+        return int(artifact.id.split('-')[1])
+    else:
+        return -1
