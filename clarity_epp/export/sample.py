@@ -71,6 +71,7 @@ def removed_samples(lims, output_file):
             person_samples = lims.get_samples(udf={
                 'Dx Persoons ID': sample.udf['Dx Persoons ID'],
                 'Dx Geslacht': sample.udf['Dx Geslacht'],
+                'Dx Familie status': sample.udf['Dx Familie status'],
             })
             for person_sample in person_samples:
                 if person_sample.id != sample.id and sample_removed:
