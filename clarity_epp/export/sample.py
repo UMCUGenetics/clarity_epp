@@ -1,10 +1,11 @@
-"""Samplelist functions"""
+"""Sample export functions."""
 import datetime
 
 import utils
 
 
 def removed_samples(lims, output_file):
+    """Export table with samples that are removed from a workflow."""
     output_file.write('Datum verwijderd\tSample\tSample project\tWerklijst\tOnderzoeks nummer\tOnderzoeks indicatie\tVerwijderd uit stap\n')
 
     # Get DX samples
