@@ -1,5 +1,5 @@
-# sql.sh
-# psql queries
+# postgres_duration_stats.sh
+# psql queries to calculate step / protocol / workflow duration
 
 psql --username dx --dbname clarityDB -o step_stats.txt --no-align --field-separator $'\t' --command "
 SELECT
