@@ -11,7 +11,9 @@ SELECT
     process.createddate as step_start,
     process.lastmodifieddate as step_end,
     process.lastmodifieddate - process.createddate as step_duration,
-    process.lastmodifieddate - project.createddate as total_duration
+    EXTRACT(EPOCH FROM (process.lastmodifieddate - process.createddate)) as step_duration_seconds,
+    process.lastmodifieddate - project.createddate as total_duration,
+    EXTRACT(EPOCH FROM (process.lastmodifieddate - project.createddate)) as total_duration_seconds
 FROM project
 INNER JOIN sample ON project.projectid = sample.projectid
 INNER JOIN artifact_sample_map ON sample.processid = artifact_sample_map.processid
@@ -37,8 +39,10 @@ SELECT
     MIN(project.createddate) as import_date,
     MIN(process.createddate) as protcol_start,
     MAX(process.lastmodifieddate) as protcol_end,
-    MAX(process.lastmodifieddate)- MIN(process.createddate) as protcol_duration,
-    MAX(process.lastmodifieddate) - MIN(project.createddate) as total_duration
+    MAX(process.lastmodifieddate) - MIN(process.createddate) as protcol_duration,
+    EXTRACT(EPOCH FROM (MAX(process.lastmodifieddate) - MIN(process.createddate))) as protcol_duration_seconds,
+    MAX(process.lastmodifieddate) - MIN(project.createddate) as total_duration,
+    EXTRACT(EPOCH FROM (MAX(process.lastmodifieddate) - MIN(project.createddate))) as total_duration_seconds
 FROM project
 INNER JOIN sample ON project.projectid = sample.projectid
 INNER JOIN artifact_sample_map ON sample.processid = artifact_sample_map.processid
@@ -65,7 +69,9 @@ SELECT
     MIN(process.createddate) as workflow_start,
     MAX(process.lastmodifieddate) as workflow_end,
     MAX(process.lastmodifieddate)- MIN(process.createddate) as workflow_duration,
-    MAX(process.lastmodifieddate) - MIN(project.createddate) as total_duration
+    EXTRACT(EPOCH FROM (MAX(process.lastmodifieddate) - MIN(process.createddate))) as workflow_duration_seconds,
+    MAX(process.lastmodifieddate) - MIN(project.createddate) as total_duration,
+    EXTRACT(EPOCH FROM (MAX(process.lastmodifieddate) - MIN(project.createddate))) as total_duration_seconds
 FROM project
 INNER JOIN sample ON project.projectid = sample.projectid
 INNER JOIN artifact_sample_map ON sample.processid = artifact_sample_map.processid
@@ -83,3 +89,8 @@ WHERE project.name LIKE 'Dx%'
 GROUP BY project.name, sample.name
 ORDER BY import_date, sample;
 "
+
+sleep 5s
+zip clarity_lims_stats.zip *.txt
+echo 'Clarity LIMS stats.' | mailx -r <email> -s 'Clarity LIMS stats' -a clarity_lims_stats.zip <emails>
+sleep 5s
