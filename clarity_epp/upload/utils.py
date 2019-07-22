@@ -38,7 +38,7 @@ def transform_sample_name(value):
         match = re.search("D(\d\d)/(.+)", value)
         sample_name = '{year}D{sample_id}'.format(
             year=datetime.strptime(match.group(1), '%y').year,
-            sample_id=match.group(2)
+            sample_id=match.group(2).zfill(5)
         )
         return sample_name
     else:
