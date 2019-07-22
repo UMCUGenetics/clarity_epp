@@ -27,13 +27,15 @@ def get_sequence_name(sample):
     except KeyError:  # None DX sample, use sample.name as sequence name.
         sequence_name = sample.name
     else:
-        sequence_name = '{familienummer}{fam_status}{sex}{monsternummer}'.format(
-            familienummer=sample.udf['Dx Familienummer'],
-            fam_status=fam_status,
-            sex=sex,
-            monsternummer=sample.udf['Dx Monsternummer']
-        )
-
+        if not sample.name.startswith(sample.udf['Dx Familienummer']):
+            sequence_name = '{familienummer}{fam_status}{sex}{monsternummer}'.format(
+                familienummer=sample.udf['Dx Familienummer'],
+                fam_status=fam_status,
+                sex=sex,
+                monsternummer=sample.udf['Dx Monsternummer']
+            )
+        else:
+            sequence_name = sample.name
     return sequence_name
 
 
