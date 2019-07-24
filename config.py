@@ -30,3 +30,8 @@ sequence_process_types = ['add', 'sequencer', 'process', 'types']
 
 # Post sequencing workflow
 post_seq_workflow = 'Dx Post sequencing id'
+
+# Research Onderzoeksindicatie
+research_onderzoeksindicatie_project = {
+    'onderzoeksindicatie': 'sequencing_project'
+}

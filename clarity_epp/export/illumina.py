@@ -3,6 +3,7 @@ from genologics.entities import Process, Artifact
 
 from .. import get_sequence_name
 import utils
+import config
 
 
 def update_samplesheet(lims, process_id, artifact_id, output_file):
@@ -13,6 +14,7 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
     families = {}
     for artifact in process.all_inputs():
         for sample in artifact.samples:
+            print list(sample.udf)
             if 'Dx Familienummer' in list(sample.udf) and 'Dx NICU Spoed' in list(sample.udf) and 'Dx Protocolomschrijving' in list(sample.udf):
                 # Dx sample
                 family = sample.udf['Dx Familienummer']
@@ -21,16 +23,24 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
                     families[family] = {'samples': [], 'NICU': False, 'project_type': 'unknown_project', 'split_project_type': False}
 
                 # Update family information
-                if sample.udf['Dx NICU Spoed']:
-                    families[family]['NICU'] = True
-                    project_type = 'NICU_{0}'.format(sample.udf['Dx Familienummer'])
-                    families[family]['project_type'] = project_type
-                    families[family]['split_project_type'] = False
-
-                elif 'elidS30409818' in sample.udf['Dx Protocolomschrijving'] and not families[family]['NICU']:
-                    project_type = 'CREv2'
-                    families[family]['project_type'] = project_type
-                    families[family]['split_project_type'] = True
+                if sample.udf['Dx Onderzoeksreden'] == 'Research':  # Dx research sample
+                    for onderzoeksindicatie in config.research_onderzoeksindicatie_project:
+                        if sample.udf['Dx Onderzoeksindicatie'] == onderzoeksindicatie:
+                            project_type = config.research_onderzoeksindicatie_project[onderzoeksindicatie]
+                            families[family]['project_type'] = project_type
+                            families[family]['split_project_type'] = False
+                            break
+                
+                else:  # Dx clinic sample
+                    if sample.udf['Dx NICU Spoed']:
+                        families[family]['NICU'] = True
+                        project_type = 'NICU_{0}'.format(sample.udf['Dx Familienummer'])
+                        families[family]['project_type'] = project_type
+                        families[family]['split_project_type'] = False
+                    elif 'elidS30409818' in sample.udf['Dx Protocolomschrijving'] and not families[family]['NICU']:
+                        project_type = 'CREv2'
+                        families[family]['project_type'] = project_type
+                        families[family]['split_project_type'] = True
 
             else:
                 family = sample.project.name
