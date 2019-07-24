@@ -14,7 +14,6 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
     families = {}
     for artifact in process.all_inputs():
         for sample in artifact.samples:
-            print list(sample.udf)
             if 'Dx Familienummer' in list(sample.udf) and 'Dx NICU Spoed' in list(sample.udf) and 'Dx Protocolomschrijving' in list(sample.udf):
                 # Dx sample
                 family = sample.udf['Dx Familienummer']
