@@ -12,7 +12,7 @@ def create_file(lims, process_id, output_file):
     ped_families = {}
 
     for sample in samples:
-        if 'Dx Familienummer' in sample.udf:
+        if 'Dx Familienummer' in sample.udf and sample.udf['Dx Onderzoeksreden'] != 'Research':
             family = sample.udf['Dx Familienummer']
             sample_name = get_sequence_name(sample)
             ped_sample = {'name': sample_name}

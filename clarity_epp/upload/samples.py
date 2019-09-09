@@ -81,7 +81,6 @@ def from_helix(lims, email_settings, input_file):
     # Parse samples
     for line in input_file:
         data = line.rstrip().strip('"').split('","')
-        sample_name = data[header.index('Monsternummer')]
 
         udf_data = {'Sample Type': 'DNA isolated', 'Dx Import warning': ''}  # required lims input
         for udf in udf_column:
@@ -94,8 +93,12 @@ def from_helix(lims, email_settings, input_file):
                 udf_data[udf] = bool(data[udf_column[udf]['index']].strip())
             elif udf == 'Dx Concentratie (ng/ul)':
                 udf_data[udf] = data[udf_column[udf]['index']].replace(',', '.')
+            elif udf in ['Dx Monsternummer', 'Dx Fractienummer']:
+                udf_data[udf] = utils.transform_sample_name(data[udf_column[udf]['index']])
             else:
                 udf_data[udf] = data[udf_column[udf]['index']]
+
+        sample_name = udf_data['Dx Monsternummer']
 
         # Set 'Dx Handmatig' udf
         if udf_data['Dx Foetus'] or udf_data['Dx Overleden'] or udf_data['Dx Materiaal type'] != 'BL':

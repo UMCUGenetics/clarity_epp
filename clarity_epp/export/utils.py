@@ -19,3 +19,17 @@ def sort_96_well_plate(wells):
 
     wells.sort(key=lambda val: order[val])
     return wells
+
+
+def reverse_complement(dna_sequence):
+    """Return reverse complement DNA sequence."""
+    complement = [{'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}[base] for base in dna_sequence]
+    reverse_complement = reversed(complement)
+    return ''.join(reverse_complement)
+
+
+def sort_artifact_list(artifact):
+    if '-' in artifact.id:
+        return int(artifact.id.split('-')[1])
+    else:
+        return -1

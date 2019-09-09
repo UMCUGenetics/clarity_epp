@@ -4,19 +4,19 @@ from genologics.entities import Process
 import config
 
 
-def determin_meetw(meetw_processes, sample_processes):
-    """Determine meetw and meetw_herh based on list of processes."""
+def determin_meetw(meetw_processes, sample_processes, repeat_cutoff=2):
+    """Determine meetwaarde and meetwaarde herhaling (reapeat) based on list of processes and repeat cutoff."""
     meetw = 0
     meetw_herh = 0
 
     for process in meetw_processes:
         if process in sample_processes:
-            if len(sample_processes[process]) == 1:
-                meetw = 1
-            else:
+            if len(sample_processes[process]) >= repeat_cutoff:
                 meetw = 0
                 meetw_herh = 1
                 break
+            else:
+                meetw = 1
     return meetw, meetw_herh
 
 
@@ -27,23 +27,33 @@ def helix_lab(lims, process_id, output_file):
 
     for artifact in process.all_inputs():
         for sample in artifact.samples:
-            sample_artifacts = lims.get_artifacts(samplelimsid=sample.id)
-            sample_processes = {}
+            sample_artifacts = lims.get_artifacts(samplelimsid=sample.id, type='Analyte')
+            sample_all_processes = {}
+            sample_filter_processes = {}  # reset after Dx Sample registratie zuivering
 
             for artifact in sample_artifacts:
                 if artifact.parent_process:
+                    if 'Dx Sample registratie zuivering' in artifact.parent_process.type.name:
+                        sample_filter_processes = {}  # reset after new import
                     process_id = artifact.parent_process.id
                     process_name = artifact.parent_process.type.name
-                    if process_name in sample_processes:
-                        sample_processes[process_name].add(process_id)
+
+                    if process_name in sample_all_processes:
+                        sample_all_processes[process_name].add(process_id)
                     else:
-                        sample_processes[process_name] = set([process_id])
+                        sample_all_processes[process_name] = set([process_id])
+
+                    if process_name in sample_filter_processes:
+                        sample_filter_processes[process_name].add(process_id)
+                    else:
+                        sample_filter_processes[process_name] = set([process_id])
 
             # Determine meetw
-            meetw_zui, meetw_zui_herh = determin_meetw(config.meetw_zui_processes, sample_processes)
-            meetw_libprep, meetw_libprep_herh = determin_meetw(config.meetw_libprep_processes, sample_processes)
-            meetw_enrich, meetw_enrich_herh = determin_meetw(config.meetw_enrich_processes, sample_processes)
-            meetw_seq, meetw_seq_herh = determin_meetw(config.meetw_seq_processes, sample_processes)
+            repeat_cutoff = len(sample.udf['Dx Werklijstnummer'].split(';')) * 2
+            meetw_zui, meetw_zui_herh = determin_meetw(config.meetw_zui_processes, sample_all_processes, repeat_cutoff)
+            meetw_libprep, meetw_libprep_herh = determin_meetw(config.meetw_libprep_processes, sample_filter_processes, 2)
+            meetw_enrich, meetw_enrich_herh = determin_meetw(config.meetw_enrich_processes, sample_filter_processes, 2)
+            meetw_seq, meetw_seq_herh = determin_meetw(config.meetw_seq_processes, sample_filter_processes, 2)
 
             output_file.write(
                 "{meet_id}\t{werklijst}\t{onderzoeksnummer}\t{monsternummer}\t{meetw_zui}\t{meetw_zui_herh}\t{meetw_libprep}\t{meetw_libprep_herh}\t{meetw_enrich}\t{meetw_enrich_herh}\t{meetw_seq}\t{meetw_seq_herh}\n".format(

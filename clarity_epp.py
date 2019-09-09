@@ -64,14 +64,20 @@ def export_manual_pipetting(args):
     elif args.type == 'multiplex_sequence_pool':
         clarity_epp.export.manual_pipetting.samplesheet_multiplex_sequence_pool(lims, args.process_id, args.output_file)
 
+
 def export_ped_file(args):
     """Export ped file."""
     clarity_epp.export.ped.create_file(lims, args.process_id, args.output_file)
 
 
-def export_samplelist(args):
-    """Generate samplelist."""
-    clarity_epp.export.samplelist.removed_samples(lims, args.output_file)
+def export_merge_file(args):
+    """Export merge file."""
+    clarity_epp.export.merge.create_file(lims, args.process_id, args.output_file)
+
+
+def export_removed_samples(args):
+    """Export removed sampels table."""
+    clarity_epp.export.sample.removed_samples(lims, args.output_file)
 
 
 def export_tapestation(args):
@@ -208,6 +214,10 @@ if __name__ == "__main__":
     parser_export_ped.add_argument('process_id', help='Clarity lims process id')
     parser_export_ped.set_defaults(func=export_ped_file)
 
+    parser_export_ped = subparser_export.add_parser('merge', help='Export merge file.', parents=[output_parser])
+    parser_export_ped.add_argument('process_id', help='Clarity lims process id')
+    parser_export_ped.set_defaults(func=export_merge_file)
+
     parser_export_workflow = subparser_export.add_parser('workflow', help='Export workflow result file.', parents=[output_parser])
     parser_export_workflow.add_argument('type', choices=['lab', 'data_analysis'], help='Workflow type')
     parser_export_workflow.add_argument('process_id', help='Clarity lims process id')
@@ -218,8 +228,8 @@ if __name__ == "__main__":
     parser_export_illumina.add_argument('artifact_id', help='Clarity lims samplesheet artifact id')
     parser_export_illumina.set_defaults(func=export_illumina)
 
-    parser_export_samplelist = subparser_export.add_parser('samplelist', help='Export samplelist.', parents=[output_parser])
-    parser_export_samplelist.set_defaults(func=export_samplelist)
+    parser_export_removed_samples = subparser_export.add_parser('removed_samples', help='Export removed sampels table.', parents=[output_parser])
+    parser_export_removed_samples.set_defaults(func=export_removed_samples)
 
     # Sample upload
     parser_upload = subparser.add_parser('upload', help='Upload samples or results to clarity lims')

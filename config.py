@@ -14,6 +14,11 @@ email = {
     ]
 }
 
+# Import samples: stoftestcode to workflow
+stoftestcode_workflow = {
+    'stoftestcode': 'workflow_id'
+}
+
 # Export meetw protocol steps
 meetw_zui_processes = ['add', 'protocol', 'steps']
 meetw_libprep_processes = ['add', 'protocol', 'steps']
@@ -22,3 +27,11 @@ meetw_seq_processes = ['add', 'protocol', 'steps']
 
 # Sequencer types
 sequence_process_types = ['add', 'sequencer', 'process', 'types']
+
+# Post sequencing workflow
+post_seq_workflow = 'Dx Post sequencing id'
+
+# Research Onderzoeksindicatie
+research_onderzoeksindicatie_project = {
+    'onderzoeksindicatie': 'sequencing_project'
+}
