@@ -111,6 +111,10 @@ def from_helix(lims, email_settings, input_file):
             udf_data['Dx Familie status'] = 'Kind'
         elif udf_data['Dx Onderzoeksreden'] == 'Prenataal onderzoek':
             udf_data['Dx Familie status'] = 'Kind'
+        elif udf_data['Dx Onderzoeksreden'] == 'Eerstegraads-verwantenond':
+            udf_data['Dx Familie status'] = 'Kind'
+        elif udf_data['Dx Onderzoeksreden'] == 'Partneronderzoek':
+            udf_data['Dx Familie status'] = 'Kind'
         elif udf_data['Dx Onderzoeksreden'] == 'Informativiteitstest':
             udf_data['Dx Familie status'] = 'Ouder'
         else:
