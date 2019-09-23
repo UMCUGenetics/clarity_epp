@@ -1,4 +1,6 @@
 """Illumina export functions."""
+import operator
+
 from genologics.entities import Process, Artifact
 
 from .. import get_sequence_name
@@ -10,16 +12,28 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
     """Update illumina samplesheet."""
     process = Process(lims, id=process_id)
 
+    def get_project(projects, urgent=False):
+        """Inner function to get a project name for samples."""
+        if urgent:  # Sort projects for urgent samples on name
+            projects = sorted(projects.items(), key=operator.itemgetter(0))
+            for project in projects:
+                if project[1] < 9:
+                    return project[0]  # return first project with < 9 samples
+        else:  # Sort projects for other samples on number of samples
+            projects = sorted(projects.items(), key=operator.itemgetter(1))
+            return projects[0][0]  # return project with least amount of samples.
+
     # Parse families
     families = {}
     for artifact in process.all_inputs():
         for sample in artifact.samples:
             if 'Dx Familienummer' in list(sample.udf) and 'Dx NICU Spoed' in list(sample.udf) and 'Dx Protocolomschrijving' in list(sample.udf):
-                # Dx sample
+                # Dx production sample
                 family = sample.udf['Dx Familienummer']
+
                 # Create family if not exist
                 if family not in families:
-                    families[family] = {'samples': [], 'NICU': False, 'project_type': 'unknown_project', 'split_project_type': False}
+                    families[family] = {'samples': [], 'NICU': False, 'project_type': 'unknown_project', 'split_project_type': False, 'urgent': False}
 
                 # Update family information
                 if sample.udf['Dx Onderzoeksreden'] == 'Research':  # Dx research sample
@@ -29,7 +43,7 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
                             families[family]['project_type'] = project_type
                             families[family]['split_project_type'] = False
                             break
-                
+
                 else:  # Dx clinic sample
                     if sample.udf['Dx NICU Spoed']:
                         families[family]['NICU'] = True
@@ -41,10 +55,13 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
                         families[family]['project_type'] = project_type
                         families[family]['split_project_type'] = True
 
-            else:
+                    if 'Dx Spoed' in list(sample.udf) and sample.udf['Dx Spoed']:
+                        families[family]['urgent'] = True
+
+            else:  # Other samples
                 family = sample.project.name
                 if family not in families:
-                    families[family] = {'samples': [], 'NICU': False, 'project_type': family, 'split_project_type': False}
+                    families[family] = {'samples': [], 'NICU': False, 'project_type': family, 'split_project_type': False, 'urgent': False}
 
             # Add sample to family
             families[family]['samples'].append(sample)
@@ -55,30 +72,35 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
         if family['project_type'] in project_types:
             project_types[family['project_type']]['sample_count'] += len(family['samples'])
         else:
-            project_types[family['project_type']] = {'sample_count': len(family['samples']), 'projects': [], 'split_project_type': family['split_project_type']}
+            project_types[family['project_type']] = {'sample_count': len(family['samples']), 'projects': {}, 'split_project_type': family['split_project_type']}
 
     # Define projects per project_type
     for project_type in project_types:
         project_types[project_type]['index'] = 0
         if project_types[project_type]['split_project_type']:
             for i in range(0, project_types[project_type]['sample_count']/9+1):
-                project_types[project_type]['projects'].append('{0}_{1}'.format(project_type, i+1))
+                project_types[project_type]['projects']['{0}_{1}'.format(project_type, i+1)] = 0
         else:
-            project_types[project_type]['projects'] = [project_type]
+            project_types[project_type]['projects'][project_type] = 0
 
     # Set sample projects
     sample_projects = {}
-    for family in sorted(families.items(), key=lambda tup: (len(tup[1]["samples"])), reverse=True):
-        family_project_type = project_types[family[1]['project_type']]
-        family_project = family_project_type['projects'][family_project_type['index']]
 
-        for sample in family[1]['samples']:
+    # Urgent families / samples
+    for family in [family for family in families.values() if family['urgent']]:
+        family_project = get_project(project_types[family['project_type']]['projects'], urgent=True)
+
+        for sample in family['samples']:
             sample_projects[get_sequence_name(sample)] = family_project
+            project_types[family['project_type']]['projects'][family_project] += 1
 
-        if family_project_type['index'] == len(family_project_type['projects']) - 1:
-            family_project_type['index'] = 0
-        else:
-            family_project_type['index'] += 1
+    # Non urgent families / samples
+    non_urgent_families = [family for family in families.values() if not family['urgent']]
+    for family in sorted(non_urgent_families, key=lambda fam: (len(fam['samples'])), reverse=True):
+        family_project = get_project(project_types[family['project_type']]['projects'])
+        for sample in family['samples']:
+            sample_projects[get_sequence_name(sample)] = family_project
+            project_types[family['project_type']]['projects'][family_project] += 1
 
     # Check sequencer type -> NextSeq runs need to reverse complement 'index2' for dual barcodes and 'index' for single barcodes.
     if 'nextseq' in process.type.name.lower():
