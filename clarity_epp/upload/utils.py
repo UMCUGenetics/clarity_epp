@@ -35,11 +35,7 @@ def transform_sex(value):
 def transform_sample_name(value):
     """Transform legacy name to new sample name."""
     if '/' in value:
-        match = re.search("D(\d\d)/(.+)", value)
-        sample_name = '{year}D{sample_id}'.format(
-            year=datetime.strptime(match.group(1), '%y').year,
-            sample_id=match.group(2).zfill(5)
-        )
+        sample_name = ''.join(value.split('/'))
         return sample_name
     else:
         return value
