@@ -1,5 +1,7 @@
 """Tecan results upload epp functions."""
 
+import re
+
 from genologics.entities import Process
 
 
