@@ -11,7 +11,7 @@ def set_qc_flag(lims, process_id, cutoff=10):
     artifacts = process.result_files()
     samples_measurements = {}
 
-    concentration_range = map(int, re.findall('[\d]+', process.udf['Concentratiebereik (ng/ul)']))
+    concentration_range = map(float, re.findall('[\d]+', process.udf['Concentratiebereik (ng/ul)']))
 
     for artifact in artifacts:
         sample = artifact.name.rstrip('Qubit').rstrip()

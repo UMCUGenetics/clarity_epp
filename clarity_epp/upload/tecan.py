@@ -8,7 +8,7 @@ from genologics.entities import Process
 def results(lims, process_id):
     """Upload tecan results to artifacts."""
     process = Process(lims, id=process_id)
-    concentration_range = map(int, re.findall('[\d]+', process.udf['Concentratiebereik (ng/ul)']))
+    concentration_range = map(float, re.findall('[\d]+', process.udf['Concentratiebereik (ng/ul)']))
 
     # Parse output file
     for output in process.all_outputs(unique=True):
