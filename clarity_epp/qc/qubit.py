@@ -9,9 +9,8 @@ def set_qc_flag(lims, process_id, cutoff=10):
     """Set qubit qc flags based on Dx Concentratie fluorescentie (ng/ul) values."""
     process = Process(lims, id=process_id)
     artifacts = process.result_files()
+    concentration_range = map(float, re.findall('[\d\.]+', process.udf['Concentratiebereik (ng/ul)']))
     samples_measurements = {}
-
-    concentration_range = map(float, re.findall('[\d]+', process.udf['Concentratiebereik (ng/ul)']))
 
     for artifact in artifacts:
         sample = artifact.name.rstrip('Qubit').rstrip()
