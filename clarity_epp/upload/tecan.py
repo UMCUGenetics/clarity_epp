@@ -1,11 +1,14 @@
 """Tecan results upload epp functions."""
 
+import re
+
 from genologics.entities import Process
 
 
 def results(lims, process_id):
     """Upload tecan results to artifacts."""
     process = Process(lims, id=process_id)
+    concentration_range = map(float, re.findall('[\d\.]+', process.udf['Concentratiebereik (ng/ul)']))
 
     # Parse output file
     for output in process.all_outputs(unique=True):
@@ -86,13 +89,17 @@ def results(lims, process_id):
                 artifact.udf['Dx Concentratie fluorescentie (ng/ul)'] = ng_values[std_number - 1]
             else:
                 # Calculate measurement deviation from average.
-                if len(sample_measurements[artifact.name]) == 1:
-                    artifact.qc_flag = 'PASSED'
-                elif len(sample_measurements[artifact.name]) == 2:
-                    artifact_fluorescence_difference = abs(sample_measurements[artifact.name][0] - sample_measurements[artifact.name][1])
-                    artifact_fluorescence_deviation = artifact_fluorescence_difference / sample_fluorescence
-                    if artifact_fluorescence_deviation <= 0.1:
+                if concentration_range[0] <= sample_concentration <= concentration_range[1]:
+                    if len(sample_measurements[artifact.name]) == 1:
                         artifact.qc_flag = 'PASSED'
-                    else:
-                        artifact.qc_flag = 'FAILED'
+                    elif len(sample_measurements[artifact.name]) == 2:
+                        artifact_fluorescence_difference = abs(sample_measurements[artifact.name][0] - sample_measurements[artifact.name][1])
+                        artifact_fluorescence_deviation = artifact_fluorescence_difference / sample_fluorescence
+                        if artifact_fluorescence_deviation <= 0.1:
+                            artifact.qc_flag = 'PASSED'
+                        else:
+                            artifact.qc_flag = 'FAILED'
+                else:
+                    artifact.qc_flag = 'FAILED'
+
             artifact.put()
