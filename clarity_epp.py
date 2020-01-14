@@ -48,7 +48,7 @@ def export_labels(args):
     if args.type == 'container':
         clarity_epp.export.labels.container(lims, args.process_id, args.output_file, args.description)
     elif args.type == 'container_sample':
-        clarity_epp.export.labels.container_sample(lims, args.process_id, args.output_file)
+        clarity_epp.export.labels.container_sample(lims, args.process_id, args.output_file, args.description)
     elif args.type == 'storage_location':
         clarity_epp.export.labels.storage_location(lims, args.process_id, args.output_file)
 
