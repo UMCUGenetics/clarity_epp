@@ -179,7 +179,7 @@ def samplesheet_multiplex_library_pool(lims, process_id, output_file):
                     elif 'PFGIAB' in sample.name.upper() or 'PMGIAB' in sample.name.upper():
                         sample.udf['Dx Familie status'] = 'Ouder'
 
-                    if sample.udf['Dx Onderzoeksreden'] == 'Research':
+                    if 'Dx Onderzoeksreden' in sample.udf and sample.udf['Dx Onderzoeksreden'] == 'Research':
                         samplestatus.append('Kind')
                     else:
                         samplestatus.append(sample.udf['Dx Familie status'])
@@ -229,7 +229,7 @@ def samplesheet_multiplex_library_pool(lims, process_id, output_file):
             # calculation if udfs 'Dx sample volume ul' and 'Dx Samplenaam' are empty and not empty
             if not sample_given_ul:
                 for sample in output.samples:
-                    if sample.udf['Dx Onderzoeksreden'] == 'Research':
+                    if 'Dx Onderzoeksreden' in sample.udf and sample.udf['Dx Onderzoeksreden'] == 'Research':
                         sample_pedigree = 'Kind'
                     else:
                         sample_pedigree = sample.udf['Dx Familie status']
