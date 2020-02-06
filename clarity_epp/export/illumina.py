@@ -59,7 +59,10 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
                         families[family]['urgent'] = True
 
             else:  # Other samples
-                family = sample.project.name
+                if 'GIAB' in sample.name.upper() and not sample.project:  # GIAB control samples
+                    family = 'GIAB'
+                else:
+                    family = sample.project.name
                 if family not in families:
                     families[family] = {'samples': [], 'NICU': False, 'project_type': family, 'split_project_type': False, 'urgent': False}
 
