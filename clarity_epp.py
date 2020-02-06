@@ -193,7 +193,6 @@ if __name__ == "__main__":
 
     parser_export_email = subparser_export.add_parser('email', help='Send emails', parents=[output_parser])
     parser_export_email.add_argument('type', choices=['sequencing_run'], help='Email type')
-    parser_export_email.add_argument('-r', '--recipient', action='append', help='Email recipient(s)')
     parser_export_email.add_argument('process_id', help='Clarity lims process id')
     parser_export_email.set_defaults(func=export_email)
 

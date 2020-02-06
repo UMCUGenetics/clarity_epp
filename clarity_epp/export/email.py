@@ -12,9 +12,9 @@ def sequencing_run(lims, email_settings, process_id):
 
     message = "Sequencing Run: {0}\n".format(artifact.name)
     message += "Date: {0}\n".format(process.date_run)
-    message += "Technician: {0}\n\n".format(process.technician.name)
+    message += "Technician: {0}\n".format(process.technician.name)
+    message += "LIMS Next Action: {0}\n\n".format(process.step.actions.next_actions[0]['action'])
 
-    message += "Status: {0}\n".format(process.step.actions.get_next_actions()[0]['action'])
     message += "UDF - Conversie rapport OK?: {0}\n".format(process.udf['Conversie rapport OK?'])
     if 'Fouten registratie (uitleg)' in process.udf:
         message += "UDF - Fouten registratie (uitleg): {0}\n".format(process.udf['Fouten registratie (uitleg)'])
