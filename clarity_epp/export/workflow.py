@@ -6,23 +6,23 @@ import config
 
 def determin_meetw(meetw_processes, sample_processes, repeat_cutoff=2):
     """Determine meetwaarde and meetwaarde herhaling (reapeat) based on list of processes and repeat cutoff."""
-    meetw = 0
-    meetw_herh = 0
+    meetw = 'N'
+    meetw_herh = 'N'
 
     for process in meetw_processes:
         if process in sample_processes:
             if len(sample_processes[process]) >= repeat_cutoff:
-                meetw = 0
-                meetw_herh = 1
+                meetw = 'N'
+                meetw_herh = 'J'
                 break
             else:
-                meetw = 1
+                meetw = 'J'
     return meetw, meetw_herh
 
 
 def helix_lab(lims, process_id, output_file):
     """Export lab workflow information in helix table format."""
-    output_file.write("<meet_id>\tWerklijstnummer\tOnderzoeksnummer\tMonsternummer\tmeetw_zui\tmeetw_zui_herh\tmeetw_libprep\tmeetw_libprep_herh\tmeetw_enrich\tmeetw_enrich_herh\tmeetw_seq\tmeetw_seq_herh\n")
+    output_file.write("meet_id\twerklijst_nummer\tonderzoeknr\tmonsternummer\tZuivering OK?\tZuivering herh?\tLibprep OK?\tLibprep herh?\tEnrichment OK?\tEnrichment herh?\tSequencen OK?\tSequencen herh?\n")
     process = Process(lims, id=process_id)
 
     for artifact in process.all_inputs():
