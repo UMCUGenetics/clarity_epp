@@ -2,6 +2,7 @@
 
 import bioanalyzer
 import caliper
+import email
 import hamilton
 import illumina
 import labels
