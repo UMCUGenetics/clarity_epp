@@ -71,16 +71,14 @@ def helix_lab(lims, process_id, output_file):
 
 def helix_data_analysis(lims, process_id, output_file):
     """Export data analysis workflow information in helix table format."""
-    output_file.write("<meet_id>\tWerklijstnummer\tOnderzoeksnummer\tMonsternummer\tmeetw_bfx\tmeetw_SNPmatch\n")
+    output_file.write("<meet_id>\tWerklijstnummer\tOnderzoeksnummer\tMonsternummer\tBfx analyse OK?\tSNP match OK?\n")
     process = Process(lims, id=process_id)
 
     for artifact in process.analytes()[0]:
-
         # Set SNP match meetw
-        if 'Dx SNPmatch' in list(artifact.udf):
-            meetw_snp_match = int(artifact.udf['Dx SNPmatch'])
-        else:
-            meetw_snp_match = '0'
+        meetw_snp_match = 'N'
+        if 'Dx SNPmatch' in list(artifact.udf) and artifact.udf['Dx SNPmatch']:
+            meetw_snp_match = 'J'
 
         # Print meetw row
         for sample in artifact.samples:
@@ -90,7 +88,7 @@ def helix_data_analysis(lims, process_id, output_file):
                     werklijst=sample.udf['Dx Werklijstnummer'].split(';')[0],
                     onderzoeksnummer=sample.udf['Dx Onderzoeknummer'].split(';')[0],
                     monsternummer=sample.udf['Dx Monsternummer'],
-                    meetw_bfx='1',
+                    meetw_bfx='J',
                     meetw_snp_match=meetw_snp_match,
 
                 )
