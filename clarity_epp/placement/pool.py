@@ -2,6 +2,7 @@
 
 from genologics.entities import Artifact, Process, Workflow
 
+from .. import get_sequence_name
 import config
 
 
@@ -37,7 +38,7 @@ def unpooling(lims, process_id):
             if len(node.find('samples').findall('sample')) == 1:
                 sample_artifact = Artifact(lims, uri=node.attrib['uri'])
                 sample_artifact.udf['Dx Sequencing Run ID'] = run_id
-                sample_artifact.udf['Dx Sequencing Run Project'] = sample_projects[sample_artifact.name]
+                sample_artifact.udf['Dx Sequencing Run Project'] = sample_projects[get_sequence_name(sample_artifact.samples[0])]
                 sample_artifact.put()
                 if sample_artifact.samples[0].project and sample_artifact.samples[0].project.udf['Application'] == 'DX':  # Only move DX production samples to post sequencing workflow
                     sample_artifacts.append(sample_artifact)
