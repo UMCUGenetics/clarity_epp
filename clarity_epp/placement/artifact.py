@@ -1,6 +1,6 @@
 """Artifact placement functions."""
 
-from genologics.entities import Process
+from genologics.entities import Process, Workflow
 
 from .. import get_sequence_name
 import config
@@ -31,3 +31,17 @@ def set_runid_name(lims, process_id):
             if sequence_process.analytes()[0][0].container.name == container_name:
                 analyte.name = sequence_process.udf['Run ID']
                 analyte.put()
+
+
+def route_to_workflow(lims, process_id):
+    """Route artifacts to a workflow."""
+    process = Process(lims, id=process_id)
+    route_artifacts = []
+
+    for action_artifact in process.step.actions.get_next_actions():
+        artifact = action_artifact['artifact']
+        action = action_artifact['action']
+        if action == 'complete' and artifact.samples[0].udf['Dx Stoftest code'] != config.research_stoftest_code:
+            route_artifacts.append(artifact)
+
+    lims.route_artifacts(route_artifacts, workflow_uri=Workflow(lims, id=config.post_bioinf_workflow).uri)

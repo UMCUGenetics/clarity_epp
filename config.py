@@ -33,7 +33,9 @@ meetw_seq_processes = ['Dx Multiplexen library pool v1.1', 'Dx Multiplexen seque
 sequence_process_types = ['Dx NextSeq Run v1.0', 'Dx Automated NovaSeq Run (standaard) v1.0']
 
 # Post sequencing workflow
-post_seq_workflow = '609'  # DEV Dx Post sequencing v1.1
+post_seq_workflow = '901'  # DEV Dx Bioinformatica analyses v1.0
+post_bioinf_workflow = '902' # DEV Dx NGS onderzoeken afronden v1.0
+research_stoftest_code = 'NGS_023'
 
 # Research Onderzoeksindicatie
 research_onderzoeksindicatie_project = {
