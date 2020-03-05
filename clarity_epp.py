@@ -155,6 +155,11 @@ def placement_artifact_set_name(args):
         clarity_epp.placement.artifact.set_runid_name(lims, args.process_id)
 
 
+def placement_route_artifact(args):
+    """Route artifacts to a workflow"""
+    clarity_epp.placement.artifact.route_to_workflow(lims, args.process_id)
+
+
 def placement_barcode(args):
     """Check barcodes."""
     if args.type == 'check_family':
@@ -289,6 +294,10 @@ if __name__ == "__main__":
     parser_placement_artifact.add_argument('type', choices=['sequence_name', 'run_id'], help='Check type')
     parser_placement_artifact.add_argument('process_id', help='Clarity lims process id')
     parser_placement_artifact.set_defaults(func=placement_artifact_set_name)
+
+    parser_placement_route_artifact = subparser_placement.add_parser('route_artifact', help='Route artifact to a workflow.')
+    parser_placement_route_artifact.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_route_artifact.set_defaults(func=placement_route_artifact)
 
     parser_placement_barcode = subparser_placement.add_parser('barcode_check', help='Check barcode clarity_epp.placement.')
     parser_placement_barcode.add_argument('type', choices=['check_family'], help='Check type')
