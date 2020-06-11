@@ -72,7 +72,7 @@ def helix_lab(lims, process_id, output_file):
 
 def helix_data_analysis(lims, process_id, output_file):
     """Export data analysis workflow information in helix table format."""
-    output_file.write("<meet_id>\tWerklijstnummer\tOnderzoeksnummer\tMonsternummer\tBfx analyse OK?\tSNP match OK?\n")
+    output_file.write("meet_id\tWerklijstnummer\tOnderzoeksnummer\tMonsternummer\tBfx analyse OK?\tSNP match OK?\n")
     process = Process(lims, id=process_id)
 
     for artifact in process.analytes()[0]:
