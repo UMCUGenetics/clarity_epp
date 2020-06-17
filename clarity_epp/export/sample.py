@@ -6,7 +6,7 @@ import utils
 
 def removed_samples(lims, output_file):
     """Export table with samples that are removed from a workflow."""
-    output_file.write('Datum verwijderd\tSample\tSample project\tWerklijst\tOnderzoeks nummer\tOnderzoeks indicatie\tVerwijderd uit stap\n')
+    output_file.write('Datum verwijderd\tSample\tSample project\tWerklijst\tOnderzoeks nummer\tOnderzoeks indicatie\tVerwijderd uit stap\tStatus\n')
 
     # Get DX samples
     dx_projects = lims.get_projects(udf={'Application': 'DX'})
@@ -102,12 +102,18 @@ def removed_samples(lims, output_file):
                                 break
 
         if sample_removed:
-            output_file.write('{removed_date}\t{name}\t{project}\t{werklijst}\t{onderzoek}\t{indicatie}\t{stage}\n'.format(
-                removed_date=removed_date.strftime('%Y-%m-%d'),
-                name=sample.name,
-                project=sample.project.name,
-                werklijst=sample.udf['Dx Werklijstnummer'],
-                onderzoek=sample.udf['Dx Onderzoeknummer'],
-                indicatie=sample.udf['Dx Onderzoeksindicatie'],
-                stage=removed_stage.name,
-            ))
+            sample_removed_status = ''
+            if 'Dx sample status verwijderd' in sample.udf:
+                sample_removed_status = sample.udf['Dx sample status verwijderd']
+            
+            if sample_removed_status != 'NIB afgerond':
+                output_file.write('{removed_date}\t{name}\t{project}\t{werklijst}\t{onderzoek}\t{indicatie}\t{stage}\t{removed_status}\n'.format(
+                    removed_date=removed_date.strftime('%Y-%m-%d'),
+                    name=sample.name,
+                    project=sample.project.name,
+                    werklijst=sample.udf['Dx Werklijstnummer'],
+                    onderzoek=sample.udf['Dx Onderzoeknummer'],
+                    indicatie=sample.udf['Dx Onderzoeksindicatie'],
+                    stage=removed_stage.name,
+                    removed_status=sample_removed_status
+                ))
