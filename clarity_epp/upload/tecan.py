@@ -64,7 +64,7 @@ def results(lims, process_id):
     artifact_count = {}
 
     for artifact in process.all_outputs():
-        if artifact.name not in ['Tecan Spark Output', 'Tecan Spark Samplesheet', 'check gemiddelde concentratie']:
+        if artifact.name not in ['Tecan Spark Output', 'Tecan Spark Samplesheet', 'check gemiddelde concentratie', 'Label plaat']:
             # Set Average Concentratie fluorescentie
             sample_fluorescence = sum(sample_measurements[artifact.name]) / float(len(sample_measurements[artifact.name]))
             sample_concentration = ((sample_fluorescence - baseline_fluorescence) * regression_slope) / 2.0
