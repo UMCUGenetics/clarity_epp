@@ -6,10 +6,10 @@ from genologics.entities import Process
 def check_family(lims, process_id):
     """Check barcodes."""
     process = Process(lims, id=process_id)
-    for artifact in process.all_outputs():
+    for artifact in process.analytes()[0]:
         sample = artifact.samples[0]
         barcode = artifact.reagent_labels[0]
-
+        
         try:
             query_udf = {'Dx Familienummer': sample.udf['Dx Familienummer']}
         except KeyError:
