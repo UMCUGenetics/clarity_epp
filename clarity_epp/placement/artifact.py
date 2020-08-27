@@ -9,7 +9,7 @@ import config
 def set_sequence_name(lims, process_id):
     """Change artifact name to sequnece name."""
     process = Process(lims, id=process_id)
-    for artifact in process.all_outputs():
+    for artifact in process.analytes()[0]:
         sample = artifact.samples[0]
         artifact.name = get_sequence_name(sample)
         artifact.put()
