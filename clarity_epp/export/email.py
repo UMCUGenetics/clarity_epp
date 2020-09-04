@@ -8,7 +8,7 @@ def sequencing_run(lims, email_settings, process_id):
     process = Process(lims, id=process_id)
     artifact = process.all_inputs()[0]
 
-    subject = "LIMS - {0}".format(artifact.name)
+    subject = "LIMS QC Controle - {0}".format(artifact.name)
 
     message = "Sequencing Run: {0}\n".format(artifact.name)
     message += "Date: {0}\n".format(process.date_run)
