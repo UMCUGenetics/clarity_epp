@@ -3,7 +3,7 @@
 from genologics.entities import Process
 
 
-def container(lims, process_id, output_file,  description=''):
+def container(lims, process_id, output_file, description=''):
     """Generate container label file."""
     process = Process(lims, id=process_id)
     for container in process.output_containers():
