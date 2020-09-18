@@ -6,9 +6,12 @@ from genologics.entities import Process
 def container(lims, process_id, output_file, description=''):
     """Generate container label file."""
     process = Process(lims, id=process_id)
-    for container in process.output_containers():
+    for index, container in enumerate(sorted(process.output_containers(), key=lambda container: container.id)):
         if description:
-            output_file.write('{description}\t{container}\r\n'.format(description=description, container=container.name))
+            if ',' in description:
+                output_file.write('{description}\t{container}\r\n'.format(description=description.split(',')[index], container=container.name))
+            else:
+                output_file.write('{description}\t{container}\r\n'.format(description=description, container=container.name))
         else:
             output_file.write('{container}\r\n'.format(container=container.name))
 
