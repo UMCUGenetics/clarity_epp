@@ -14,7 +14,10 @@ def samplesheet_purify(lims, process_id, output_file):
         input_artifact = artifact.input_artifact_list()[0]  # asume one input artifact
         sample = artifact.samples[0]  # asume one sample per tube
 
-        fractienummer = sample.udf['Dx Fractienummer']
+        if 'Dx Fractienummer' in sample.udf:
+            fractienummer = sample.udf['Dx Fractienummer']
+        else:  # giab
+            fractienummer = sample.name
 
         if 'Dx Concentratie fluorescentie (ng/ul)' in input_artifact.udf:
             concentration = float(input_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
