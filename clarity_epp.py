@@ -30,6 +30,12 @@ def export_caliper(args):
         clarity_epp.export.caliper.samplesheet_normalise(lims, args.process_id, args.output_file)
 
 
+def export_email(args):
+    """Export emails"""
+    if args.type == 'sequencing_run':
+        clarity_epp.export.email.sequencing_run(lims, config.email, args.process_id)
+
+
 def export_hamilton(args):
     """Export samplesheets for hamilton machine."""
     if args.type == 'filling_out':
@@ -48,7 +54,7 @@ def export_labels(args):
     if args.type == 'container':
         clarity_epp.export.labels.container(lims, args.process_id, args.output_file, args.description)
     elif args.type == 'container_sample':
-        clarity_epp.export.labels.container_sample(lims, args.process_id, args.output_file)
+        clarity_epp.export.labels.container_sample(lims, args.process_id, args.output_file, args.description)
     elif args.type == 'storage_location':
         clarity_epp.export.labels.storage_location(lims, args.process_id, args.output_file)
 
@@ -149,6 +155,11 @@ def placement_artifact_set_name(args):
         clarity_epp.placement.artifact.set_runid_name(lims, args.process_id)
 
 
+def placement_route_artifact(args):
+    """Route artifacts to a workflow"""
+    clarity_epp.placement.artifact.route_to_workflow(lims, args.process_id)
+
+
 def placement_barcode(args):
     """Check barcodes."""
     if args.type == 'check_family':
@@ -176,80 +187,84 @@ if __name__ == "__main__":
     parser_export = subparser.add_parser('export', help='Export from lims.')
     subparser_export = parser_export.add_subparsers()
 
-    parser_export_hamilton = subparser_export.add_parser('hamilton', help='Create hamilton samplesheets', parents=[output_parser])
-    parser_export_hamilton.add_argument('type', choices=['filling_out', 'purify'], help='Samplesheet type')
-    parser_export_hamilton.add_argument('process_id', help='Clarity lims process id')
-    parser_export_hamilton.set_defaults(func=export_hamilton)
-
-    parser_export_tecan = subparser_export.add_parser('tecan', help='Create tecan samplesheets', parents=[output_parser])
-    parser_export_tecan.add_argument('process_id', help='Clarity lims process id')
-    parser_export_tecan.set_defaults(func=export_tecan)
-
-    parser_export_manual_pipetting = subparser_export.add_parser('manual', help='Create manual pipetting _exports', parents=[output_parser])
-    parser_export_manual_pipetting.add_argument('type', choices=['purify', 'dilute_library_pool', 'multiplex_library_pool', 'multiplex_sequence_pool'], help='Samplesheet type')
-    parser_export_manual_pipetting.add_argument('process_id', help='Clarity lims process id')
-    parser_export_manual_pipetting.set_defaults(func=export_manual_pipetting)
+    parser_export_bioanalyzer = subparser_export.add_parser('bioanalyzer', help='Create bioanalyzer samplesheets', parents=[output_parser])
+    parser_export_bioanalyzer.add_argument('process_id', help='Clarity lims process id')
+    parser_export_bioanalyzer.set_defaults(func=export_bioanalyzer)
 
     parser_export_caliper = subparser_export.add_parser('caliper', help='Create caliper samplesheets', parents=[output_parser])
     parser_export_caliper.add_argument('type', choices=['normalise'], help='Samplesheet type')
     parser_export_caliper.add_argument('process_id', help='Clarity lims process id')
     parser_export_caliper.set_defaults(func=export_caliper)
 
-    parser_export_tapestation = subparser_export.add_parser('tapestation', help='Create tapestation samplesheets', parents=[output_parser])
-    parser_export_tapestation.add_argument('process_id', help='Clarity lims process id')
-    parser_export_tapestation.set_defaults(func=export_tapestation)
+    parser_export_email = subparser_export.add_parser('email', help='Send emails', parents=[output_parser])
+    parser_export_email.add_argument('type', choices=['sequencing_run'], help='Email type')
+    parser_export_email.add_argument('process_id', help='Clarity lims process id')
+    parser_export_email.set_defaults(func=export_email)
 
-    parser_export_bioanalyzer = subparser_export.add_parser('bioanalyzer', help='Create bioanalyzer samplesheets', parents=[output_parser])
-    parser_export_bioanalyzer.add_argument('process_id', help='Clarity lims process id')
-    parser_export_bioanalyzer.set_defaults(func=export_bioanalyzer)
-
-    parser_export_labels = subparser_export.add_parser('labels', help='Export container labels.', parents=[output_parser])
-    parser_export_labels.add_argument('type', choices=['container', 'container_sample', 'storage_location'], help='Label type')
-    parser_export_labels.add_argument('process_id', help='Clarity lims process id')
-    parser_export_labels.add_argument('-d', '--description',  nargs='?', help='Container name description')
-
-    parser_export_labels.set_defaults(func=export_labels)
-
-    parser_export_ped = subparser_export.add_parser('ped', help='Export ped file.', parents=[output_parser])
-    parser_export_ped.add_argument('process_id', help='Clarity lims process id')
-    parser_export_ped.set_defaults(func=export_ped_file)
-
-    parser_export_ped = subparser_export.add_parser('merge', help='Export merge file.', parents=[output_parser])
-    parser_export_ped.add_argument('process_id', help='Clarity lims process id')
-    parser_export_ped.set_defaults(func=export_merge_file)
-
-    parser_export_workflow = subparser_export.add_parser('workflow', help='Export workflow result file.', parents=[output_parser])
-    parser_export_workflow.add_argument('type', choices=['lab', 'data_analysis'], help='Workflow type')
-    parser_export_workflow.add_argument('process_id', help='Clarity lims process id')
-    parser_export_workflow.set_defaults(func=export_workflow)
+    parser_export_hamilton = subparser_export.add_parser('hamilton', help='Create hamilton samplesheets', parents=[output_parser])
+    parser_export_hamilton.add_argument('type', choices=['filling_out', 'purify'], help='Samplesheet type')
+    parser_export_hamilton.add_argument('process_id', help='Clarity lims process id')
+    parser_export_hamilton.set_defaults(func=export_hamilton)
 
     parser_export_illumina = subparser_export.add_parser('illumina', help='Export updated illumina samplesheet.', parents=[output_parser])
     parser_export_illumina.add_argument('process_id', help='Clarity lims process id')
     parser_export_illumina.add_argument('artifact_id', help='Clarity lims samplesheet artifact id')
     parser_export_illumina.set_defaults(func=export_illumina)
 
+    parser_export_labels = subparser_export.add_parser('labels', help='Export container labels.', parents=[output_parser])
+    parser_export_labels.add_argument('type', choices=['container', 'container_sample', 'storage_location'], help='Label type')
+    parser_export_labels.add_argument('process_id', help='Clarity lims process id')
+    parser_export_labels.add_argument('-d', '--description',  nargs='?', help='Container name description')
+    parser_export_labels.set_defaults(func=export_labels)
+
+    parser_export_manual_pipetting = subparser_export.add_parser('manual', help='Create manual pipetting _exports', parents=[output_parser])
+    parser_export_manual_pipetting.add_argument('type', choices=['purify', 'dilute_library_pool', 'multiplex_library_pool', 'multiplex_sequence_pool'], help='Samplesheet type')
+    parser_export_manual_pipetting.add_argument('process_id', help='Clarity lims process id')
+    parser_export_manual_pipetting.set_defaults(func=export_manual_pipetting)
+
+    parser_export_merge = subparser_export.add_parser('merge', help='Export merge file.', parents=[output_parser])
+    parser_export_merge.add_argument('process_id', help='Clarity lims process id')
+    parser_export_merge.set_defaults(func=export_merge_file)
+
+    parser_export_ped = subparser_export.add_parser('ped', help='Export ped file.', parents=[output_parser])
+    parser_export_ped.add_argument('process_id', help='Clarity lims process id')
+    parser_export_ped.set_defaults(func=export_ped_file)
+
     parser_export_removed_samples = subparser_export.add_parser('removed_samples', help='Export removed sampels table.', parents=[output_parser])
     parser_export_removed_samples.set_defaults(func=export_removed_samples)
+
+    parser_export_tapestation = subparser_export.add_parser('tapestation', help='Create tapestation samplesheets', parents=[output_parser])
+    parser_export_tapestation.add_argument('process_id', help='Clarity lims process id')
+    parser_export_tapestation.set_defaults(func=export_tapestation)
+
+    parser_export_tecan = subparser_export.add_parser('tecan', help='Create tecan samplesheets', parents=[output_parser])
+    parser_export_tecan.add_argument('process_id', help='Clarity lims process id')
+    parser_export_tecan.set_defaults(func=export_tecan)
+
+    parser_export_workflow = subparser_export.add_parser('workflow', help='Export workflow result file.', parents=[output_parser])
+    parser_export_workflow.add_argument('type', choices=['lab', 'data_analysis'], help='Workflow type')
+    parser_export_workflow.add_argument('process_id', help='Clarity lims process id')
+    parser_export_workflow.set_defaults(func=export_workflow)
 
     # Sample upload
     parser_upload = subparser.add_parser('upload', help='Upload samples or results to clarity lims')
     subparser_upload = parser_upload.add_subparsers()
 
+    parser_upload_bioanalyzer = subparser_upload.add_parser('bioanalyzer', help='Upload bioanalyzer results')
+    parser_upload_bioanalyzer.add_argument('process_id', help='Clarity lims process id')
+    parser_upload_bioanalyzer.set_defaults(func=upload_bioanalyzer_results)
+
     parser_upload_sample = subparser_upload.add_parser('sample', help='Upload samples from helix export')
     parser_upload_sample.add_argument('input_file', type=argparse.FileType('r'), help='Input file path')
     parser_upload_sample.set_defaults(func=upload_samples)
-
-    parser_upload_tecan = subparser_upload.add_parser('tecan', help='Upload tecan results')
-    parser_upload_tecan.add_argument('process_id', help='Clarity lims process id')
-    parser_upload_tecan.set_defaults(func=upload_tecan_results)
 
     parser_upload_tapestation = subparser_upload.add_parser('tapestation', help='Upload tapestation results')
     parser_upload_tapestation.add_argument('process_id', help='Clarity lims process id')
     parser_upload_tapestation.set_defaults(func=upload_tapestation_results)
 
-    parser_upload_bioanalyzer = subparser_upload.add_parser('bioanalyzer', help='Upload bioanalyzer results')
-    parser_upload_bioanalyzer.add_argument('process_id', help='Clarity lims process id')
-    parser_upload_bioanalyzer.set_defaults(func=upload_bioanalyzer_results)
+    parser_upload_tecan = subparser_upload.add_parser('tecan', help='Upload tecan results')
+    parser_upload_tecan.add_argument('process_id', help='Clarity lims process id')
+    parser_upload_tecan.set_defaults(func=upload_tecan_results)
 
     # QC
     parser_qc = subparser.add_parser('qc', help='Set QC values/flags.')
@@ -280,18 +295,22 @@ if __name__ == "__main__":
     parser_placement_artifact.add_argument('process_id', help='Clarity lims process id')
     parser_placement_artifact.set_defaults(func=placement_artifact_set_name)
 
+    parser_placement_route_artifact = subparser_placement.add_parser('route_artifact', help='Route artifact to a workflow.')
+    parser_placement_route_artifact.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_route_artifact.set_defaults(func=placement_route_artifact)
+
     parser_placement_barcode = subparser_placement.add_parser('barcode_check', help='Check barcode clarity_epp.placement.')
     parser_placement_barcode.add_argument('type', choices=['check_family'], help='Check type')
     parser_placement_barcode.add_argument('process_id', help='Clarity lims process id')
     parser_placement_barcode.set_defaults(func=placement_barcode)
 
-    parser_placement_unpooling = subparser_placement.add_parser('unpooling', help='Unpooling of sequencing pool.')
-    parser_placement_unpooling.add_argument('process_id', help='Clarity lims process id')
-    parser_placement_unpooling.set_defaults(func=placement_unpooling)
-
     parser_placement_complete_step = subparser_placement.add_parser('complete_step', help='Complete step Dx Mark protocol complete.')
     parser_placement_complete_step.add_argument('process_id', help='Clarity lims process id')
     parser_placement_complete_step.set_defaults(func=placement_complete_step)
+
+    parser_placement_unpooling = subparser_placement.add_parser('unpooling', help='Unpooling of sequencing pool.')
+    parser_placement_unpooling.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_unpooling.set_defaults(func=placement_unpooling)
 
     args = parser.parse_args()
     args.func(args)
