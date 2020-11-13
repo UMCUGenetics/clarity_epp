@@ -4,7 +4,6 @@ from genologics.entities import Process
 
 import utils
 
-
 def samplesheet_normalise(lims, process_id, output_file):
     """Create Caliper samplesheet for normalising 96 well plate."""
     output_file.write('Monsternummer\tPlate_Id_input\tWell\tPlate_Id_output\tPipetteervolume DNA (ul)\tPipetteervolume H2O (ul)\n')
@@ -71,7 +70,7 @@ def samplesheet_normalise(lims, process_id, output_file):
     for p in qc_processes:
         if 'Dx Qubit QC' in p.type.name:
             for a in p.all_outputs():
-                if 'Tecan' not in a.name and 'check' not in a.name:
+                if 'Tecan' not in a.name and 'check' not in a.name and 'Label' not in a.name:
                     if 'Dx Conc. goedgekeurde meting (ng/ul)' in a.udf:
                         machine = 'Qubit'
                         sample = a.samples[0].name
@@ -86,7 +85,7 @@ def samplesheet_normalise(lims, process_id, output_file):
                             sample_concentration[sample] = 'geen'
         elif 'Dx Tecan Spark 10M QC' in p.type.name:
             for a in p.all_outputs():
-                if 'Tecan' not in a.name and 'check' not in a.name:
+                if 'Tecan' not in a.name and 'check' not in a.name and 'Label' not in a.name:
                     if 'Dx Conc. goedgekeurde meting (ng/ul)' in a.udf:
                         machine = 'Tecan'
                         sample = a.samples[0].name
@@ -101,7 +100,7 @@ def samplesheet_normalise(lims, process_id, output_file):
                             sample_concentration[sample] = 'geen'
     for p in qc_processes:
         for a in p.all_outputs():
-            if 'Tecan' not in a.name and 'check' not in a.name:
+            if 'Tecan' not in a.name and 'check' not in a.name and 'Label' not in a.name:
                 if 'Dx Tecan Spark 10M QC' in p.type.name:
                     if 'Dx Conc. goedgekeurde meting (ng/ul)' in a.udf:
                         machine = 'Tecan'
