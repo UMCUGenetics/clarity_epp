@@ -15,7 +15,10 @@ def results(lims, process_id):
             for line in lims.get_file_contents(tapestation_result_file.id).split('\n'):
                 if line.startswith('FileName'):
                     header = line.split(',')
-                    size_index = header.index('Size [bp]')
+                    if 'Size [bp]' in header:
+                        size_index = header.index('Size [bp]') # Tapestation compact peak table
+                    else:
+                        size_index = header.index('Average Size [bp]') # Tapestation compact region table
                     sample_index = header.index('Sample Description')
 
                 elif line:
