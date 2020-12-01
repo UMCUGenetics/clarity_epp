@@ -67,7 +67,7 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
                     family = 'GIAB'
                 else:
                     family = sample.project.name
-                    family = re.sub('^dx', '', family, flags=re.IGNORECASE).strip('_ ')  # Remove 'dx' (ignore case) and strip leading space or _
+                    family = re.sub('^dx[ _]*', '', family, flags=re.IGNORECASE)  # Remove 'dx' (ignore case) and strip leading space or _
                 if family not in families:
                     families[family] = {'samples': [], 'NICU': False, 'project_type': family, 'split_project_type': False, 'urgent': False, 'merge': False}
 
