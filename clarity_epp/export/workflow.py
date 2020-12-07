@@ -29,25 +29,27 @@ def helix_lab(lims, process_id, output_file):
         for sample in artifact.samples:
             if 'Dx Werklijstnummer' in sample.udf:  # Only check samples with a 'Werklijstnummer'
                 sample_artifacts = lims.get_artifacts(samplelimsid=sample.id, type='Analyte')
+                sample_artifacts = [artifact for artifact in sample_artifacts if artifact.parent_process]  # Filter artifacts without parent_process
+                sample_artifacts = sorted(sample_artifacts, key=lambda artifact: int(artifact.parent_process.id.split('-')[-1]))  # Sort artifact by parent process id 
+                
                 sample_all_processes = {}
                 sample_filter_processes = {}  # reset after Dx Sample registratie zuivering
 
                 for artifact in sample_artifacts:
-                    if artifact.parent_process:
-                        if 'Dx Sample registratie zuivering' in artifact.parent_process.type.name:
-                            sample_filter_processes = {}  # reset after new import
-                        process_id = artifact.parent_process.id
-                        process_name = artifact.parent_process.type.name
+                    if 'Dx Sample registratie zuivering' in artifact.parent_process.type.name:
+                        sample_filter_processes = {}  # reset after new helix import
+                    process_id = artifact.parent_process.id
+                    process_name = artifact.parent_process.type.name
 
-                        if process_name in sample_all_processes:
-                            sample_all_processes[process_name].add(process_id)
-                        else:
-                            sample_all_processes[process_name] = set([process_id])
+                    if process_name in sample_all_processes:
+                        sample_all_processes[process_name].add(process_id)
+                    else:
+                        sample_all_processes[process_name] = set([process_id])
 
-                        if process_name in sample_filter_processes:
-                            sample_filter_processes[process_name].add(process_id)
-                        else:
-                            sample_filter_processes[process_name] = set([process_id])
+                    if process_name in sample_filter_processes:
+                        sample_filter_processes[process_name].add(process_id)
+                    else:
+                        sample_filter_processes[process_name] = set([process_id])
 
                 # Determine meetw
                 repeat_cutoff = len(sample.udf['Dx Werklijstnummer'].split(';')) * 2
@@ -104,25 +106,27 @@ def helix_all(lims, process_id, output_file):
         for sample in artifact.samples:
             if 'Dx Werklijstnummer' in sample.udf:  # Only check samples with a 'Werklijstnummer'
                 sample_artifacts = lims.get_artifacts(samplelimsid=sample.id, type='Analyte')
+                sample_artifacts = [artifact for artifact in sample_artifacts if artifact.parent_process]  # Filter artifacts without parent_process
+                sample_artifacts = sorted(sample_artifacts, key=lambda artifact: int(artifact.parent_process.id.split('-')[-1]))  # Sort artifact by parent process id 
+                
                 sample_all_processes = {}
-                sample_filter_processes = {}  # reset after Dx Sample registratie zuivering
+                sample_filter_processes = {}  # reset after 'Dx Sample registratie zuivering' process -> this is a new import from helix, should not be counted as a repeat
 
                 for sample_artifact in sample_artifacts:
-                    if sample_artifact.parent_process:
-                        if 'Dx Sample registratie zuivering' in sample_artifact.parent_process.type.name:
-                            sample_filter_processes = {}  # reset after new import
-                        process_id = sample_artifact.parent_process.id
-                        process_name = sample_artifact.parent_process.type.name
+                    if 'Dx Sample registratie zuivering' in sample_artifact.parent_process.type.name:
+                        sample_filter_processes = {}  # reset after new helix import
+                    process_id = sample_artifact.parent_process.id
+                    process_name = sample_artifact.parent_process.type.name
 
-                        if process_name in sample_all_processes:
-                            sample_all_processes[process_name].add(process_id)
-                        else:
-                            sample_all_processes[process_name] = set([process_id])
+                    if process_name in sample_all_processes:
+                        sample_all_processes[process_name].add(process_id)
+                    else:
+                        sample_all_processes[process_name] = set([process_id])
 
-                        if process_name in sample_filter_processes:
-                            sample_filter_processes[process_name].add(process_id)
-                        else:
-                            sample_filter_processes[process_name] = set([process_id])
+                    if process_name in sample_filter_processes:
+                        sample_filter_processes[process_name].add(process_id)
+                    else:
+                        sample_filter_processes[process_name] = set([process_id])
 
                 # Determine meetw
                 repeat_cutoff = len(sample.udf['Dx Werklijstnummer'].split(';')) * 2
