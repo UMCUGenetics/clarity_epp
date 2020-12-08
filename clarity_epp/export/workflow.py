@@ -29,7 +29,7 @@ def helix_lab(lims, process_id, output_file):
         for sample in artifact.samples:
             if 'Dx Werklijstnummer' in sample.udf:  # Only check samples with a 'Werklijstnummer'
                 sample_artifacts = lims.get_artifacts(samplelimsid=sample.id, type='Analyte')
-                sample_artifacts = [artifact for artifact in sample_artifacts if artifact.parent_process]  # Filter artifacts without parent_process
+                sample_artifacts = [sample_artifact for sample_artifact in sample_artifacts if sample_artifact.parent_process]  # Filter artifacts without parent_process
                 sample_artifacts = sorted(sample_artifacts, key=lambda artifact: int(artifact.parent_process.id.split('-')[-1]))  # Sort artifact by parent process id 
                 
                 sample_all_processes = {}
@@ -106,7 +106,7 @@ def helix_all(lims, process_id, output_file):
         for sample in artifact.samples:
             if 'Dx Werklijstnummer' in sample.udf:  # Only check samples with a 'Werklijstnummer'
                 sample_artifacts = lims.get_artifacts(samplelimsid=sample.id, type='Analyte')
-                sample_artifacts = [artifact for artifact in sample_artifacts if artifact.parent_process]  # Filter artifacts without parent_process
+                sample_artifacts = [sample_artifact for sample_artifact in sample_artifacts if sample_artifact.parent_process]  # Filter artifacts without parent_process
                 sample_artifacts = sorted(sample_artifacts, key=lambda artifact: int(artifact.parent_process.id.split('-')[-1]))  # Sort artifact by parent process id 
                 
                 sample_all_processes = {}
