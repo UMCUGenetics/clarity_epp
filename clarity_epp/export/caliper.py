@@ -75,12 +75,10 @@ def samplesheet_normalise(lims, process_id, output_file):
                         machine = 'Qubit'
                         sample = a.samples[0].name
                         measurement = a.udf['Dx Conc. goedgekeurde meting (ng/ul)']
-                        qcflag = a.qc_flag
-                        if qcflag == 'PASSED':
-                            if sample in samples_measurements_qubit:
-                                samples_measurements_qubit[sample].append(measurement)
-                            else:
-                                samples_measurements_qubit[sample] = [measurement]
+                        if sample in samples_measurements_qubit:
+                            samples_measurements_qubit[sample].append(measurement)
+                        else:
+                            samples_measurements_qubit[sample] = [measurement]
                     else:
                         sample = a.samples[0].name
                         if sample not in sample_concentration:
@@ -92,12 +90,10 @@ def samplesheet_normalise(lims, process_id, output_file):
                         machine = 'Tecan'
                         sample = a.samples[0].name
                         measurement = a.udf['Dx Conc. goedgekeurde meting (ng/ul)']
-                        qcflag = a.qc_flag
-                        if qcflag == 'UNKNOWN' or 'PASSED':
-                            if sample in samples_measurements_tecan:
-                                samples_measurements_tecan[sample].append(measurement)
-                            else:
-                                samples_measurements_tecan[sample] = [measurement]
+                        if sample in samples_measurements_tecan:
+                            samples_measurements_tecan[sample].append(measurement)
+                        else:
+                            samples_measurements_tecan[sample] = [measurement]
                     else:
                         sample = a.samples[0].name
                         if sample not in sample_concentration:

@@ -11,7 +11,6 @@ def set_qc_flag(lims, process_id):
     max_size = process.udf['Maximale fragmentlengte (bp)']
 
     for artifact in process.all_outputs():
-        print artifact, artifact.name, artifact.files
         try:
             size = artifact.udf['Dx Fragmentlengte (bp)']
             if size >= min_size and size <= max_size:
