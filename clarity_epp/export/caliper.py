@@ -4,29 +4,34 @@ from genologics.entities import Process
 
 import utils
 
+
 def samplesheet_normalise(lims, process_id, output_file):
     """Create Caliper samplesheet for normalising 96 well plate."""
-    output_file.write('Monsternummer\tPlate_Id_input\tWell\tPlate_Id_output\tPipetteervolume DNA (ul)\tPipetteervolume H2O (ul)\n')
+    output_file.write(
+        'Monsternummer\tPlate_Id_input\tWell\tPlate_Id_output\tPipetteervolume DNA (ul)\tPipetteervolume H2O (ul)\n'
+    )
     process = Process(lims, id=process_id)
     parent_processes = []
     parent_process_barcode_manual = 'None'
     parent_process_barcode_hamilton = 'None'
+
     for p in process.parent_processes():
-        if 'Dx manueel gezuiverd placement' in p.type.name:
+        if p.type.name.startswith('Dx manueel gezuiverd placement'):
             for pp in p.parent_processes():
                 parent_processes.append(pp)
             parent_process_barcode_manual = p.output_containers()[0].name
-        if 'Dx Hamilton zuiveren' in p.type.name:
+        elif p.type.name.startswith('Dx Hamilton'):
             parent_processes.append(p)
             parent_process_barcode_hamilton = p.output_containers()[0].name
-        if 'Dx Zuiveren gDNA manueel' in p.type.name:
+        elif p.type.name.startswith('Dx Zuiveren gDNA manueel'):
             parent_processes.append(p)
+
     if parent_process_barcode_hamilton != 'None':
         parent_process_barcode = parent_process_barcode_hamilton
     else:
         parent_process_barcode = parent_process_barcode_manual
-    parent_processes = list(set(parent_processes))
-    process_types = []
+
+    # Get all Qubit and Tecan Spark QC types
     types = []
     process_types = lims.get_process_types()
     for pt in process_types:
@@ -34,16 +39,18 @@ def samplesheet_normalise(lims, process_id, output_file):
             types.append(pt.name)
         elif 'Dx Tecan Spark 10M QC' in pt.name:
             types.append(pt.name)
+
+    # Get all unique input artifact ids
+    parent_processes = list(set(parent_processes))
     input_artifact_ids = []
     for p in parent_processes:
         for analyte in p.all_outputs():
             input_artifact_ids.append(analyte.id)
     input_artifact_ids = list(set(input_artifact_ids))
-    qc_processes = lims.get_processes(
-        type=[types],
-        inputartifactlimsid=input_artifact_ids
-    )
-    qc_processes = list(set(qc_processes))
+
+    # Get unique QC processes for input artifacts
+    qc_processes = list(set(lims.get_processes(type=[types], inputartifactlimsid=input_artifact_ids)))
+    
     samples_measurements_qubit = {}
     sample_concentration = {}
     samples_measurements_tecan = {}
@@ -146,11 +153,13 @@ def samplesheet_normalise(lims, process_id, output_file):
             volume_H2O[placement] = output_ul-int(round(float(output_ng)/conc[placement]))
 
     for well in utils.sort_96_well_plate(monsternummer.keys()):
-        output_file.write('{monsternummer}\t{plate_id_input}\t{position}\t{plate_id_output}\t{volume_DNA}\t{volume_H2O}\n'.format(
-            monsternummer=monsternummer[well],
-            plate_id_input=parent_process_barcode,
-            position=well,
-            plate_id_output=output_plate_barcode,
-            volume_DNA=volume_DNA[well],
-            volume_H2O=volume_H2O[well]
-        ))
+        output_file.write(
+            '{monsternummer}\t{plate_id_input}\t{position}\t{plate_id_output}\t{volume_DNA}\t{volume_H2O}\n'.format(
+                monsternummer=monsternummer[well],
+                plate_id_input=parent_process_barcode,
+                position=well,
+                plate_id_output=output_plate_barcode,
+                volume_DNA=volume_DNA[well],
+                volume_H2O=volume_H2O[well]
+            )
+        )
