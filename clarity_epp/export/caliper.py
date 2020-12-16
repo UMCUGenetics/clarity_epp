@@ -11,6 +11,7 @@ def samplesheet_normalise(lims, process_id, output_file):
         'Monsternummer\tPlate_Id_input\tWell\tPlate_Id_output\tPipetteervolume DNA (ul)\tPipetteervolume H2O (ul)\n'
     )
     process = Process(lims, id=process_id)
+    process_samples = [artifact.name for artifact in process.analytes()[0]]
     parent_processes = []
     parent_process_barcode_manual = 'None'
     parent_process_barcode_hamilton = 'None'
@@ -32,13 +33,12 @@ def samplesheet_normalise(lims, process_id, output_file):
         parent_process_barcode = parent_process_barcode_manual
 
     # Get all Qubit and Tecan Spark QC types
-    types = []
-    process_types = lims.get_process_types()
-    for pt in process_types:
-        if 'Dx Qubit QC' in pt.name:
-            types.append(pt.name)
-        elif 'Dx Tecan Spark 10M QC' in pt.name:
-            types.append(pt.name)
+    qc_process_types = []
+    for process_type in lims.get_process_types():
+        if 'Dx Qubit QC' in process_type.name:
+            qc_process_types.append(process_type.name)
+        elif 'Dx Tecan Spark 10M QC' in process_type.name:
+            qc_process_types.append(process_type.name)
 
     # Get all unique input artifact ids
     parent_processes = list(set(parent_processes))
@@ -49,7 +49,7 @@ def samplesheet_normalise(lims, process_id, output_file):
     input_artifact_ids = list(set(input_artifact_ids))
 
     # Get unique QC processes for input artifacts
-    qc_processes = list(set(lims.get_processes(type=[types], inputartifactlimsid=input_artifact_ids)))
+    qc_processes = list(set(lims.get_processes(type=[qc_process_types], inputartifactlimsid=input_artifact_ids)))
     
     samples_measurements_qubit = {}
     sample_concentration = {}
@@ -74,48 +74,40 @@ def samplesheet_normalise(lims, process_id, output_file):
     output_ul = process.udf['Eindvolume (ul) genormaliseerd gDNA']
     output_plate_barcode = process.output_containers()[0].name
 
-    for p in qc_processes:
-        if 'Dx Qubit QC' in p.type.name:
-            for a in p.all_outputs():
-                if 'Tecan' not in a.name and 'check' not in a.name and 'Label' not in a.name:
-                    if 'Dx Conc. goedgekeurde meting (ng/ul)' in a.udf:
-                        machine = 'Qubit'
-                        sample = a.samples[0].name
-                        measurement = a.udf['Dx Conc. goedgekeurde meting (ng/ul)']
-                        if sample in samples_measurements_qubit:
-                            samples_measurements_qubit[sample].append(measurement)
-                        else:
-                            samples_measurements_qubit[sample] = [measurement]
-                    else:
-                        sample = a.samples[0].name
-                        if sample not in sample_concentration:
-                            sample_concentration[sample] = 'geen'
-        elif 'Dx Tecan Spark 10M QC' in p.type.name:
-            for a in p.all_outputs():
-                if 'Tecan' not in a.name and 'check' not in a.name and 'Label' not in a.name:
-                    if 'Dx Conc. goedgekeurde meting (ng/ul)' in a.udf:
-                        machine = 'Tecan'
-                        sample = a.samples[0].name
-                        measurement = a.udf['Dx Conc. goedgekeurde meting (ng/ul)']
-                        if sample in samples_measurements_tecan:
-                            samples_measurements_tecan[sample].append(measurement)
-                        else:
-                            samples_measurements_tecan[sample] = [measurement]
-                    else:
-                        sample = a.samples[0].name
-                        if sample not in sample_concentration:
-                            sample_concentration[sample] = 'geen'
-    for p in qc_processes:
-        for a in p.all_outputs():
-            if 'Tecan' not in a.name and 'check' not in a.name and 'Label' not in a.name:
-                if 'Dx Tecan Spark 10M QC' in p.type.name:
-                    if 'Dx Conc. goedgekeurde meting (ng/ul)' in a.udf:
-                        machine = 'Tecan'
-                    sample = a.samples[0].name
-                elif 'Dx Qubit QC' in p.type.name:
-                    if 'Dx Conc. goedgekeurde meting (ng/ul)' in a.udf:
-                        machine = 'Qubit'
-                    sample = a.samples[0].name
+    for qc_process in qc_processes:
+        if 'Dx Qubit QC' in qc_process.type.name:
+            for artifact in qc_process.all_outputs():
+                sample = artifact.samples[0].name
+                if sample in process_samples and not any(keyword in artifact.name for keyword in ['Tecan', 'check', 'Label']):
+                    if 'Dx Conc. goedgekeurde meting (ng/ul)' in artifact.udf:
+                        measurement = artifact.udf['Dx Conc. goedgekeurde meting (ng/ul)']
+                        if sample not in samples_measurements_qubit:
+                            samples_measurements_qubit[sample] = []
+                        samples_measurements_qubit[sample].append(measurement)
+                    elif sample not in sample_concentration:
+                        sample_concentration[sample] = 'geen'
+        
+        elif 'Dx Tecan Spark 10M QC' in qc_process.type.name:
+            for artifact in qc_process.all_outputs():
+                sample = artifact.samples[0].name
+                if sample in process_samples and not any(keyword in artifact.name for keyword in ['Tecan', 'check', 'Label']):
+                    if 'Dx Conc. goedgekeurde meting (ng/ul)' in artifact.udf:
+                        measurement = artifact.udf['Dx Conc. goedgekeurde meting (ng/ul)']
+                        if sample not in samples_measurements_tecan:
+                            samples_measurements_tecan[sample] = []
+                        samples_measurements_tecan[sample].append(measurement)                            
+                    elif sample not in sample_concentration:
+                        sample_concentration[sample] = 'geen'
+    
+    for qc_process in qc_processes:
+        for artifact in qc_process.all_outputs():
+            sample = artifact.samples[0].name
+            if not any(keyword in artifact.name for keyword in ['Tecan', 'check', 'Label']):
+                if 'Dx Tecan Spark 10M QC' in qc_process.type.name and 'Dx Conc. goedgekeurde meting (ng/ul)' in artifact.udf:
+                    machine = 'Tecan'
+                elif 'Dx Qubit QC' in qc_process.type.name and 'Dx Conc. goedgekeurde meting (ng/ul)' in artifact.udf:
+                    machine = 'Qubit'
+            
             if sample not in sample_concentration or machine == 'Qubit':
                 if sample in samples_measurements_tecan or sample in samples_measurements_qubit:
                     if machine == 'Tecan':
@@ -141,16 +133,17 @@ def samplesheet_normalise(lims, process_id, output_file):
 
     for placement, artifact in process.output_containers()[0].placements.iteritems():
         sample = artifact.samples[0].name
-        placement = ''.join(placement.split(':'))
-        monsternummer[placement] = sample
-        conc_measured[placement] = sample_concentration[sample]
-        if conc_measured[placement] != 'geen':
-            if output_ng/conc_measured[placement] > 50:
-                conc[placement] = output_ng/50
-            else:
-                conc[placement] = conc_measured[placement]
-            volume_DNA[placement] = int(round(float(output_ng)/conc[placement]))
-            volume_H2O[placement] = output_ul-int(round(float(output_ng)/conc[placement]))
+        if sample in process_samples:
+            placement = ''.join(placement.split(':'))
+            monsternummer[placement] = sample
+            conc_measured[placement] = sample_concentration[sample]
+            if conc_measured[placement] != 'geen':
+                if output_ng/conc_measured[placement] > 50:
+                    conc[placement] = output_ng/50
+                else:
+                    conc[placement] = conc_measured[placement]
+                volume_DNA[placement] = int(round(float(output_ng)/conc[placement]))
+                volume_H2O[placement] = output_ul-int(round(float(output_ng)/conc[placement]))
 
     for well in utils.sort_96_well_plate(monsternummer.keys()):
         output_file.write(
