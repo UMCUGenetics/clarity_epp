@@ -6,8 +6,9 @@ java -jar config-slicer.jar \
     -s <dev_server> \
     -u <username> \
     -p <password> \
-    -m <workflow_name>_workflowManifest.txt \
-    -w '<workflow_name>'
+    -w '<workflow_name>' \
+    -m <workflow_name_without_space>_workflowManifest.txt
+
 
 # Step 1b - Export workflow
 java -jar config-slicer.jar \
@@ -15,8 +16,8 @@ java -jar config-slicer.jar \
     -s <dev_server> \
     -u <username> \
     -p <password> \
-    -m <workflow_name>_workflowManifest.txt \
-    -k <workflow_name>_workflowManifest.xml
+    -m <workflow_name_without_space>_workflowManifest.txt \
+    -k <workflow_name_without_space>_workflowManifest.xml
 
 # Step 2 - Compare workflow
 java -jar config-slicer.jar \
@@ -24,7 +25,7 @@ java -jar config-slicer.jar \
     -s <prod_server> \
     -u <username> \
     -p <password> \
-    -k <workflow_name>_workflowManifest.xml \
+    -k <workflow_name_without_space>_workflowManifest.xml \
     > validate_before.out
 
 #  Step 3a - Import workflow
@@ -33,7 +34,7 @@ java -jar config-slicer.jar \
     -s <prod_server> \
     -u <username> \
     -p <password> \
-    -k <workflow_name>_workflowManifest.xml \
+    -k <workflow_name_without_space>_workflowManifest.xml \
     > import.out
 
 #  Step 3b - Import workflow
@@ -43,7 +44,7 @@ java -jar config-slicer.jar \
     -s <prod_server> \
     -u <username> \
     -p <password> \
-    -k <workflow_name>_workflowManifest.xml
+    -k <workflow_name_without_space>_workflowManifest.xml
 
 # Step 4 - Compare workflow
 java -jar config-slicer.jar \
