@@ -360,7 +360,7 @@ def samplesheet_normalization(lims, process_id, output_file):
         sample_volume = final_volume / dilution_factor
         water_volume = final_volume - sample_volume
 
-        output_file.write('{sample}\t{concentration}\t{final_volume}\t{dilution_factor:.1f}\t{sample_volume:.1f}\t{water_volume:.1f}\n'.format(
+        output_file.write('{sample}\t{concentration:.1f}\t{final_volume}\t{dilution_factor:.1f}\t{sample_volume:.1f}\t{water_volume:.1f}\n'.format(
             sample=sample.name,
             concentration=concentration,
             final_volume=final_volume,
