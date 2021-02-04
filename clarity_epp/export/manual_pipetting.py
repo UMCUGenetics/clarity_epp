@@ -324,3 +324,47 @@ def samplesheet_multiplex_sequence_pool(lims, process_id, output_file):
 
     tris_HCL_uL = 150 - total_load_uL
     output_file.write('{0}\t{1:.2f}\n'.format('Tris-HCL', tris_HCL_uL))
+
+
+def samplesheet_normalization(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for normalizing samples."""
+    output_file.write('Sample\tConcentration (ng/ul)\tEindvolume (ul)\tVerdunningsfactor\tVolume sample (ul)\tVolume water (ul)\n')
+    process = Process(lims, id=process_id)
+
+    # Find all QC process types
+    qc_process_types = []
+    for process_type in lims.get_process_types():
+        if 'Dx Qubit QC' in process_type.name:
+            qc_process_types.append(process_type.name)
+        elif 'Dx Tecan Spark 10M QC' in process_type.name:
+            qc_process_types.append(process_type.name)
+
+    for container in process.output_containers():
+        artifact = container.placements['1:1']  # asume tubes
+        input_artifact = artifact.input_artifact_list()[0]  # asume one input artifact
+        sample = artifact.samples[0]  # asume one sample per tube
+
+        # Find last qc process for artifact
+        qc_process = sorted(
+            lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id),
+            key=lambda process: int(process.id.split('-')[-1])
+        )[-1]
+
+        # Find concentration measurement
+        for qc_artifact in qc_process.outputs_per_input(input_artifact.id):
+            if 'Dx Concentratie fluorescentie (ng/ul)' in qc_artifact.udf:
+                concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+
+        final_volume = artifact.udf['Dx Eindvolume (ul)']
+        dilution_factor = concentration / 20
+        sample_volume = final_volume / dilution_factor
+        water_volume = final_volume - sample_volume
+
+        output_file.write('{sample}\t{concentration}\t{final_volume}\t{dilution_factor:.1f}\t{sample_volume:.1f}\t{water_volume:.1f}\n'.format(
+            sample=sample.name,
+            concentration=concentration,
+            final_volume=final_volume,
+            dilution_factor=dilution_factor,
+            sample_volume=sample_volume,
+            water_volume=water_volume
+        ))
