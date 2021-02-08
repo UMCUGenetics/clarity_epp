@@ -339,10 +339,9 @@ def samplesheet_normalization(lims, process_id, output_file):
         elif 'Dx Tecan Spark 10M QC' in process_type.name:
             qc_process_types.append(process_type.name)
 
-    for container in process.output_containers():
-        artifact = container.placements['1:1']  # asume tubes
-        input_artifact = artifact.input_artifact_list()[0]  # asume one input artifact
-        sample = artifact.samples[0]  # asume one sample per tube
+    for input_artifact in process.all_inputs(resolve=True):
+        artifact = process.outputs_per_input(input_artifact.id, Analyte=True)[0]  # assume one artifact per input
+        sample = input_artifact.samples[0]  # asume one sample per input artifact
 
         # Find last qc process for artifact
         qc_process = sorted(
