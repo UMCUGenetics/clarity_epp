@@ -55,6 +55,8 @@ for process in processes:
 
 for project in dx_projects:
     for sample in lims.get_samples(projectlimsid=project.id):
+        if sample.udf['Dx Onderzoeksreden'] == 'Research':  # skip research
+            continue
         sample_count += 1
         for artifact in lims.get_artifacts(samplelimsid=sample.id, resolve=True, type='Analyte'):
             for process in lims.get_processes(inputartifactlimsid=artifact.id):
@@ -67,7 +69,7 @@ for project in dx_projects:
                 # Find output artifacts
                 output_artifacts = []
                 if process.all_outputs():  # outputs_per_input returns TypeError if there is no output
-                    output_artifacts = [artifact.id for artifact in process.outputs_per_input(artifact.id, Analyte=True)]
+                    output_artifacts = [output_artifact.id for output_artifact in process.outputs_per_input(artifact.id, Analyte=True)]
 
                 # For 'Bioinformatica analyses' and 'NGS onderzoeken afronden' we need to demux to get correct artifact
                 if process_name in ['Dx Bioinformatica analyses', 'Dx NGS onderzoeken afronden']:
@@ -89,7 +91,6 @@ for project in dx_projects:
                         process_action_counts[process_name]['total'] += 1
                         process_action_counts[process_name][str(action['action'])] += 1
 
-print 'Sample counts'
 print 'Total Sample count: {0}'.format(str(sample_count))
 print 'Process\t{action_list}'.format(action_list='\t'.join(action_list))
 for process in process_action_counts:
