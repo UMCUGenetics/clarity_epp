@@ -71,6 +71,8 @@ def export_manual_pipetting(args):
         clarity_epp.export.manual_pipetting.samplesheet_multiplex_sequence_pool(lims, args.process_id, args.output_file)
     elif args.type == 'normalization':
         clarity_epp.export.manual_pipetting.samplesheet_normalization(lims, args.process_id, args.output_file)
+    elif args.type == 'capture':
+        clarity_epp.export.manual_pipetting.samplesheet_capture(lims, args.process_id, args.output_file)
 
 
 def export_ped_file(args):
@@ -222,7 +224,7 @@ if __name__ == "__main__":
     parser_export_labels.set_defaults(func=export_labels)
 
     parser_export_manual_pipetting = subparser_export.add_parser('manual', help='Create manual pipetting exports', parents=[output_parser])
-    parser_export_manual_pipetting.add_argument('type', choices=['purify', 'dilute_library_pool', 'multiplex_library_pool', 'multiplex_sequence_pool', 'normalization'], help='Samplesheet type')
+    parser_export_manual_pipetting.add_argument('type', choices=['purify', 'dilute_library_pool', 'multiplex_library_pool', 'multiplex_sequence_pool', 'normalization', 'capture'], help='Samplesheet type')
     parser_export_manual_pipetting.add_argument('process_id', help='Clarity lims process id')
     parser_export_manual_pipetting.set_defaults(func=export_manual_pipetting)
 

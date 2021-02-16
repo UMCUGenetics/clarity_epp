@@ -367,3 +367,35 @@ def samplesheet_normalization(lims, process_id, output_file):
             sample_volume=sample_volume,
             water_volume=water_volume
         ))
+
+
+def samplesheet_capture(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for capture protocol."""
+    process = Process(lims, id=process_id)
+    sample_count = len(process.analytes()[0])
+
+    # Hardcode for now all input paramters -> maybe use an UDF?
+    data = [
+        ['Ampligase Buffer 10X', 2.5],
+        ['MIP pool werkoplossing', 0.04],
+        ['*dNTP 0.25mM', 0.03],
+        ['Hemo Klentaq 10U/ul', 0.32],
+        ['Ampligase 100U/ul', 0.01],
+        ['water', 17.10],
+    ]
+
+    # Caculate for sample count
+    for i, item in enumerate(data):
+        data[i].append(sample_count * item[1] * 1.1)
+
+    # Calculate final volume
+    data.append([
+        'ul MM in elke well',
+        sum([item[1] for item in data]),
+        sum([item[2] for item in data]),
+    ])
+
+    # Write samplesheet
+    output_file.write('Mastermix\t1\t{0}\n'.format(sample_count))
+    for item in data:
+        output_file.write('{0}\t{1}\t{2}\n'.format(item[0], item[1], item[2]))
