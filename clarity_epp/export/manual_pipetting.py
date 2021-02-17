@@ -377,11 +377,11 @@ def samplesheet_capture(lims, process_id, output_file):
     # Hardcode for now all input paramters -> maybe use an UDF?
     data = [
         ['Ampligase Buffer 10X', 2.5],
-        ['MIP pool werkoplossing', 0.04],
-        ['*dNTP 0.25mM', 0.03],
+        ['MIP pool werkoplossing', 0.0410325795234137],
+        ['*dNTP 0.25mM', 0.032],
         ['Hemo Klentaq 10U/ul', 0.32],
         ['Ampligase 100U/ul', 0.01],
-        ['water', 17.10],
+        ['water', 17.0969674204766],
     ]
 
     # Caculate for sample count
@@ -398,4 +398,4 @@ def samplesheet_capture(lims, process_id, output_file):
     # Write samplesheet
     output_file.write('Mastermix\t1\t{0}\n'.format(sample_count))
     for item in data:
-        output_file.write('{0}\t{1}\t{2}\n'.format(item[0], item[1], item[2]))
+        output_file.write('{0}\t{1:.2f}\t{2:.2f}\n'.format(item[0], item[1], item[2]))
