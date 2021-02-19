@@ -376,12 +376,12 @@ def samplesheet_capture(lims, process_id, output_file):
 
     # Hardcode for now all input paramters -> maybe use an UDF?
     data = [
-        ['Ampligase Buffer 10X', 2.5],
-        ['MIP pool werkoplossing', 0.0410325795234137],
-        ['*dNTP 0.25mM', 0.032],
-        ['Hemo Klentaq 10U/ul', 0.32],
-        ['Ampligase 100U/ul', 0.01],
-        ['water', 17.0969674204766],
+        ['Ampligase Buffer 10X', process.udf['Ampligase Buffer 10X']],
+        ['MIP pool werkoplossing', process.udf['MIP pool werkoplossing']],
+        ['*dNTP 0.25mM', process.udf['*dNTP 0.25mM']],
+        ['Hemo Klentaq 10U/ul', process.udf['Hemo Klentaq 10U/ul']],
+        ['Ampligase 100U/ul', process.udf['Ampligase 100U/ul']],
+        ['Water', process.udf['Water']],
     ]
 
     # Caculate for sample count
