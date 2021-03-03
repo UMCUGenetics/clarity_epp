@@ -439,7 +439,7 @@ def sammplesheet_pcr_exonuclease(lims, process_id, output_file):
     # All input paramters
     data = [
         ['2X iProof', process.udf['2X iProof']],
-        ['Illumina forward primer(100µM) MIP_OLD_BB_FOR', process.udf['Illumina forward primer(100µM) MIP_OLD_BB_FOR']],
+        ['Illumina forward primer(100uM) MIP_OLD_BB_FOR', process.udf['Illumina forward primer(100uM) MIP_OLD_BB_FOR']],
         ['H2O', process.udf['H2O']],
     ]
 
