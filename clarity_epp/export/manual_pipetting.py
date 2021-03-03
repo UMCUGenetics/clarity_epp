@@ -374,7 +374,7 @@ def samplesheet_capture(lims, process_id, output_file):
     process = Process(lims, id=process_id)
     sample_count = len(process.analytes()[0])
 
-    # Hardcode for now all input paramters -> maybe use an UDF?
+    # All input paramters
     data = [
         ['Ampligase Buffer 10X', process.udf['Ampligase Buffer 10X']],
         ['MIP pool werkoplossing', process.udf['MIP pool werkoplossing']],
@@ -397,5 +397,64 @@ def samplesheet_capture(lims, process_id, output_file):
 
     # Write samplesheet
     output_file.write('Mastermix\t1\t{0}\n'.format(sample_count))
+    for item in data:
+        output_file.write('{0}\t{1:.2f}\t{2:.2f}\n'.format(item[0], item[1], item[2]))
+
+
+def sammplesheet_exonuclease(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for Exonuclease protocol"""
+    process = Process(lims, id=process_id)
+    sample_count = len(process.analytes()[0])
+
+    # All input paramters
+    data = [
+        ['EXO I', process.udf['EXO I']],
+        ['EXO III', process.udf['EXO III']],
+        ['Ampligase buffer 10X', process.udf['Ampligase buffer 10X']],
+        ['H2O', process.udf['H2O']],
+    ]
+
+    # Caculate for sample count
+    for i, item in enumerate(data):
+        data[i].append(sample_count * item[1] * 1.25)
+
+    # Calculate total
+    data.append([
+        'TOTAL (incl. 25% overmaat)',
+        sum([item[1] for item in data]),
+        sum([item[2] for item in data]),
+    ])
+
+    # Write samplesheet
+    output_file.write('\tMaster Mix (ul)\t{0}\n'.format(sample_count))
+    for item in data:
+        output_file.write('{0}\t{1:.2f}\t{2:.2f}\n'.format(item[0], item[1], item[2]))
+
+
+def sammplesheet_pcr_exonuclease(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for PCR after Exonuclease protocol"""
+    process = Process(lims, id=process_id)
+    sample_count = len(process.analytes()[0])
+
+    # All input paramters
+    data = [
+        ['2X iProof', process.udf['2X iProof']],
+        ['Illumina forward primer(100µM) MIP_OLD_BB_FOR', process.udf['Illumina forward primer(100µM) MIP_OLD_BB_FOR']],
+        ['H2O', process.udf['H2O']],
+    ]
+
+    # Caculate for sample count
+    for i, item in enumerate(data):
+        data[i].append(sample_count * item[1] * 1.1)
+
+    # Calculate total
+    data.append([
+        'TOTAL (incl. 10% overmaat)',
+        sum([item[1] for item in data]),
+        sum([item[2] for item in data]),
+    ])
+
+    # Write samplesheet
+    output_file.write('\tMaster Mix (ul)\t{0}\n'.format(sample_count))
     for item in data:
         output_file.write('{0}\t{1:.2f}\t{2:.2f}\n'.format(item[0], item[1], item[2]))
