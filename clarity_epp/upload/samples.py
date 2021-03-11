@@ -39,7 +39,7 @@ def from_helix(lims, email_settings, input_file):
     else:
         subject = "ERROR Lims Helix Upload: {0}".format(project_name)
         message = "Duplicate project / werklijst. Samples not loaded."
-        send_email(email_settings['from'], email_settings['to_import_helix'], subject, message)
+       send_email(email_settings['from'], email_settings['to_import_helix'], subject, message)
         sys.exit(message)
 
     container_type = Containertype(lims, id='2')  # Tube
@@ -98,7 +98,7 @@ def from_helix(lims, email_settings, input_file):
             else:
                 udf_data[udf] = data[udf_column[udf]['index']]
 
-        sample_name = udf_data['Dx Monsternummer']
+        sample_name = '{0}_{1}'.format(udf_data['Dx Monsternummer'], udf_data['Dx Meet ID'])
 
         # Set 'Dx Handmatig' udf
         if udf_data['Dx Foetus'] or udf_data['Dx Overleden'] or udf_data['Dx Materiaal type'] not in ['BL', 'BLHEP', 'BM', 'BMEDTA']:
@@ -137,53 +137,23 @@ def from_helix(lims, email_settings, input_file):
             ])
             udf_data['Dx Familienummer'] = udf_data['Dx Familienummer'].split('/')[-1].strip(' ')
 
-        sample_list = lims.get_samples(name=sample_name)
+        # Check other samples from patient
+        sample_list = lims.get_samples(udf={'Dx Persoons ID': udf_data['Dx Persoons ID']})
+        for sample in sample_list:
+            if sample.udf['Dx Monsternummer'] == udf_data['Dx Monsternummer']:
+                udf_data['Dx Import warning'] = ';'.join(['Monsternummer reeds gebruikt.', udf_data['Dx Import warning']])
+            if sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving'] and sample.udf['Dx Foetus'] == udf_data['Dx Foetus']:
+                udf_data['Dx Import warning'] = ';'.join(['Onderzoek reeds uitgevoerd.', udf_data['Dx Import warning']])
 
-        if sample_list:
-            sample = sample_list[0]
-            if udf_data['Dx Protocolomschrijving'] in sample.udf['Dx Protocolomschrijving']:
-                message += "{0}\tERROR: Duplicate sample and Protocolomschrijving code: {1}.\n".format(sample_name, udf_data['Dx Protocolomschrijving'])
-            else:
-                # Update existing sample if new Protocolomschrijving and thus workflow.
-
-                # Append udf fields
-                append_udf = [
-                    'Dx Onderzoeknummer', 'Dx Onderzoeksindicatie', 'Dx Onderzoeksreden', 'Dx Werklijstnummer', 'Dx Protocolcode', 'Dx Protocolomschrijving',
-                    'Dx Meet ID', 'Dx Stoftest code', 'Dx Stoftest omschrijving'
-                ]
-                for udf in append_udf:
-                    sample.udf[udf] = ';'.join([udf_data[udf], str(sample.udf[udf])])
-
-                # Update udf fields
-                update_udf = ['Dx Overleden', 'Dx Spoed', 'Dx NICU Spoed', 'Dx Handmatig', 'Dx Opslaglocatie', 'Dx Import warning']
-                for udf in update_udf:
-                    sample.udf[udf] = udf_data[udf]
-
-                # Add to new workflow
-                workflow = utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])
-                if workflow:
-                    sample.put()
-                    lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
-                    message += "{0}\tUpdated and added to workflow: {1}.\n".format(sample.name, workflow.name)
-                else:
-                    message += "{0}\tERROR: Stoftest code {1} is not linked to a workflow.\n".format(sample.name, udf_data['Dx Stoftest code'])
-
+        # Add sample to workflow
+        workflow = utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])
+        if workflow:
+            container = Container.create(lims, type=container_type, name=udf_data['Dx Fractienummer'])
+            sample = Sample.create(lims, container=container, position='1:1', project=project, name=sample_name, udf=udf_data)
+            lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
+            message += "{0}\tCreated and added to workflow: {1}.\n".format(sample.name, workflow.name)
         else:
-            # Check other samples from patient
-            sample_list = lims.get_samples(udf={'Dx Persoons ID': udf_data['Dx Persoons ID']})
-            for sample in sample_list:
-                if sample.udf['Dx Protocolomschrijving'] == udf_data['Dx Protocolomschrijving'] and sample.udf['Dx Foetus'] == udf_data['Dx Foetus']:
-                    udf_data['Dx Import warning'] = ';'.join(['Onderzoek reeds uitgevoerd.', udf_data['Dx Import warning']])
-
-            # Add sample to workflow
-            workflow = utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])
-            if workflow:
-                container = Container.create(lims, type=container_type, name=udf_data['Dx Fractienummer'])
-                sample = Sample.create(lims, container=container, position='1:1', project=project, name=sample_name, udf=udf_data)
-                lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
-                message += "{0}\tCreated and added to workflow: {1}.\n".format(sample.name, workflow.name)
-            else:
-                message += "{0}\tERROR: Stoftest code {1} is not linked to a workflow.\n".format(sample_name, udf_data['Dx Stoftest code'])
+            message += "{0}\tERROR: Stoftest code {1} is not linked to a workflow.\n".format(sample_name, udf_data['Dx Stoftest code'])
 
     # Send final email
     send_email(email_settings['from'], email_settings['to_import_helix'], subject, message)
