@@ -351,8 +351,7 @@ def samplesheet_normalization(lims, process_id, output_file):
 
         # Find concentration measurement
         for qc_artifact in qc_process.outputs_per_input(input_artifact.id):
-            if 'Dx Concentratie fluorescentie (ng/ul)' in qc_artifact.udf:
-                concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+            concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
 
         final_volume = artifact.udf['Dx Eindvolume (ul)']
         dilution_factor = concentration / 20
