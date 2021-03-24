@@ -21,7 +21,7 @@ def results(lims, process_id):
                         concentration_index = None
                     else:  # Tapestation compact region table
                         size_index = header.index('Average Size [bp]')
-                        concentration_index = header.index('Conc. [pg/\xb5l]')  # micro sign
+                        concentration_index = header.index(u'Conc. [pg/\xb5l]')  # micro sign
                     sample_index = header.index('Sample Description')
 
                 elif line:
