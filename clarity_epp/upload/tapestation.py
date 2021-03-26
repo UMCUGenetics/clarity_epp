@@ -42,5 +42,5 @@ def results(lims, process_id):
             if sample_name in sample_size_measurements:
                 artifact.udf['Dx Fragmentlengte (bp)'] = sample_size_measurements[sample_name]
             if sample_name in sample_concentration_measurements:
-                artifact.udf['Dx Concentratie fluorescentie (ng/ul)'] = sample_size_measurements[sample_name]
+                artifact.udf['Dx Concentratie fluorescentie (ng/ul)'] = sample_concentration_measurements[sample_name]
             artifact.put()
