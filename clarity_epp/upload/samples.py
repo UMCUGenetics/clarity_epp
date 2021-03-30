@@ -24,7 +24,8 @@ def from_helix(lims, email_settings, input_file):
 
     # Get researcher using helix initials
     for researcher in lims.get_researchers():
-        if researcher.fax == helix_initials:  # Use FAX as intials field as the lims initials field can't be edited via the 5.0 web interface.
+        # Use FAX as intials field as the lims initials field can't be edited via the 5.0 web interface.
+        if researcher.fax == helix_initials:
             email_settings['to_import_helix'].append(researcher.email)
             break
     else:   # No researcher found
@@ -39,7 +40,7 @@ def from_helix(lims, email_settings, input_file):
     else:
         subject = "ERROR Lims Helix Upload: {0}".format(project_name)
         message = "Duplicate project / werklijst. Samples not loaded."
-       send_email(email_settings['from'], email_settings['to_import_helix'], subject, message)
+        send_email(email_settings['from'], email_settings['to_import_helix'], subject, message)
         sys.exit(message)
 
     container_type = Containertype(lims, id='2')  # Tube
@@ -101,7 +102,10 @@ def from_helix(lims, email_settings, input_file):
         sample_name = '{0}_{1}'.format(udf_data['Dx Monsternummer'], udf_data['Dx Meet ID'])
 
         # Set 'Dx Handmatig' udf
-        if udf_data['Dx Foetus'] or udf_data['Dx Overleden'] or udf_data['Dx Materiaal type'] not in ['BL', 'BLHEP', 'BM', 'BMEDTA']:
+        if (
+            udf_data['Dx Foetus'] or udf_data['Dx Overleden'] or
+            udf_data['Dx Materiaal type'] not in ['BL', 'BLHEP', 'BM', 'BMEDTA']
+        ):
             udf_data['Dx Handmatig'] = True
         else:
             udf_data['Dx Handmatig'] = False
@@ -118,7 +122,10 @@ def from_helix(lims, email_settings, input_file):
         elif udf_data['Dx Onderzoeksreden'] == 'Informativiteitstest':
             udf_data['Dx Familie status'] = 'Ouder'
         else:
-            udf_data['Dx Import warning'] = ';'.join(['Onbekende onderzoeksreden, familie status niet ingevuld.', udf_data['Dx Import warning']])
+            udf_data['Dx Import warning'] = ';'.join([
+                'Onbekende onderzoeksreden, familie status niet ingevuld.',
+                udf_data['Dx Import warning']
+            ])
 
         # Set 'Dx Geslacht' and 'Dx Geboortejaar' with 'Foetus' information if 'Dx Foetus == True'
         if udf_data['Dx Foetus']:
@@ -142,7 +149,10 @@ def from_helix(lims, email_settings, input_file):
         for sample in sample_list:
             if sample.udf['Dx Monsternummer'] == udf_data['Dx Monsternummer']:
                 udf_data['Dx Import warning'] = ';'.join(['Monsternummer reeds gebruikt.', udf_data['Dx Import warning']])
-            if sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving'] and sample.udf['Dx Foetus'] == udf_data['Dx Foetus']:
+            if (
+                sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving'] and
+                sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
+            ):
                 udf_data['Dx Import warning'] = ';'.join(['Onderzoek reeds uitgevoerd.', udf_data['Dx Import warning']])
 
         # Add sample to workflow
@@ -153,7 +163,10 @@ def from_helix(lims, email_settings, input_file):
             lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
             message += "{0}\tCreated and added to workflow: {1}.\n".format(sample.name, workflow.name)
         else:
-            message += "{0}\tERROR: Stoftest code {1} is not linked to a workflow.\n".format(sample_name, udf_data['Dx Stoftest code'])
+            message += "{0}\tERROR: Stoftest code {1} is not linked to a workflow.\n".format(
+                sample_name,
+                udf_data['Dx Stoftest code']
+            )
 
     # Send final email
     send_email(email_settings['from'], email_settings['to_import_helix'], subject, message)
