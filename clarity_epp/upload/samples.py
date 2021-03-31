@@ -161,7 +161,14 @@ def from_helix(lims, email_settings, input_file):
             container = Container.create(lims, type=container_type, name=udf_data['Dx Fractienummer'])
             sample = Sample.create(lims, container=container, position='1:1', project=project, name=sample_name, udf=udf_data)
             lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
-            message += "{0}\tCreated and added to workflow: {1}.\n".format(sample.name, workflow.name)
+            if 'Dx Import warning' in udf_data:
+                message += "{0}\tCreated and added to workflow: {1}.\tImport warning: {2}\n".format(
+                    sample.name,
+                    workflow.name,
+                    udf_data['Dx Import warning']
+                )
+            else:
+                message += "{0}\tCreated and added to workflow: {1}.\n".format(sample.name, workflow.name)
         else:
             message += "{0}\tERROR: Stoftest code {1} is not linked to a workflow.\n".format(
                 sample_name,
