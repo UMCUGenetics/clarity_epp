@@ -457,3 +457,68 @@ def sammplesheet_pcr_exonuclease(lims, process_id, output_file):
     output_file.write('\tMaster Mix (ul)\t{0}\n'.format(sample_count))
     for item in data:
         output_file.write('{0}\t{1:.2f}\t{2:.2f}\n'.format(item[0], item[1], item[2]))
+
+
+def samplesheet_mip_multiplex_pool(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for smMIP multiplexing"""
+    process = Process(lims, id=process_id)
+    input_artifacts = []
+
+    # Find all Dx Tapestation 2200/4200 QC process types
+    qc_process_types = []
+    for process_type in lims.get_process_types():
+        if 'Dx Tapestation 2200 QC' in process_type.name:
+            qc_process_types.append(process_type.name)
+        elif 'Dx Tapestation 4200 QC' in process_type.name:
+            qc_process_types.append(process_type.name)
+
+    # Write header
+    output_file.write('{sample}\t{volume}\t{plate_id}\t{well_id}\t{concentration}\t{manual}\n'.format(
+            sample='Sample',
+            volume='Volume',
+            plate_id='Plaat_id',
+            well_id='Well_id',
+            concentration='Concentratie',
+            manual='Handmatig',
+        ))
+
+    for input_artifact in process.all_inputs(resolve=True):
+        # Find last qc process for artifact
+        qc_process = sorted(
+            lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id),
+            key=lambda process: int(process.id.split('-')[-1])
+        )[-1]
+
+        # Find concentration measurement
+        for qc_artifact in qc_process.outputs_per_input(input_artifact.id):
+            if qc_artifact.name == input_artifact.name:
+                concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+
+        input_artifacts.append({
+            'name': input_artifact.name,
+            'concentration': concentration,
+            'plate_id': input_artifact.location[0].id,
+            'well_id': input_artifact.location[1],
+            'manual': input_artifact.samples[0].udf['Dx Handmatig']
+        })
+
+    # Calculate avg concentration for all non manual samples
+    concentrations = [input_artifact['concentration'] for input_artifact in input_artifacts if not input_artifact['manual']]
+    avg_concentration = sum(concentrations) / len(concentrations)
+
+    for input_artifact in input_artifacts:
+        if input_artifact['concentration'] < avg_concentration * 0.5:
+            volume = 20
+        elif input_artifact['concentration'] > avg_concentration * 1.5:
+            volume = 2
+        else:
+            volume = 5
+
+        output_file.write('{sample}\t{volume}\t{plate_id}\t{well_id}\t{concentration}\t{manual}\n'.format(
+            sample=input_artifact['name'],
+            volume=volume,
+            plate_id=input_artifact['plate_id'],
+            well_id=input_artifact['well_id'],
+            concentration=input_artifact['concentration'],
+            manual=input_artifact['manual'],
+        ))
