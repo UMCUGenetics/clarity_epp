@@ -193,13 +193,18 @@ if __name__ == "__main__":
     subparser = parser.add_subparsers()
 
     output_parser = argparse.ArgumentParser(add_help=False)
-    output_parser.add_argument('-o', '--output_file',  nargs='?', type=argparse.FileType('w'), default=sys.stdout, help='Output file path (default=stdout)')
+    output_parser.add_argument(
+        '-o', '--output_file',  nargs='?', type=argparse.FileType('w'), default=sys.stdout,
+        help='Output file path (default=stdout)'
+    )
 
     # export
     parser_export = subparser.add_parser('export', help='Export from lims.')
     subparser_export = parser_export.add_subparsers()
 
-    parser_export_bioanalyzer = subparser_export.add_parser('bioanalyzer', help='Create bioanalyzer samplesheets', parents=[output_parser])
+    parser_export_bioanalyzer = subparser_export.add_parser(
+        'bioanalyzer', help='Create bioanalyzer samplesheets', parents=[output_parser]
+    )
     parser_export_bioanalyzer.add_argument('process_id', help='Clarity lims process id')
     parser_export_bioanalyzer.set_defaults(func=export_bioanalyzer)
 
@@ -213,12 +218,16 @@ if __name__ == "__main__":
     parser_export_email.add_argument('process_id', help='Clarity lims process id')
     parser_export_email.set_defaults(func=export_email)
 
-    parser_export_hamilton = subparser_export.add_parser('hamilton', help='Create hamilton samplesheets', parents=[output_parser])
+    parser_export_hamilton = subparser_export.add_parser(
+        'hamilton', help='Create hamilton samplesheets', parents=[output_parser]
+    )
     parser_export_hamilton.add_argument('type', choices=['filling_out', 'purify'], help='Samplesheet type')
     parser_export_hamilton.add_argument('process_id', help='Clarity lims process id')
     parser_export_hamilton.set_defaults(func=export_hamilton)
 
-    parser_export_illumina = subparser_export.add_parser('illumina', help='Export updated illumina samplesheet.', parents=[output_parser])
+    parser_export_illumina = subparser_export.add_parser(
+        'illumina', help='Export updated illumina samplesheet.', parents=[output_parser]
+    )
     parser_export_illumina.add_argument('process_id', help='Clarity lims process id')
     parser_export_illumina.add_argument('artifact_id', help='Clarity lims samplesheet artifact id')
     parser_export_illumina.set_defaults(func=export_illumina)
@@ -229,7 +238,9 @@ if __name__ == "__main__":
     parser_export_labels.add_argument('-d', '--description',  nargs='?', help='Container name description')
     parser_export_labels.set_defaults(func=export_labels)
 
-    parser_export_manual_pipetting = subparser_export.add_parser('manual', help='Create manual pipetting exports', parents=[output_parser])
+    parser_export_manual_pipetting = subparser_export.add_parser(
+        'manual', help='Create manual pipetting exports', parents=[output_parser]
+    )
     parser_export_manual_pipetting.add_argument(
         'type',
         choices=[
@@ -249,10 +260,14 @@ if __name__ == "__main__":
     parser_export_ped.add_argument('process_id', help='Clarity lims process id')
     parser_export_ped.set_defaults(func=export_ped_file)
 
-    parser_export_removed_samples = subparser_export.add_parser('removed_samples', help='Export removed sampels table.', parents=[output_parser])
+    parser_export_removed_samples = subparser_export.add_parser(
+        'removed_samples', help='Export removed sampels table.', parents=[output_parser]
+    )
     parser_export_removed_samples.set_defaults(func=export_removed_samples)
 
-    parser_export_tapestation = subparser_export.add_parser('tapestation', help='Create tapestation samplesheets', parents=[output_parser])
+    parser_export_tapestation = subparser_export.add_parser(
+        'tapestation', help='Create tapestation samplesheets', parents=[output_parser]
+    )
     parser_export_tapestation.add_argument('process_id', help='Clarity lims process id')
     parser_export_tapestation.set_defaults(func=export_tapestation)
 
@@ -260,7 +275,9 @@ if __name__ == "__main__":
     parser_export_tecan.add_argument('process_id', help='Clarity lims process id')
     parser_export_tecan.set_defaults(func=export_tecan)
 
-    parser_export_workflow = subparser_export.add_parser('workflow', help='Export workflow result file.', parents=[output_parser])
+    parser_export_workflow = subparser_export.add_parser(
+        'workflow', help='Export workflow result file.', parents=[output_parser]
+    )
     parser_export_workflow.add_argument('type', choices=['all', 'lab', 'data_analysis'], help='Workflow type')
     parser_export_workflow.add_argument('process_id', help='Clarity lims process id')
     parser_export_workflow.set_defaults(func=export_workflow)
@@ -323,7 +340,9 @@ if __name__ == "__main__":
     parser_placement_barcode.add_argument('process_id', help='Clarity lims process id')
     parser_placement_barcode.set_defaults(func=placement_barcode)
 
-    parser_placement_complete_step = subparser_placement.add_parser('complete_step', help='Complete step Dx Mark protocol complete.')
+    parser_placement_complete_step = subparser_placement.add_parser(
+        'complete_step', help='Complete step Dx Mark protocol complete.'
+    )
     parser_placement_complete_step.add_argument('process_id', help='Clarity lims process id')
     parser_placement_complete_step.set_defaults(func=placement_complete_step)
 
