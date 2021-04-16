@@ -161,7 +161,7 @@ def from_helix(lims, email_settings, input_file):
             container = Container.create(lims, type=container_type, name=udf_data['Dx Fractienummer'])
             sample = Sample.create(lims, container=container, position='1:1', project=project, name=sample_name, udf=udf_data)
             lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
-            if 'Dx Import warning' in udf_data:
+            if udf_data['Dx Import warning']:
                 message += "{0}\tCreated and added to workflow: {1}.\tImport warning: {2}\n".format(
                     sample.name,
                     workflow.name,
