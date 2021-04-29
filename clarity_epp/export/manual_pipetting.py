@@ -459,7 +459,7 @@ def sammplesheet_pcr_exonuclease(lims, process_id, output_file):
     # Calculate total
     data.append([
         'TOTAL (incl. 10% overmaat)',
-        sum([item[1] for item in data]),
+        sum([item[1] for item in data]) * 1.1,
         sum([item[2] for item in data]),
     ])
 
