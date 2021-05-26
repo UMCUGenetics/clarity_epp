@@ -5,7 +5,7 @@ import re
 from genologics.entities import Process, Artifact
 
 from .. import get_sequence_name
-import utils
+import clarity_epp.export.utils
 import config
 
 

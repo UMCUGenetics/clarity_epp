@@ -1,7 +1,7 @@
 """Sample export functions."""
 import datetime
 
-import utils
+import clarity_epp.export.utils
 
 
 def removed_samples(lims, output_file):

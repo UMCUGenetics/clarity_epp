@@ -1,5 +1,5 @@
 """Automatic QC functions."""
 
-import fragment_length
-import illumina
-import qubit
+import clarity_epp.qc.fragment_length
+import clarity_epp.qc.illumina
+import clarity_epp.qc.qubit

@@ -2,7 +2,7 @@
 
 from genologics.entities import Process
 
-import utils
+import clarity_epp.export.utils
 
 
 def samplesheet_filling_out(lims, process_id, output_file):
