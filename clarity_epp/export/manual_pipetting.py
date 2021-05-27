@@ -532,3 +532,35 @@ def samplesheet_mip_multiplex_pool(lims, process_id, output_file):
             concentration=input_artifact['concentration'],
             manual=input_artifact['manual'],
         ))
+
+
+def samplesheet_mip_pool_dilution(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for smMIP pool dilution"""
+    process = Process(lims, id=process_id)
+
+    # Write header
+    output_file.write('{sample}\t{dna}\t{ul_sample}\t{ul_EB}\t{concentration}\t{fragment_length}\n'.format(
+        sample='Sample',
+        dna='nM DNA',
+        ul_sample='ul Sample',
+        ul_EB='ul EB buffer',
+        concentration='Concentratie (ng/ul)',
+        fragment_length='Fragment lengte (bp)',
+    ))
+
+    for input_artifact in process.all_inputs(resolve=True):
+        concentration = float(input_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+        fragment_length = float(input_artifact.udf['Dx Fragmentlengte (bp)'])
+
+        dna = (concentration*(10**3/1)*(1/649)*(1/fragment_length))*1000
+        ul_sample = 2/dna*10
+        ul_EB = 10-ul_sample
+
+        output_file.write('{sample}\t{dna:.2f}\t{ul_sample:.2f}\t{ul_EB:.2f}\t{concentration:.2f}\t{fragment_length}\n'.format(
+            sample=input_artifact.name,
+            dna=dna,
+            ul_sample=ul_sample,
+            ul_EB=ul_EB,
+            concentration=concentration,
+            fragment_length=int(fragment_length),
+        ))
