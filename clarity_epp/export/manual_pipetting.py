@@ -552,7 +552,7 @@ def samplesheet_mip_pool_dilution(lims, process_id, output_file):
         concentration = float(input_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
         fragment_length = float(input_artifact.udf['Dx Fragmentlengte (bp)'])
 
-        dna = (concentration*(10**3/1)*(1/649)*(1/fragment_length))*1000
+        dna = (concentration*(10.0**3.0/1.0)*(1.0/649.0)*(1.0/fragment_length))*1000.0
         ul_sample = 2/dna*10
         ul_EB = 10-ul_sample
 
