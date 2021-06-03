@@ -539,28 +539,30 @@ def samplesheet_mip_pool_dilution(lims, process_id, output_file):
     process = Process(lims, id=process_id)
 
     # Write header
-    output_file.write('{sample}\t{dna}\t{ul_sample}\t{ul_EB}\t{concentration}\t{fragment_length}\n'.format(
+    output_file.write('{sample}\t{ul_sample_10}\t{ul_EB_10}\t{ul_sample_20}\t{ul_EB_20}\t{ul_sample_40}\t{ul_EB_40}\t\n'.format(
         sample='Sample',
-        dna='nM DNA',
-        ul_sample='ul Sample',
-        ul_EB='ul EB buffer',
-        concentration='Concentratie (ng/ul)',
-        fragment_length='Fragment lengte (bp)',
+        ul_sample_10='ul Sample (10 ul)',
+        ul_EB_10='ul EB buffer (10 ul)',
+        ul_sample_20='ul Sample (20 ul)',
+        ul_EB_20='ul EB buffer (20 ul)',
+        ul_sample_40='ul Sample (40 ul)',
+        ul_EB_40='ul EB buffer (40 ul)',
     ))
 
     for input_artifact in process.all_inputs(resolve=True):
         concentration = float(input_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
         fragment_length = float(input_artifact.udf['Dx Fragmentlengte (bp)'])
 
-        dna = (concentration*(10.0**3.0/1.0)*(1.0/649.0)*(1.0/fragment_length))*1000.0
-        ul_sample = 2/dna*10
-        ul_EB = 10-ul_sample
+        dna = (concentration * (10.0**3.0 / 1.0) * (1.0 / 649.0) * (1.0 / fragment_length) ) * 1000.0
+        ul_sample = 2 / dna * 10
+        ul_EB = 10 - ul_sample
 
-        output_file.write('{sample}\t{dna:.2f}\t{ul_sample:.2f}\t{ul_EB:.2f}\t{concentration:.2f}\t{fragment_length}\n'.format(
+        output_file.write('{sample}\t{ul_sample_10:.2f}\t{ul_EB_10:.2f}\t{ul_sample_20:.2f}\t{ul_EB_20:.2f}\t{ul_sample_40:.2f}\t{ul_EB_40:.2f}\t\n'.format(
             sample=input_artifact.name,
-            dna=dna,
-            ul_sample=ul_sample,
-            ul_EB=ul_EB,
-            concentration=concentration,
-            fragment_length=int(fragment_length),
+            ul_sample_10=ul_sample,
+            ul_EB_10=ul_EB,
+            ul_sample_20=ul_sample * 2,
+            ul_EB_20=ul_EB * 2,
+            ul_sample_40=ul_sample * 4,
+            ul_EB_40=ul_EB * 4,
         ))
