@@ -55,6 +55,15 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
                         project_type = 'CREv2'
                         families[family]['project_type'] = project_type
                         families[family]['split_project_type'] = True
+                    elif 'SNP fingerprint MIP' in sample.udf['Dx Protocolomschrijving'] and not families[family]['NICU']:
+                        project_type = 'Fingerprint'
+                        families[family]['project_type'] = project_type
+                        families[family]['split_project_type'] = False
+                    elif 'PID09.V7_smMIP' in sample.udf['Dx Protocolomschrijving'] and not families[family]['NICU']:
+                        project_type = 'ERARE'
+                        families[family]['project_type'] = project_type
+                        families[family]['split_project_type'] = False
+                    
                     # Set urgent / merge status
                     if 'Dx Spoed' in list(sample.udf) and sample.udf['Dx Spoed']:
                         families[family]['urgent'] = True
