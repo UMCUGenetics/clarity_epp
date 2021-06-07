@@ -5,7 +5,7 @@ import re
 from genologics.entities import Process, Artifact
 
 from .. import get_sequence_name
-import clarity_epp.export.utils  as utils
+import clarity_epp.export.utils
 import config
 
 
@@ -177,7 +177,7 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
 
             # Reverse complement index for NextSeq runs
             if nextseq_run:
-                data[index_index] = utils.reverse_complement(data[index_index])
+                data[index_index] = clarity_epp.export.utils.reverse_complement(data[index_index])
 
             output_file.write('{line}\n'.format(line=','.join(data)))
         else:  # Leave other lines untouched.

@@ -2,7 +2,7 @@
 
 from genologics.entities import Process
 
-import clarity_epp.export.utils as utils
+import clarity_epp.export.utils
 
 
 def samplesheet_normalise(lims, process_id, output_file):
@@ -145,7 +145,7 @@ def samplesheet_normalise(lims, process_id, output_file):
                 volume_DNA[placement] = int(round(float(output_ng)/conc[placement]))
                 volume_H2O[placement] = output_ul-int(round(float(output_ng)/conc[placement]))
 
-    for well in utils.sort_96_well_plate(monsternummer.keys()):
+    for well in clarity_epp.export.utils.sort_96_well_plate(monsternummer.keys()):
         output_file.write(
             '{monsternummer}\t{plate_id_input}\t{position}\t{plate_id_output}\t{volume_DNA}\t{volume_H2O}\n'.format(
                 monsternummer=monsternummer[well],
