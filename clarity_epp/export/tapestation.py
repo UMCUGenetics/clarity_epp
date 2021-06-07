@@ -2,7 +2,7 @@
 
 from genologics.entities import Process
 
-import clarity_epp.export.utils
+import clarity_epp.export.utils as utils
 
 
 def samplesheet(lims, process_id, output_file):

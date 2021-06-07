@@ -1,7 +1,4 @@
 """Utility functions."""
-from datetime import datetime
-import re
-
 from genologics.entities import Workflow
 
 import config

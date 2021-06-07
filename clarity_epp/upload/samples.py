@@ -5,7 +5,7 @@ from requests.exceptions import ConnectionError
 from genologics.entities import Sample, Project, Containertype, Container
 
 from .. import send_email
-import clarity_epp.upload.utils
+import clarity_epp.upload.utils as utils
 
 
 def from_helix(lims, email_settings, input_file):

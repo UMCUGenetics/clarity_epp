@@ -2,7 +2,6 @@
 
 from genologics.entities import Artifact, Process, Workflow
 
-from .. import get_sequence_name
 import config
 
 
