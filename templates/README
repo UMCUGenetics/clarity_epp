@@ -1,0 +1,2 @@
+This folder contains templates to create Illumina samplesheets using clarity lims. 
+Original location on limsserver: `/opt/gls/clarity/extensions/conf/driverfiletemplates`.
