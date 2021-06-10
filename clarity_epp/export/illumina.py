@@ -102,19 +102,24 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
 
     # Set sample projects
     sample_projects = {}
+    sample_sequence_names = {}
 
     # Urgent families / samples, skip merge
     for family in [family for family in families.values() if family['urgent'] and not family['merge']]:
         family_project = get_project(project_types[family['project_type']]['projects'], urgent=True)
         for sample in family['samples']:
-            sample_projects[get_sequence_name(sample)] = family_project
+            sample_sequence_name = get_sequence_name(sample)
+            sample_sequence_names[sample.name] = sample_sequence_name
+            sample_projects[sample_sequence_name] = family_project
             project_types[family['project_type']]['projects'][family_project] += 1
     
     # Merge families / samples
     for family in [family for family in families.values() if family['merge']]:
         family_project = get_project(project_types[family['project_type']]['projects'])
         for sample in family['samples']:
-            sample_projects[get_sequence_name(sample)] = family_project
+            sample_sequence_name = get_sequence_name(sample)
+            sample_sequence_names[sample.name] = sample_sequence_name
+            sample_projects[sample_sequence_name] = family_project
             project_types[family['project_type']]['projects'][family_project] += 1
 
     # Non urgent and non merge families / samples
@@ -122,7 +127,9 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
     for family in sorted(non_urgent_families, key=lambda fam: (len(fam['samples'])), reverse=True):
         family_project = get_project(project_types[family['project_type']]['projects'])
         for sample in family['samples']:
-            sample_projects[get_sequence_name(sample)] = family_project
+            sample_sequence_name = get_sequence_name(sample)
+            sample_sequence_names[sample.name] = sample_sequence_name
+            sample_projects[sample_sequence_name] = family_project
             project_types[family['project_type']]['projects'][family_project] += 1
 
     # Check sequencer type -> NextSeq runs need to reverse complement 'index2' for dual barcodes and 'index' for single barcodes.
@@ -165,6 +172,12 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
 
         elif sample_header:  # Samples header seen, so continue with samples.
             data = line.rstrip().split(',')
+
+            # Fix sample name -> use sequence name
+            try:
+                data[sample_name_index] = sample_sequence_names[data[sample_name_index]]
+            except KeyError:
+                pass
 
             # Set Sample_Project
             try:
