@@ -95,7 +95,7 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
     for project_type in project_types:
         project_types[project_type]['index'] = 0
         if project_types[project_type]['split_project_type']:
-            for i in range(0, project_types[project_type]['sample_count']/9+1):
+            for i in range(0, int(project_types[project_type]['sample_count']/9+1)):
                 project_types[project_type]['projects']['{0}_{1}'.format(project_type, i+1)] = 0
         else:
             project_types[project_type]['projects'][project_type] = 0
