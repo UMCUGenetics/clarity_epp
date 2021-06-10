@@ -148,12 +148,18 @@ def from_helix(lims, email_settings, input_file):
         sample_list = lims.get_samples(udf={'Dx Persoons ID': udf_data['Dx Persoons ID']})
         for sample in sample_list:
             if sample.udf['Dx Monsternummer'] == udf_data['Dx Monsternummer']:
-                udf_data['Dx Import warning'] = ';'.join(['Monsternummer reeds gebruikt.', udf_data['Dx Import warning']])
-            if (
-                sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving'] and
-                sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
-            ):
-                udf_data['Dx Import warning'] = ';'.join(['Onderzoek reeds uitgevoerd.', udf_data['Dx Import warning']])
+                if (
+                    sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving'] and
+                    sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
+                ):
+                    udf_data['Dx Import warning'] = ';'.join(['Monsternummer hetzelfde, Protocolomschrijving hetzelfde', udf_data['Dx Import warning']])
+                else:
+                    udf_data['Dx Import warning'] = ';'.join(['Monsternummer hetzelfde, Protocolomschrijving uniek', udf_data['Dx Import warning']])
+            elif (
+                    sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving'] and
+                    sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
+                ):
+                    udf_data['Dx Import warning'] = ';'.join(['Monsternummer uniek, Protocolomschrijving hetzelfde', udf_data['Dx Import warning']])
 
         # Add sample to workflow
         workflow = utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])
