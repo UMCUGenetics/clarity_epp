@@ -12,6 +12,7 @@ import config
 def update_samplesheet(lims, process_id, artifact_id, output_file):
     """Update illumina samplesheet."""
     process = Process(lims, id=process_id)
+    trim_last_base = True  # Used to set Read1EndWithCycle
 
     def get_project(projects, urgent=False):
         """Inner function to get a project name for samples."""
@@ -28,13 +29,22 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
     families = {}
     for artifact in process.all_inputs():
         for sample in artifact.samples:
-            if 'Dx Familienummer' in list(sample.udf) and 'Dx NICU Spoed' in list(sample.udf) and 'Dx Protocolomschrijving' in list(sample.udf):
+            if ('Dx Familienummer' in list(sample.udf)
+                    and 'Dx NICU Spoed' in list(sample.udf)
+                    and 'Dx Protocolomschrijving' in list(sample.udf)):
                 # Dx production sample
                 family = sample.udf['Dx Familienummer']
 
                 # Create family if not exist
                 if family not in families:
-                    families[family] = {'samples': [], 'NICU': False, 'project_type': 'unknown_project', 'split_project_type': False, 'urgent': False, 'merge': False}
+                    families[family] = {
+                        'samples': [],
+                        'NICU': False,
+                        'project_type': 'unknown_project',
+                        'split_project_type': False,
+                        'urgent': False,
+                        'merge': False
+                    }
 
                 # Update family information
                 if sample.udf['Dx Onderzoeksreden'] == 'Research':  # Dx research sample
@@ -50,10 +60,12 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
                         project_type = 'Fingerprint'
                         families[family]['project_type'] = project_type
                         families[family]['split_project_type'] = False
+                        trim_last_base = False
                     elif 'PID09.V7_smMIP' in sample.udf['Dx Protocolomschrijving'] and not families[family]['NICU']:
                         project_type = 'ERARE'
                         families[family]['project_type'] = project_type
                         families[family]['split_project_type'] = False
+                        trim_last_base = False
                     elif sample.udf['Dx NICU Spoed']:
                         families[family]['NICU'] = True
                         project_type = 'NICU_{0}'.format(sample.udf['Dx Familienummer'])
@@ -63,7 +75,7 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
                         project_type = 'CREv2'
                         families[family]['project_type'] = project_type
                         families[family]['split_project_type'] = True
-                    
+
                     # Set urgent / merge status
                     if 'Dx Spoed' in list(sample.udf) and sample.udf['Dx Spoed']:
                         families[family]['urgent'] = True
@@ -76,9 +88,17 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
                     family = 'GIAB'
                 else:
                     family = sample.project.name
-                    family = re.sub('^dx[ _]*', '', family, flags=re.IGNORECASE)  # Remove 'dx' (ignore case) and strip leading space or _
+                    # Remove 'dx' (ignore case) and strip leading space or _
+                    family = re.sub('^dx[ _]*', '', family, flags=re.IGNORECASE)
                 if family not in families:
-                    families[family] = {'samples': [], 'NICU': False, 'project_type': family, 'split_project_type': False, 'urgent': False, 'merge': False}
+                    families[family] = {
+                        'samples': [],
+                        'NICU': False,
+                        'project_type': family,
+                        'split_project_type': False,
+                        'urgent': False,
+                        'merge': False
+                    }
 
             # Add sample to family
             families[family]['samples'].append(sample)
@@ -89,7 +109,11 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
         if family['project_type'] in project_types:
             project_types[family['project_type']]['sample_count'] += len(family['samples'])
         else:
-            project_types[family['project_type']] = {'sample_count': len(family['samples']), 'projects': {}, 'split_project_type': family['split_project_type']}
+            project_types[family['project_type']] = {
+                'sample_count': len(family['samples']),
+                'projects': {},
+                'split_project_type': family['split_project_type']
+            }
 
     # Define projects per project_type
     for project_type in project_types:
@@ -112,7 +136,7 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
             sample_sequence_names[sample.name] = sample_sequence_name
             sample_projects[sample_sequence_name] = family_project
             project_types[family['project_type']]['projects'][family_project] += 1
-    
+
     # Merge families / samples
     for family in [family for family in families.values() if family['merge']]:
         family_project = get_project(project_types[family['project_type']]['projects'])
@@ -132,7 +156,8 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
             sample_projects[sample_sequence_name] = family_project
             project_types[family['project_type']]['projects'][family_project] += 1
 
-    # Check sequencer type -> NextSeq runs need to reverse complement 'index2' for dual barcodes and 'index' for single barcodes.
+    # Check sequencer type
+    # NextSeq runs need to reverse complement 'index2' for dual barcodes and 'index' for single barcodes.
     if 'nextseq' in process.type.name.lower():
         nextseq_run = True
     else:
@@ -145,13 +170,13 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
     file_id = samplesheet_artifact.files[0].id
 
     for line in lims.get_file_contents(id=file_id).rstrip().split('\n'):
-        if line.startswith('[Settings]'):
+        if line.startswith('[Settings]') and trim_last_base:
             output_file.write('{line}\n'.format(line=line))
             output_file.write('Read1EndWithCycle,{value}\n'.format(value=process.udf['Read 1 Cycles']-1))
             output_file.write('Read2EndWithCycle,{value}\n'.format(value=process.udf['Read 2 Cycles']-1))
             settings_section = True
 
-        elif line.startswith('[Data]') and not settings_section:
+        elif line.startswith('[Data]') and trim_last_base and not settings_section:
             output_file.write('[Settings]\n')
             output_file.write('Read1EndWithCycle,{value}\n'.format(value=process.udf['Read 1 Cycles']-1))
             output_file.write('Read2EndWithCycle,{value}\n'.format(value=process.udf['Read 2 Cycles']-1))
