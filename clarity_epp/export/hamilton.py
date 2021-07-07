@@ -2,7 +2,7 @@
 
 from genologics.entities import Process
 
-import utils
+import clarity_epp.export.utils
 
 
 def samplesheet_filling_out(lims, process_id, output_file):
@@ -15,7 +15,7 @@ def samplesheet_filling_out(lims, process_id, output_file):
         placement = ''.join(placement.split(':'))
         well_plate[placement] = artifact.samples[0].udf['Dx Fractienummer']
 
-    for well in utils.sort_96_well_plate(well_plate.keys()):
+    for well in clarity_epp.export.utils.sort_96_well_plate(well_plate.keys()):
         output_file.write('{source_tube}\t{well}\n'.format(
             source_tube=well_plate[well],
             well=well
@@ -33,7 +33,7 @@ def samplesheet_purify(lims, process_id, output_file):
         placement = ''.join(placement.split(':'))
         well_plate[placement] = artifact.samples[0].udf['Dx Fractienummer']
 
-    for well in utils.sort_96_well_plate(well_plate.keys()):
+    for well in clarity_epp.export.utils.sort_96_well_plate(well_plate.keys()):
         output_file.write('{sample}\t{sample_rack_barcode}\t{sample_rack_position}\t{sample_start_volume}\n'.format(
             sample=well_plate[well],
             sample_rack_barcode=parent_process_barcode,

@@ -1,7 +1,7 @@
 """Sample export functions."""
 import datetime
 
-import utils
+import clarity_epp.export.utils
 
 
 def removed_samples(lims, output_file):
@@ -21,7 +21,7 @@ def removed_samples(lims, output_file):
         removed_process_id = None
         removed_date = None
 
-        for artifact in sorted(lims.get_artifacts(type="Analyte", sample_name=sample.name, resolve=True), key=utils.sort_artifact_list):
+        for artifact in sorted(lims.get_artifacts(type="Analyte", sample_name=sample.name, resolve=True), key=clarity_epp.export.utils.sort_artifact_list):
             for stage, status, name in artifact.workflow_stages_and_statuses:
                 if status == 'REMOVED':  # Store removed from workflow
                     sample_removed = True

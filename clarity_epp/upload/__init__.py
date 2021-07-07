@@ -1,6 +1,6 @@
 """Upload functions."""
 
-import samples
-import tecan
-import tapestation
-import bioanalyzer
+import clarity_epp.upload.samples
+import clarity_epp.upload.tecan
+import clarity_epp.upload.tapestation
+import clarity_epp.upload.bioanalyzer
