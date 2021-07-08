@@ -122,7 +122,7 @@ def from_helix(lims, email_settings, input_file):
         elif udf_data['Dx Onderzoeksreden'] == 'Informativiteitstest':
             udf_data['Dx Familie status'] = 'Ouder'
         else:
-            udf_data['Dx Import warning'] = ';'.join([
+            udf_data['Dx Import warning'] = '; '.join([
                 'Onbekende onderzoeksreden, familie status niet ingevuld.',
                 udf_data['Dx Import warning']
             ])
@@ -138,7 +138,7 @@ def from_helix(lims, email_settings, input_file):
 
         # Check 'Dx Familienummer' and correct
         if '/' in udf_data['Dx Familienummer']:
-            udf_data['Dx Import warning'] = ';'.join([
+            udf_data['Dx Import warning'] = '; '.join([
                 'Meerdere familienummers, laatste wordt gebruikt. ({0})'.format(udf_data['Dx Familienummer']),
                 udf_data['Dx Import warning']
             ])
@@ -152,14 +152,23 @@ def from_helix(lims, email_settings, input_file):
                     sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving'] and
                     sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
                 ):
-                    udf_data['Dx Import warning'] = ';'.join(['Monsternummer hetzelfde, Protocolomschrijving hetzelfde', udf_data['Dx Import warning']])
+                    udf_data['Dx Import warning'] = '; '.join([
+                        '{sample}: Monsternummer hetzelfde, Protocolomschrijving hetzelfde.'.format(sample=sample.name),
+                        udf_data['Dx Import warning']
+                    ])
                 else:
-                    udf_data['Dx Import warning'] = ';'.join(['Monsternummer hetzelfde, Protocolomschrijving uniek', udf_data['Dx Import warning']])
+                    udf_data['Dx Import warning'] = '; '.join([
+                        '{sample}: Monsternummer hetzelfde, Protocolomschrijving uniek.'.format(sample=sample.name),
+                        udf_data['Dx Import warning']
+                    ])
             elif (
                     sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving'] and
                     sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
                 ):
-                    udf_data['Dx Import warning'] = ';'.join(['Monsternummer uniek, Protocolomschrijving hetzelfde', udf_data['Dx Import warning']])
+                    udf_data['Dx Import warning'] = '; '.join([
+                        '{sample}: Monsternummer uniek, Protocolomschrijving hetzelfde.'.format(sample=sample.name),
+                        udf_data['Dx Import warning']
+                    ])
 
         # Add sample to workflow
         workflow = clarity_epp.upload.utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])
