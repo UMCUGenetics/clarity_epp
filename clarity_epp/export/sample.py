@@ -1,7 +1,7 @@
 """Sample export functions."""
 import datetime
 
-import utils
+import clarity_epp.export.utils
 
 
 def removed_samples(lims, output_file):
@@ -21,7 +21,7 @@ def removed_samples(lims, output_file):
         removed_process_id = None
         removed_date = None
 
-        for artifact in sorted(lims.get_artifacts(type="Analyte", sample_name=sample.name), key=utils.sort_artifact_list):
+        for artifact in sorted(lims.get_artifacts(type="Analyte", sample_name=sample.name, resolve=True), key=clarity_epp.export.utils.sort_artifact_list):
             for stage, status, name in artifact.workflow_stages_and_statuses:
                 if status == 'REMOVED':  # Store removed from workflow
                     sample_removed = True
@@ -83,7 +83,7 @@ def removed_samples(lims, output_file):
                         removed_date = None
 
                     else:  # Work done on other sample after removal from workflow
-                        for artifact in lims.get_artifacts(type="Analyte", sample_name=person_sample.name):
+                        for artifact in lims.get_artifacts(type="Analyte", sample_name=person_sample.name, resolve=True):
                             for stage, status, name in artifact.workflow_stages_and_statuses:
                                 if status == 'COMPLETE':
                                     processes = list(set(lims.get_processes(inputartifactlimsid=artifact.id, type=name)))
@@ -105,8 +105,11 @@ def removed_samples(lims, output_file):
             sample_removed_status = ''
             if 'Dx sample status verwijderd' in sample.udf:
                 sample_removed_status = sample.udf['Dx sample status verwijderd']
-            
-            if sample_removed_status != 'NIB afgerond':
+
+            elapsed_time = datetime.datetime.now() - removed_date
+
+            # Filter samples on sample_removed_status and elapsed month (6 => 6*31 = 186 days) since removal.
+            if (not sample_removed_status or sample_removed_status == 'Nieuw materiaal aangevraagd') and elapsed_time.days < 186:
                 output_file.write('{removed_date}\t{name}\t{project}\t{werklijst}\t{onderzoek}\t{indicatie}\t{stage}\t{removed_status}\n'.format(
                     removed_date=removed_date.strftime('%Y-%m-%d'),
                     name=sample.name,

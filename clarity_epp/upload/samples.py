@@ -5,7 +5,7 @@ from requests.exceptions import ConnectionError
 from genologics.entities import Sample, Project, Containertype, Container
 
 from .. import send_email
-import utils
+import clarity_epp.upload.utils
 
 
 def from_helix(lims, email_settings, input_file):
@@ -86,15 +86,15 @@ def from_helix(lims, email_settings, input_file):
         for udf in udf_column:
             # Transform specific udf
             if udf in ['Dx Overleden', 'Dx Spoed', 'Dx NICU Spoed']:
-                udf_data[udf] = utils.char_to_bool(data[udf_column[udf]['index']])
+                udf_data[udf] = clarity_epp.upload.utils.char_to_bool(data[udf_column[udf]['index']])
             elif udf in ['Dx Geslacht', 'Dx Foetus geslacht']:
-                udf_data[udf] = utils.transform_sex(data[udf_column[udf]['index']])
+                udf_data[udf] = clarity_epp.upload.utils.transform_sex(data[udf_column[udf]['index']])
             elif udf == 'Dx Foetus':
                 udf_data[udf] = bool(data[udf_column[udf]['index']].strip())
             elif udf == 'Dx Concentratie (ng/ul)':
                 udf_data[udf] = data[udf_column[udf]['index']].replace(',', '.')
             elif udf in ['Dx Monsternummer', 'Dx Fractienummer']:
-                udf_data[udf] = utils.transform_sample_name(data[udf_column[udf]['index']])
+                udf_data[udf] = clarity_epp.upload.utils.transform_sample_name(data[udf_column[udf]['index']])
             else:
                 udf_data[udf] = data[udf_column[udf]['index']]
 
@@ -160,7 +160,7 @@ def from_helix(lims, email_settings, input_file):
                     sample.udf[udf] = udf_data[udf]
 
                 # Add to new workflow
-                workflow = utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])
+                workflow = clarity_epp.upload.utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])
                 if workflow:
                     sample.put()
                     lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
@@ -176,7 +176,7 @@ def from_helix(lims, email_settings, input_file):
                     udf_data['Dx Import warning'] = ';'.join(['Onderzoek reeds uitgevoerd.', udf_data['Dx Import warning']])
 
             # Add sample to workflow
-            workflow = utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])
+            workflow = clarity_epp.upload.utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])
             if workflow:
                 container = Container.create(lims, type=container_type, name=udf_data['Dx Fractienummer'])
                 sample = Sample.create(lims, container=container, position='1:1', project=project, name=sample_name, udf=udf_data)
