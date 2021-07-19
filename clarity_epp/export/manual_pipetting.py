@@ -379,10 +379,9 @@ def samplesheet_normalization(lims, process_id, output_file):
             evaporate = 'J'
             water_volume = 0
 
-        output_file.write('{sample}\t{concentration:.1f}\t{final_volume}\t{sample_volume:.1f}\t{water_volume:.1f}\t{output:.1f}\t{evaporate}\n'.format(
+        output_file.write('{sample}\t{concentration:.1f}\t{sample_volume:.1f}\t{water_volume:.1f}\t{output:.1f}\t{evaporate}\n'.format(
             sample=sample.name,
             concentration=concentration,
-            final_volume=final_volume,
             sample_volume=sample_volume,
             water_volume=water_volume,
             output=input_ng,
