@@ -362,7 +362,6 @@ def samplesheet_normalization(lims, process_id, output_file):
         for qc_artifact in qc_process.outputs_per_input(input_artifact.id):
             if qc_artifact.name.split(' ')[0] == artifact.name:
                 concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
-                #concentration = float(qc_artifact.udf['Dx Conc. goedgekeurde meting (ng/ul)'])
 
         final_volume = float(artifact.udf['Dx Eindvolume (ul)'])
         input_ng = float(artifact.udf['Dx Input (ng)'])
