@@ -24,4 +24,3 @@ def create_file(lims, process_id, output_file):
                 sample=get_sequence_name(sample),
                 merge='\t'.join(sample_merge)
             ))
-1
