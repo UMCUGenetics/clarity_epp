@@ -199,16 +199,12 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
             data = line.rstrip().split(',')
 
             # Fix sample name -> use sequence name
-            try:
+            if data[sample_name_index] in sample_sequence_names:
                 data[sample_name_index] = sample_sequence_names[data[sample_name_index]]
-            except KeyError:
-                pass
 
             # Set Sample_Project
-            try:
+            if data[sample_name_index] in sample_projects:
                 data[sample_project_index] = sample_projects[data[sample_name_index]]
-            except KeyError:
-                pass
 
             # Overwrite Sample_ID with Sample_name to get correct conversion output folder structure
             data[sample_id_index] = data[sample_name_index]
