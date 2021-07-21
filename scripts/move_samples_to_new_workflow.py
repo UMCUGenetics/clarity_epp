@@ -1,5 +1,5 @@
 from genologics.lims import Lims
-from genologics.entities import Workflow, Step, Queue, Stage
+from genologics.entities import Workflow, Queue, Stage
 
 import config
 
