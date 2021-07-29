@@ -277,8 +277,9 @@ if __name__ == "__main__":
     parser_export_sample_indications = subparser_export.add_parser(
         'sample_indications', help='Export sample indication table.', parents=[output_parser]
     )
-    parser_export_sample_indications.add_argument('-a', '--artifact_name',  nargs='?', help='Artifact name')
-    parser_export_sample_indications.add_argument('-r', '--sequencing_run',  nargs='?', help='Sequencing run name')
+    parser_export_sample_indications_group = parser_export_sample_indications.add_mutually_exclusive_group(required=True)
+    parser_export_sample_indications_group.add_argument('-a', '--artifact_name', help='Artifact name')
+    parser_export_sample_indications_group.add_argument('-r', '--sequencing_run', help='Sequencing run name')
     parser_export_sample_indications.add_argument(
         '-p', '--sequencing_run_project',  nargs='?', help='Sequencing run project name'
     )
