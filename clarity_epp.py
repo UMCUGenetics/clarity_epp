@@ -94,8 +94,15 @@ def export_merge_file(args):
 
 
 def export_removed_samples(args):
-    """Export removed sampels table."""
+    """Export removed samples table."""
     clarity_epp.export.sample.removed_samples(lims, args.output_file)
+
+
+def export_sample_indications(args):
+    """Export sample indication table."""
+    clarity_epp.export.sample.sample_indications(
+        lims, args.output_file, args.artifact_name, args.sequencing_run, args.sequencing_run_project
+    )
 
 
 def export_tapestation(args):
@@ -263,9 +270,20 @@ if __name__ == "__main__":
     parser_export_ped.set_defaults(func=export_ped_file)
 
     parser_export_removed_samples = subparser_export.add_parser(
-        'removed_samples', help='Export removed sampels table', parents=[output_parser]
+        'removed_samples', help='Export removed samples table', parents=[output_parser]
     )
     parser_export_removed_samples.set_defaults(func=export_removed_samples)
+
+    parser_export_sample_indications = subparser_export.add_parser(
+        'sample_indications', help='Export sample indication table.', parents=[output_parser]
+    )
+    parser_export_sample_indications_group = parser_export_sample_indications.add_mutually_exclusive_group(required=True)
+    parser_export_sample_indications_group.add_argument('-a', '--artifact_name', help='Artifact name')
+    parser_export_sample_indications_group.add_argument('-r', '--sequencing_run', help='Sequencing run name')
+    parser_export_sample_indications.add_argument(
+        '-p', '--sequencing_run_project',  nargs='?', help='Sequencing run project name'
+    )
+    parser_export_sample_indications.set_defaults(func=export_sample_indications)
 
     parser_export_tapestation = subparser_export.add_parser(
         'tapestation', help='Create tapestation samplesheets', parents=[output_parser]
