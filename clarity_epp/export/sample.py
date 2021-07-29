@@ -120,3 +120,32 @@ def removed_samples(lims, output_file):
                     stage=removed_stage.name,
                     removed_status=sample_removed_status
                 ))
+
+
+def sample_indications(lims, output_file, artifact_name=None, sequencing_run=None, sequencing_run_project=None):
+    """Export table with sample indications. Lookup samples by sample name or sequencing run (project)."""
+    samples = []
+
+    # Get samples by artifact_name
+    if artifact_name:
+        artifacts = lims.get_artifacts(name=artifact_name)
+        samples = {artifact_name: artifact.samples[0] for artifact in artifacts}
+
+    # Get samples by sequencing run
+    elif sequencing_run:
+        udf_query = {'Dx Sequencing Run ID': sequencing_run}
+        if sequencing_run_project:
+            udf_query['Dx Sequencing Run Project'] = sequencing_run_project
+
+        artifacts = lims.get_artifacts(type='Analyte', udf=udf_query)
+        samples = {artifact.name: artifact.samples[0] for artifact in artifacts}
+
+    # Write result
+    if samples:
+        output_file.write('Sample\tIndication\n')
+        for sample_name, sample in samples.items():
+            output_file.write(
+                '{sample}\t{indication}\n'.format(sample=sample_name, indication=sample.udf['Dx Onderzoeksindicatie'])
+            )
+    else:
+        print("Can't find sample(s).")
