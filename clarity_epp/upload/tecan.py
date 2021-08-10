@@ -65,7 +65,11 @@ def results(lims, process_id):
 
     for artifact in process.all_outputs():
         if artifact.name not in ['Tecan Spark Output', 'Tecan Spark Samplesheet', 'check gemiddelde concentratie', 'Label plaat']:
-            artifact_name = artifact.name.split('_')[0]
+            if len(artifact.samples) == 1:  # Remove 'meet_id' from artifact name if artifact is not a pool
+                artifact_name = artifact.name.split('_')[0]
+            else:
+                artifact_name = artifact.name
+
             # Set Average Concentratie fluorescentie
             sample_fluorescence = sum(sample_measurements[artifact_name]) / float(len(sample_measurements[artifact_name]))
             sample_concentration = ((sample_fluorescence - baseline_fluorescence) * regression_slope) / 2.0
