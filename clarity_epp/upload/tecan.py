@@ -65,35 +65,40 @@ def results(lims, process_id):
 
     for artifact in process.all_outputs():
         if artifact.name not in ['Tecan Spark Output', 'Tecan Spark Samplesheet', 'check gemiddelde concentratie', 'Label plaat']:
+            if len(artifact.samples) == 1:  # Remove 'meet_id' from artifact name if artifact is not a pool
+                artifact_name = artifact.name.split('_')[0]
+            else:
+                artifact_name = artifact.name
+
             # Set Average Concentratie fluorescentie
-            sample_fluorescence = sum(sample_measurements[artifact.name]) / float(len(sample_measurements[artifact.name]))
+            sample_fluorescence = sum(sample_measurements[artifact_name]) / float(len(sample_measurements[artifact_name]))
             sample_concentration = ((sample_fluorescence - baseline_fluorescence) * regression_slope) / 2.0
             artifact.udf['Dx Concentratie fluorescentie (ng/ul)'] = sample_concentration
 
             # Set artifact Concentratie fluorescentie
             # Get artifact index == count
-            if artifact.name not in artifact_count:
-                artifact_count[artifact.name] = 0
+            if artifact_name not in artifact_count:
+                artifact_count[artifact_name] = 0
             else:
-                artifact_count[artifact.name] += 1
+                artifact_count[artifact_name] += 1
 
-            artifact_fluorescence = sample_measurements[artifact.name][artifact_count[artifact.name]]
+            artifact_fluorescence = sample_measurements[artifact_name][artifact_count[artifact_name]]
             artifact_concentration = ((artifact_fluorescence - baseline_fluorescence) * regression_slope) / 2.0
             artifact.udf['Dx Conc. goedgekeurde meting (ng/ul)'] = artifact_concentration
 
             # Set QC flags
-            if artifact.name.startswith('Dx Tecan std'):
+            if artifact_name.startswith('Dx Tecan std'):
                 artifact.qc_flag = 'PASSED'
-                std_number = int(artifact.name.split(' ')[3])
+                std_number = int(artifact_name.split(' ')[3])
                 artifact.udf['Dx Conc. goedgekeurde meting (ng/ul)'] = ng_values[std_number - 1]
                 artifact.udf['Dx Concentratie fluorescentie (ng/ul)'] = ng_values[std_number - 1]
             else:
                 # Calculate measurement deviation from average.
                 if concentration_range[0] <= sample_concentration <= concentration_range[1]:
-                    if len(sample_measurements[artifact.name]) == 1:
+                    if len(sample_measurements[artifact_name]) == 1:
                         artifact.qc_flag = 'PASSED'
-                    elif len(sample_measurements[artifact.name]) == 2:
-                        artifact_fluorescence_difference = abs(sample_measurements[artifact.name][0] - sample_measurements[artifact.name][1])
+                    elif len(sample_measurements[artifact_name]) == 2:
+                        artifact_fluorescence_difference = abs(sample_measurements[artifact_name][0] - sample_measurements[artifact_name][1])
                         artifact_fluorescence_deviation = artifact_fluorescence_difference / sample_fluorescence
                         if artifact_fluorescence_deviation <= 0.1:
                             artifact.qc_flag = 'PASSED'

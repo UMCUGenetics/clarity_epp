@@ -17,7 +17,7 @@ def sort_96_well_plate(wells):
     ]
     order = dict(zip(order, range(len(order))))
 
-    wells.sort(key=lambda val: order[val])
+    wells = sorted(wells, key=lambda val: order[val])
     return wells
 
 

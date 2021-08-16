@@ -9,12 +9,12 @@ def create_file(lims, process_id, output_file):
     process = Process(lims, id=process_id)
     samples = process.analytes()[0][0].samples
 
-    output_file.write('Sample\tMerge 1 Sequencing Run\tMerge 1 Sample\tMerge 2 Sequencing Run\tMerge 2 Sample\n')
+    output_file.write('Sample\tMerge 1 Sample\tMerge 1 Sequencing Run\tMerge 2 Sample\tMerge 2 Sequencing Run\n')
 
     for sample in samples:
         sample_merge = []
         if 'Dx Mergen' in sample.udf and sample.udf['Dx Mergen']:
-            for udf in ['Dx Merge 1 Runnaam', 'Dx Merge 1 Samplenaam', 'Dx Merge 2 Runnaam', 'Dx Merge 2 Samplenaam']:
+            for udf in ['Dx Merge 1 Samplenaam', 'Dx Merge 1 Runnaam', 'Dx Merge 2 Samplenaam', 'Dx Merge 2 Runnaam']:
                 if udf in sample.udf:
                     sample_merge.append(sample.udf[udf])
                 else:

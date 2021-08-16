@@ -123,11 +123,18 @@ def samplesheet_multiplex_library_pool(lims, process_id, output_file):
     well_id = {}
     pools_not_3 = []
     order = [
-        'A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'G2', 'H2', 'A3', 'B3', 'C3', 'D3', 'E3', 'F3', 'G3',
-        'H3', 'A4', 'B4', 'C4', 'D4', 'E4', 'F4', 'G4', 'H4', 'A5', 'B5', 'C5', 'D5', 'E5', 'F5', 'G5', 'H5', 'A6', 'B6', 'C6', 'D6', 'E6', 'F6',
-        'G6', 'H6', 'A7', 'B7', 'C7', 'D7', 'E7', 'F7', 'G7', 'H7', 'A8', 'B8', 'C8', 'D8', 'E8', 'F8', 'G8', 'H8', 'A9', 'B9', 'C9', 'D9', 'E9',
-        'F9', 'G9', 'H9', 'A10', 'B10', 'C10', 'D10', 'E10', 'F10', 'G10', 'H10', 'A11', 'B11', 'C11', 'D11', 'E11', 'F11', 'G11', 'H11', 'A12',
-        'B12', 'C12', 'D12', 'E12', 'F12', 'G12', 'H12'
+        'A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1',
+        'A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'G2', 'H2',
+        'A3', 'B3', 'C3', 'D3', 'E3', 'F3', 'G3', 'H3',
+        'A4', 'B4', 'C4', 'D4', 'E4', 'F4', 'G4', 'H4',
+        'A5', 'B5', 'C5', 'D5', 'E5', 'F5', 'G5', 'H5',
+        'A6', 'B6', 'C6', 'D6', 'E6', 'F6', 'G6', 'H6',
+        'A7', 'B7', 'C7', 'D7', 'E7', 'F7', 'G7', 'H7',
+        'A8', 'B8', 'C8', 'D8', 'E8', 'F8', 'G8', 'H8',
+        'A9', 'B9', 'C9', 'D9', 'E9', 'F9', 'G9', 'H9',
+        'A10', 'B10', 'C10', 'D10', 'E10', 'F10', 'G10', 'H10',
+        'A11', 'B11', 'C11', 'D11', 'E11', 'F11', 'G11', 'H11',
+        'A12', 'B12', 'C12', 'D12', 'E12', 'F12', 'G12', 'H12'
     ]
     order = dict(zip(order, range(len(order))))
     well_order = {}
@@ -324,3 +331,248 @@ def samplesheet_multiplex_sequence_pool(lims, process_id, output_file):
 
     tris_HCL_uL = 150 - total_load_uL
     output_file.write('{0}\t{1:.2f}\n'.format('Tris-HCL', tris_HCL_uL))
+
+
+def samplesheet_normalization(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for normalizing (MIP) samples."""
+    output_file.write(
+        'Sample\tConcentration (ng/ul)\tVolume sample (ul)\tVolume water (ul)\tOutput (ng)\tIndampen\n'
+    )
+    process = Process(lims, id=process_id)
+
+    # Find all QC process types
+    qc_process_types = []
+    for process_type in lims.get_process_types():
+        if 'Dx Qubit QC' in process_type.name:
+            qc_process_types.append(process_type.name)
+        elif 'Dx Tecan Spark 10M QC' in process_type.name:
+            qc_process_types.append(process_type.name)
+
+    for input_artifact in process.all_inputs(resolve=True):
+        artifact = process.outputs_per_input(input_artifact.id, Analyte=True)[0]  # assume one artifact per input
+        sample = input_artifact.samples[0]  # asume one sample per input artifact
+
+        # Find last qc process for artifact
+        qc_process = sorted(
+            lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id),
+            key=lambda process: int(process.id.split('-')[-1])
+        )[-1]
+
+        # Find concentration measurement
+        for qc_artifact in qc_process.outputs_per_input(input_artifact.id):
+            if qc_artifact.name.split(' ')[0] == artifact.name:
+                concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+
+        final_volume = float(artifact.udf['Dx Eindvolume (ul)'])
+        input_ng = float(artifact.udf['Dx Input (ng)'])
+        if 'Dx pipetteervolume (ul)' in artifact.udf:
+            input_ng = concentration * float(artifact.udf['Dx pipetteervolume (ul)'])
+        sample_volume = input_ng / concentration
+        water_volume = final_volume - sample_volume
+        evaporate = 'N'
+
+        if sample_volume < 0.5:
+            sample_volume = 0.5
+            water_volume = final_volume - sample_volume
+        elif sample_volume > final_volume:
+            evaporate = 'J'
+            water_volume = 0
+
+        output_file.write('{sample}\t{concentration:.1f}\t{sample_volume:.1f}\t{water_volume:.1f}\t{output:.1f}\t{evaporate}\n'.format(
+            sample=sample.name,
+            concentration=concentration,
+            sample_volume=sample_volume,
+            water_volume=water_volume,
+            output=input_ng,
+            evaporate=evaporate
+        ))
+
+
+def samplesheet_capture(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for capture protocol."""
+    process = Process(lims, id=process_id)
+    sample_count = len(process.analytes()[0])
+
+    # All input paramters
+    data = [
+        ['Ampligase Buffer 10X', process.udf['Ampligase Buffer 10X']],
+        ['MIP pool werkoplossing', process.udf['MIP pool werkoplossing']],
+        ['*dNTP 0.25mM', process.udf['*dNTP 0.25mM']],
+        ['Hemo Klentaq 10U/ul', process.udf['Hemo Klentaq 10U/ul']],
+        ['Ampligase 100U/ul', process.udf['Ampligase 100U/ul']],
+        ['Water', process.udf['Water']],
+    ]
+
+    # Caculate for sample count
+    for i, item in enumerate(data):
+        data[i].append(sample_count * item[1] * 1.1)
+
+    # Calculate final volume
+    data.append([
+        'ul MM in elke well',
+        sum([item[1] for item in data]),
+        sum([item[2] for item in data]),
+    ])
+
+    # Write samplesheet
+    output_file.write('Mastermix\t1\t{0}\n'.format(sample_count))
+    for item in data:
+        output_file.write('{0}\t{1:.2f}\t{2:.2f}\n'.format(item[0], item[1], item[2]))
+
+
+def sammplesheet_exonuclease(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for Exonuclease protocol"""
+    process = Process(lims, id=process_id)
+    sample_count = len(process.analytes()[0])
+
+    # All input paramters
+    data = [
+        ['EXO I', process.udf['EXO I']],
+        ['EXO III', process.udf['EXO III']],
+        ['Ampligase buffer 10X', process.udf['Ampligase buffer 10X']],
+        ['H2O', process.udf['H2O']],
+    ]
+
+    # Caculate for sample count
+    for i, item in enumerate(data):
+        data[i].append(sample_count * item[1] * 1.25)
+
+    # Calculate total
+    data.append([
+        'TOTAL (incl. 25% overmaat)',
+        sum([item[1] for item in data]),
+        sum([item[2] for item in data]),
+    ])
+
+    # Write samplesheet
+    output_file.write('\tMaster Mix (ul)\t{0}\n'.format(sample_count))
+    for item in data:
+        output_file.write('{0}\t{1:.2f}\t{2:.2f}\n'.format(item[0], item[1], item[2]))
+
+
+def sammplesheet_pcr_exonuclease(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for PCR after Exonuclease protocol"""
+    process = Process(lims, id=process_id)
+    sample_count = len(process.analytes()[0])
+
+    # All input paramters
+    data = [
+        ['2X iProof', process.udf['2X iProof']],
+        ['Illumina forward primer(100uM) MIP_OLD_BB_FOR', process.udf['Illumina forward primer(100uM) MIP_OLD_BB_FOR']],
+        ['H2O', process.udf['H2O']],
+    ]
+
+    # Caculate for sample count
+    for i, item in enumerate(data):
+        data[i].append(sample_count * item[1] * 1.1)
+
+    # Calculate total
+    data.append([
+        'TOTAL (incl. 10% overmaat)',
+        sum([item[1] for item in data]) * 1.1,
+        sum([item[2] for item in data]),
+    ])
+
+    # Write samplesheet
+    output_file.write('\tMaster Mix (ul)\t{0}\n'.format(sample_count))
+    for item in data:
+        output_file.write('{0}\t{1:.2f}\t{2:.2f}\n'.format(item[0], item[1], item[2]))
+
+
+def samplesheet_mip_multiplex_pool(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for smMIP multiplexing"""
+    process = Process(lims, id=process_id)
+    input_artifacts = []
+
+    # Find all Dx Tapestation 2200/4200 QC process types
+    qc_process_types = []
+    for process_type in lims.get_process_types():
+        if 'Dx Tapestation 2200 QC' in process_type.name:
+            qc_process_types.append(process_type.name)
+        elif 'Dx Tapestation 4200 QC' in process_type.name:
+            qc_process_types.append(process_type.name)
+
+    # Write header
+    output_file.write('{sample}\t{volume}\t{plate_id}\t{well_id}\t{concentration}\t{manual}\n'.format(
+            sample='Sample',
+            volume='Volume',
+            plate_id='Plaat_id',
+            well_id='Well_id',
+            concentration='Concentratie',
+            manual='Handmatig',
+        ))
+
+    for input_artifact in process.all_inputs(resolve=True):
+        # Find last qc process for artifact
+        qc_process = sorted(
+            lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id),
+            key=lambda process: int(process.id.split('-')[-1])
+        )[-1]
+
+        # Find concentration measurement
+        for qc_artifact in qc_process.outputs_per_input(input_artifact.id):
+            if qc_artifact.name == input_artifact.name:
+                concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+
+        input_artifacts.append({
+            'name': input_artifact.name,
+            'concentration': concentration,
+            'plate_id': input_artifact.location[0].id,
+            'well_id': input_artifact.location[1],
+            'manual': input_artifact.samples[0].udf['Dx Handmatig']
+        })
+
+    # Calculate avg concentration for all non manual samples
+    concentrations = [input_artifact['concentration'] for input_artifact in input_artifacts if not input_artifact['manual']]
+    avg_concentration = sum(concentrations) / len(concentrations)
+
+    for input_artifact in input_artifacts:
+        if input_artifact['concentration'] < avg_concentration * 0.5:
+            volume = 20
+        elif input_artifact['concentration'] > avg_concentration * 1.5:
+            volume = 2
+        else:
+            volume = 5
+
+        output_file.write('{sample}\t{volume}\t{plate_id}\t{well_id}\t{concentration}\t{manual}\n'.format(
+            sample=input_artifact['name'],
+            volume=volume,
+            plate_id=input_artifact['plate_id'],
+            well_id=input_artifact['well_id'],
+            concentration=input_artifact['concentration'],
+            manual=input_artifact['manual'],
+        ))
+
+
+def samplesheet_mip_pool_dilution(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for smMIP pool dilution"""
+    process = Process(lims, id=process_id)
+
+    # Write header
+    output_file.write('{sample}\t{ul_sample_10}\t{ul_EB_10}\t{ul_sample_20}\t{ul_EB_20}\t{ul_sample_40}\t{ul_EB_40}\t\n'.format(
+        sample='Sample',
+        ul_sample_10='ul Sample (10 ul)',
+        ul_EB_10='ul EB buffer (10 ul)',
+        ul_sample_20='ul Sample (20 ul)',
+        ul_EB_20='ul EB buffer (20 ul)',
+        ul_sample_40='ul Sample (40 ul)',
+        ul_EB_40='ul EB buffer (40 ul)',
+    ))
+
+    for input_artifact in process.all_inputs(resolve=True):
+        concentration = float(input_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+        fragment_length = float(input_artifact.udf['Dx Fragmentlengte (bp)'])
+
+        dna = (concentration * (10.0**3.0 / 1.0) * (1.0 / 649.0) * (1.0 / fragment_length) ) * 1000.0
+        ul_sample = 2 / dna * 10
+        ul_EB = 10 - ul_sample
+
+        output_file.write('{sample}\t{ul_sample_10:.2f}\t{ul_EB_10:.2f}\t{ul_sample_20:.2f}\t{ul_EB_20:.2f}\t{ul_sample_40:.2f}\t{ul_EB_40:.2f}\t\n'.format(
+            sample=input_artifact.name,
+            ul_sample_10=ul_sample,
+            ul_EB_10=ul_EB,
+            ul_sample_20=ul_sample * 2,
+            ul_EB_20=ul_EB * 2,
+            ul_sample_40=ul_sample * 4,
+            ul_EB_40=ul_EB * 4,
+        ))
