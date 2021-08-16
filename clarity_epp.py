@@ -208,7 +208,7 @@ if __name__ == "__main__":
     )
 
     # export
-    parser_export = subparser.add_parser('export', help='Export from lims.')
+    parser_export = subparser.add_parser('export', help='Export from lims')
     subparser_export = parser_export.add_subparsers()
 
     parser_export_bioanalyzer = subparser_export.add_parser(
@@ -235,13 +235,13 @@ if __name__ == "__main__":
     parser_export_hamilton.set_defaults(func=export_hamilton)
 
     parser_export_illumina = subparser_export.add_parser(
-        'illumina', help='Export updated illumina samplesheet.', parents=[output_parser]
+        'illumina', help='Export updated illumina samplesheet', parents=[output_parser]
     )
     parser_export_illumina.add_argument('process_id', help='Clarity lims process id')
     parser_export_illumina.add_argument('artifact_id', help='Clarity lims samplesheet artifact id')
     parser_export_illumina.set_defaults(func=export_illumina)
 
-    parser_export_labels = subparser_export.add_parser('labels', help='Export container labels.', parents=[output_parser])
+    parser_export_labels = subparser_export.add_parser('labels', help='Export container labels', parents=[output_parser])
     parser_export_labels.add_argument('type', choices=['container', 'container_sample', 'storage_location'], help='Label type')
     parser_export_labels.add_argument('process_id', help='Clarity lims process id')
     parser_export_labels.add_argument('-d', '--description',  nargs='?', help='Container name description')
@@ -261,16 +261,16 @@ if __name__ == "__main__":
     parser_export_manual_pipetting.add_argument('process_id', help='Clarity lims process id')
     parser_export_manual_pipetting.set_defaults(func=export_manual_pipetting)
 
-    parser_export_merge = subparser_export.add_parser('merge', help='Export merge file.', parents=[output_parser])
+    parser_export_merge = subparser_export.add_parser('merge', help='Export merge file', parents=[output_parser])
     parser_export_merge.add_argument('process_id', help='Clarity lims process id')
     parser_export_merge.set_defaults(func=export_merge_file)
 
-    parser_export_ped = subparser_export.add_parser('ped', help='Export ped file.', parents=[output_parser])
+    parser_export_ped = subparser_export.add_parser('ped', help='Export ped file', parents=[output_parser])
     parser_export_ped.add_argument('process_id', help='Clarity lims process id')
     parser_export_ped.set_defaults(func=export_ped_file)
 
     parser_export_removed_samples = subparser_export.add_parser(
-        'removed_samples', help='Export removed samples table.', parents=[output_parser]
+        'removed_samples', help='Export removed samples table', parents=[output_parser]
     )
     parser_export_removed_samples.set_defaults(func=export_removed_samples)
 
@@ -296,7 +296,7 @@ if __name__ == "__main__":
     parser_export_tecan.set_defaults(func=export_tecan)
 
     parser_export_workflow = subparser_export.add_parser(
-        'workflow', help='Export workflow result file.', parents=[output_parser]
+        'workflow', help='Export workflow result file', parents=[output_parser]
     )
     parser_export_workflow.add_argument('type', choices=['all', 'lab', 'data_analysis'], help='Workflow type')
     parser_export_workflow.add_argument('process_id', help='Clarity lims process id')
@@ -323,50 +323,50 @@ if __name__ == "__main__":
     parser_upload_tecan.set_defaults(func=upload_tecan_results)
 
     # QC
-    parser_qc = subparser.add_parser('qc', help='Set QC values/flags.')
+    parser_qc = subparser.add_parser('qc', help='Set QC values/flags')
     subparser_qc = parser_qc.add_subparsers()
 
-    parser_qc_fragment_length = subparser_qc.add_parser('fragment_length', help='Set fragment length qc flag.')
+    parser_qc_fragment_length = subparser_qc.add_parser('fragment_length', help='Set fragment length qc flag')
     parser_qc_fragment_length.add_argument('process_id', help='Clarity lims process id')
     parser_qc_fragment_length.set_defaults(func=qc_fragment_length)
 
-    parser_qc_illumina = subparser_qc.add_parser('illumina', help='Set average % Bases >=Q30.')
+    parser_qc_illumina = subparser_qc.add_parser('illumina', help='Set average % Bases >=Q30')
     parser_qc_illumina.add_argument('process_id', help='Clarity lims process id')
     parser_qc_illumina.set_defaults(func=qc_illumina)
 
-    parser_qc_qubit = subparser_qc.add_parser('qubit', help='Set qubit qc flag.')
+    parser_qc_qubit = subparser_qc.add_parser('qubit', help='Set qubit qc flag')
     parser_qc_qubit.add_argument('process_id', help='Clarity lims process id')
     parser_qc_qubit.set_defaults(func=qc_qubit)
 
     # placement
-    parser_placement = subparser.add_parser('placement', help='Container placement functions.')
+    parser_placement = subparser.add_parser('placement', help='Container placement functions')
     subparser_placement = parser_placement.add_subparsers()
 
-    parser_placement_automatic = subparser_placement.add_parser('copy', help='Copy container layout from previous step.')
+    parser_placement_automatic = subparser_placement.add_parser('copy', help='Copy container layout from previous step')
     parser_placement_automatic.add_argument('process_id', help='Clarity lims process id')
     parser_placement_automatic.set_defaults(func=placement_automatic)
 
-    parser_placement_artifact = subparser_placement.add_parser('artifact', help='Change artifact name to sequence name.')
+    parser_placement_artifact = subparser_placement.add_parser('artifact', help='Change artifact name to sequence name')
     parser_placement_artifact.add_argument('type', choices=['sequence_name', 'run_id'], help='Check type')
     parser_placement_artifact.add_argument('process_id', help='Clarity lims process id')
     parser_placement_artifact.set_defaults(func=placement_artifact_set_name)
 
-    parser_placement_route_artifact = subparser_placement.add_parser('route_artifact', help='Route artifact to a workflow.')
+    parser_placement_route_artifact = subparser_placement.add_parser('route_artifact', help='Route artifact to a workflow')
     parser_placement_route_artifact.add_argument('process_id', help='Clarity lims process id')
     parser_placement_route_artifact.set_defaults(func=placement_route_artifact)
 
-    parser_placement_barcode = subparser_placement.add_parser('barcode_check', help='Check barcode clarity_epp.placement.')
+    parser_placement_barcode = subparser_placement.add_parser('barcode_check', help='Check barcode clarity_epp.placement')
     parser_placement_barcode.add_argument('type', choices=['check_family'], help='Check type')
     parser_placement_barcode.add_argument('process_id', help='Clarity lims process id')
     parser_placement_barcode.set_defaults(func=placement_barcode)
 
     parser_placement_complete_step = subparser_placement.add_parser(
-        'complete_step', help='Complete step Dx Mark protocol complete.'
+        'complete_step', help='Complete step Dx Mark protocol complete'
     )
     parser_placement_complete_step.add_argument('process_id', help='Clarity lims process id')
     parser_placement_complete_step.set_defaults(func=placement_complete_step)
 
-    parser_placement_unpooling = subparser_placement.add_parser('unpooling', help='Unpooling of sequencing pool.')
+    parser_placement_unpooling = subparser_placement.add_parser('unpooling', help='Unpooling of sequencing pool')
     parser_placement_unpooling.add_argument('process_id', help='Clarity lims process id')
     parser_placement_unpooling.set_defaults(func=placement_unpooling)
 

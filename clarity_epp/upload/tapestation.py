@@ -21,7 +21,12 @@ def results(lims, process_id):
                         concentration_index = None
                     else:  # Tapestation compact region table
                         size_index = header.index('Average Size [bp]')
-                        concentration_index = header.index(u'Conc. [pg/\xb5l]')  # micro sign
+                        try:
+                            concentration_index = header.index(u'Conc. [pg/\xb5l]')  # micro sign
+                            concentration_correction = 1000  # Used to transform pg/ul to ng/ul
+                        except ValueError:
+                            concentration_index = header.index(u'Conc. [ng/\xb5l]')  # micro sign
+                            concentration_correction = 1
                     sample_index = header.index('Sample Description')
 
                 elif line:
@@ -32,7 +37,8 @@ def results(lims, process_id):
                             size = int(data[size_index])
                             sample_size_measurements[sample] = size
                         if concentration_index and data[concentration_index]:
-                            concentration = float(data[concentration_index]) / 1000  # pg/ul to ng/ul
+                            # Correct concentration
+                            concentration = float(data[concentration_index]) / concentration_correction
                             sample_concentration_measurements[sample] = concentration
 
     # Set UDF
