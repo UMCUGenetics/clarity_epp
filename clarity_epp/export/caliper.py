@@ -50,7 +50,7 @@ def samplesheet_normalise(lims, process_id, output_file):
 
     # Get unique QC processes for input artifacts
     qc_processes = list(set(lims.get_processes(type=[qc_process_types], inputartifactlimsid=input_artifact_ids)))
-    
+
     samples_measurements_qubit = {}
     sample_concentration = {}
     samples_measurements_tecan = {}
@@ -86,7 +86,7 @@ def samplesheet_normalise(lims, process_id, output_file):
                         samples_measurements_qubit[sample].append(measurement)
                     elif sample not in sample_concentration:
                         sample_concentration[sample] = 'geen'
-        
+
         elif 'Dx Tecan Spark 10M QC' in qc_process.type.name:
             for artifact in qc_process.all_outputs():
                 sample = artifact.samples[0].name
@@ -95,10 +95,10 @@ def samplesheet_normalise(lims, process_id, output_file):
                         measurement = artifact.udf['Dx Conc. goedgekeurde meting (ng/ul)']
                         if sample not in samples_measurements_tecan:
                             samples_measurements_tecan[sample] = []
-                        samples_measurements_tecan[sample].append(measurement)                            
+                        samples_measurements_tecan[sample].append(measurement)
                     elif sample not in sample_concentration:
                         sample_concentration[sample] = 'geen'
-    
+
     for qc_process in qc_processes:
         for artifact in qc_process.all_outputs():
             sample = artifact.samples[0].name
@@ -107,31 +107,31 @@ def samplesheet_normalise(lims, process_id, output_file):
                     machine = 'Tecan'
                 elif 'Dx Qubit QC' in qc_process.type.name and 'Dx Conc. goedgekeurde meting (ng/ul)' in artifact.udf:
                     machine = 'Qubit'
-            
-            if sample not in sample_concentration or machine == 'Qubit':
-                if sample in samples_measurements_tecan or sample in samples_measurements_qubit:
-                    if machine == 'Tecan':
-                        sample_measurements = samples_measurements_tecan[sample]
-                    elif machine == 'Qubit':
-                        sample_measurements = samples_measurements_qubit[sample]
-                    sample_measurements_average = sum(sample_measurements) / float(len(sample_measurements))
-                    sample_concentration[sample] = sample_measurements_average
 
-    for placement, artifact in process.output_containers()[0].placements.iteritems():
+                if sample not in sample_concentration or machine == 'Qubit':
+                    if sample in samples_measurements_tecan or sample in samples_measurements_qubit:
+                        if machine == 'Tecan':
+                            sample_measurements = samples_measurements_tecan[sample]
+                        elif machine == 'Qubit':
+                            sample_measurements = samples_measurements_qubit[sample]
+                        sample_measurements_average = sum(sample_measurements) / float(len(sample_measurements))
+                        sample_concentration[sample] = sample_measurements_average
+
+    for placement, artifact in process.output_containers()[0].placements.items():
         placement = ''.join(placement.split(':'))
         filled_wells.append(placement)
         if order[placement] > last_filled_well:
             last_filled_well = order[placement]
 
     for x in range(0, last_filled_well):
-        for well, number in order.iteritems():
+        for well, number in order.items():
             if number == x:
                 placement = well
         monsternummer[placement] = 'Leeg'
         volume_DNA[placement] = 0
         volume_H2O[placement] = 0
 
-    for placement, artifact in process.output_containers()[0].placements.iteritems():
+    for placement, artifact in process.output_containers()[0].placements.items():
         sample = artifact.samples[0].name
         if sample in process_samples:
             placement = ''.join(placement.split(':'))
