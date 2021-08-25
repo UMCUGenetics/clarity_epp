@@ -59,6 +59,11 @@ def export_labels(args):
         clarity_epp.export.labels.storage_location(lims, args.process_id, args.output_file)
 
 
+def export_magnis(args):
+    """Export magnis samplesheet."""
+    clarity_epp.export.magnis.samplesheet(lims, args.process_id, args.output_file)
+
+
 def export_manual_pipetting(args):
     """Export samplesheets for manual pipetting."""
     if args.type == 'purify':
@@ -246,6 +251,12 @@ if __name__ == "__main__":
     parser_export_labels.add_argument('process_id', help='Clarity lims process id')
     parser_export_labels.add_argument('-d', '--description',  nargs='?', help='Container name description')
     parser_export_labels.set_defaults(func=export_labels)
+
+    parser_export_magnis = subparser_export.add_parser(
+        'magnis', help='Export magnis samplesheet', parents=[output_parser]
+    )
+    parser_export_magnis.add_argument('process_id', help='Clarity lims process id')
+    parser_export_magnis.set_defaults(func=export_magnis)
 
     parser_export_manual_pipetting = subparser_export.add_parser(
         'manual', help='Create manual pipetting exports', parents=[output_parser]

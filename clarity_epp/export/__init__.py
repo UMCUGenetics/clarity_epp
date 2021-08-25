@@ -6,6 +6,7 @@ import clarity_epp.export.email
 import clarity_epp.export.hamilton
 import clarity_epp.export.illumina
 import clarity_epp.export.labels
+import clarity_epp.export.magnis
 import clarity_epp.export.manual_pipetting
 import clarity_epp.export.merge
 import clarity_epp.export.ped
