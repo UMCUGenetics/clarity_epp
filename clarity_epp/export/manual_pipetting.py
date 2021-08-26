@@ -45,6 +45,8 @@ def samplesheet_dilute_library_pool(lims, process_id, output_file):
     process = Process(lims, id=process_id)
 
     pool_lines = []  # save pool data to list, to be able to sort on pool number.
+    nM_pool = process.udf['Dx Pool verdunning (nM)']
+    output_ul = process.udf['Eindvolume (ul)']
 
     for pool in process.all_inputs():
         pool_number = int(re.search(r'Pool #(\d+)_', pool.name).group(1))
@@ -52,11 +54,10 @@ def samplesheet_dilute_library_pool(lims, process_id, output_file):
 
         size = float(pool_input_artifact.udf['Dx Fragmentlengte (bp)'])
         concentration = float(pool_input_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
-        nM_pool = process.udf['Dx Pool verdunning (nM)']
 
         nM_dna = (concentration * 1000 * (1/660.0) * (1/size)) * 1000
-        ul_sample = (nM_pool/nM_dna) * 20
-        ul_EB = 20 - ul_sample
+        ul_sample = (nM_pool/nM_dna) * output_ul
+        ul_EB = output_ul - ul_sample
 
         pool_line = '{pool_name}\t{ul_sample:.2f}\t{ul_EB:.2f}\n'.format(
             pool_name=pool.name,
