@@ -138,8 +138,8 @@ def samplesheet_normalise(lims, process_id, output_file):
             monsternummer[placement] = sample
             conc_measured[placement] = sample_concentration[sample]
             if conc_measured[placement] != 'geen':
-                if output_ng/conc_measured[placement] > 50:
-                    conc[placement] = output_ng/50
+                if output_ng/conc_measured[placement] > 100:
+                    conc[placement] = output_ng/100
                 else:
                     conc[placement] = conc_measured[placement]
                 volume_DNA[placement] = int(round(float(output_ng)/conc[placement]))
