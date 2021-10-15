@@ -153,6 +153,11 @@ def upload_bioanalyzer_results(args):
     clarity_epp.upload.bioanalyzer.results(lims, args.process_id)
 
 
+def upload_magnis_results(args):
+    """Upload magnis results."""
+    clarity_epp.upload.magnis.results(lims, args.process_id)
+
+
 # QC functions
 def qc_fragment_length(args):
     """Set QC status based on fragment length measurement."""
@@ -334,6 +339,11 @@ if __name__ == "__main__":
     parser_upload_tecan = subparser_upload.add_parser('tecan', help='Upload tecan results')
     parser_upload_tecan.add_argument('process_id', help='Clarity lims process id')
     parser_upload_tecan.set_defaults(func=upload_tecan_results)
+
+    parser_upload_magnis = subparser_upload.add_parser('magnis', help='Upload magnis results')
+    parser_upload_magnis.add_argument('process_id', help='Clarity lims process id')
+    parser_upload_magnis.set_defaults(func=upload_magnis_results)
+
 
     # QC
     parser_qc = subparser.add_parser('qc', help='Set QC values/flags')
