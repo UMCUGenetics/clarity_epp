@@ -1,7 +1,8 @@
 """Sample upload epp functions."""
 import sys
-
+from datetime import datetime
 from requests.exceptions import ConnectionError
+
 from genologics.entities import Sample, Project, Containertype, Container
 
 from .. import send_email
@@ -100,6 +101,9 @@ def from_helix(lims, email_settings, input_file):
                 udf_data[udf] = clarity_epp.upload.utils.transform_sample_name(data[udf_column[udf]['index']])
             elif udf == 'Dx Gerelateerde onderzoeken':
                 udf_data[udf] = data[udf_column[udf]['index']].replace(',', ';')
+            elif udf == 'Dx Einddatum':
+                date = datetime.strptime(data[udf_column[udf]['index']], '%d-%m-%Y')  # Helix format (14-01-2021)
+                udf_data[udf] = date.strftime('%Y-%m-%d')  # LIMS format (2021-01-14)
             else:
                 udf_data[udf] = data[udf_column[udf]['index']]
 
