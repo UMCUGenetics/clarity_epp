@@ -29,9 +29,11 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
     families = {}
     for artifact in process.all_inputs():
         for sample in artifact.samples:
-            if ('Dx Familienummer' in list(sample.udf)
-                    and 'Dx NICU Spoed' in list(sample.udf)
-                    and 'Dx Protocolomschrijving' in list(sample.udf)):
+            if (
+                'Dx Familienummer' in list(sample.udf) and
+                'Dx NICU Spoed' in list(sample.udf) and
+                'Dx Protocolomschrijving' in list(sample.udf)
+            ):
                 # Dx production sample
                 family = sample.udf['Dx Familienummer']
 
@@ -43,7 +45,7 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
                         'project_type': 'unknown_project',
                         'split_project_type': False,
                         'urgent': False,
-                        'merge': False
+                        'deviating': False  # merge, deep sequencing (5x), etc samples
                     }
 
                 # Update family information
@@ -80,11 +82,16 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
                         families[family]['project_type'] = project_type
                         families[family]['split_project_type'] = True
 
-                    # Set urgent / merge status
+                    # Set urgent status
                     if 'Dx Spoed' in list(sample.udf) and sample.udf['Dx Spoed']:
                         families[family]['urgent'] = True
-                    if 'Dx Mergen' in list(sample.udf) and sample.udf['Dx Mergen']:
-                        families[family]['merge'] = True
+
+                    # Set deviating status, remove urgent status if deviating
+                    if (
+                        ('Dx Mergen' in list(sample.udf) and sample.udf['Dx Mergen']) or
+                        ('Dx Exoomequivalent' in list(sample.udf) and sample.udf['Dx Exoomequivalent'] > 1)
+                    ):
+                        families[family]['deviating'] = True
                         families[family]['urgent'] = False
 
             else:  # Other samples
@@ -101,7 +108,7 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
                         'project_type': family,
                         'split_project_type': False,
                         'urgent': False,
-                        'merge': False
+                        'deviating': False
                     }
 
             # Add sample to family
@@ -132,8 +139,8 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
     sample_projects = {}
     sample_sequence_names = {}
 
-    # Urgent families / samples, skip merge
-    for family in [family for family in families.values() if family['urgent'] and not family['merge']]:
+    # Urgent families / samples, skip deviating
+    for family in [family for family in families.values() if family['urgent'] and not family['deviating']]:
         family_project = get_project(project_types[family['project_type']]['projects'], urgent=True)
         for sample in family['samples']:
             sample_sequence_name = get_sequence_name(sample)
@@ -141,8 +148,8 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
             sample_projects[sample_sequence_name] = family_project
             project_types[family['project_type']]['projects'][family_project] += 1
 
-    # Merge families / samples
-    for family in [family for family in families.values() if family['merge']]:
+    # Deviating families / samples
+    for family in [family for family in families.values() if family['deviating']]:
         family_project = get_project(project_types[family['project_type']]['projects'])
         for sample in family['samples']:
             sample_sequence_name = get_sequence_name(sample)
@@ -150,9 +157,9 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
             sample_projects[sample_sequence_name] = family_project
             project_types[family['project_type']]['projects'][family_project] += 1
 
-    # Non urgent and non merge families / samples
-    non_urgent_families = [family for family in families.values() if not family['urgent'] and not family['merge']]
-    for family in sorted(non_urgent_families, key=lambda fam: (len(fam['samples'])), reverse=True):
+    # Non urgent and non deviating families / samples
+    normal_families = [family for family in families.values() if not family['urgent'] and not family['deviating']]
+    for family in sorted(normal_families, key=lambda fam: (len(fam['samples'])), reverse=True):
         family_project = get_project(project_types[family['project_type']]['projects'])
         for sample in family['samples']:
             sample_sequence_name = get_sequence_name(sample)
