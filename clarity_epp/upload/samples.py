@@ -52,6 +52,7 @@ def from_helix(lims, email_settings, input_file):
         'Dx Concentratie (ng/ul)': {'column': 'Concentratie (ng/ul)'},
         'Dx Materiaal type': {'column': 'Materiaal'},
         'Dx Foetus': {'column': 'Foetus'},
+        'Dx Foetus ID': {'column': 'Foet_id'},
         'Dx Foetus geslacht': {'column': 'Foetus_geslacht'},
         'Dx Overleden': {'column': 'Overleden'},
         'Dx Opslaglocatie': {'column': 'Opslagpositie'},
@@ -69,6 +70,8 @@ def from_helix(lims, email_settings, input_file):
         'Dx Onderzoeksreden': {'column': 'Onderzoeksreden'},
         'Dx Protocolcode': {'column': 'Protocolcode'},
         'Dx Protocolomschrijving': {'column': 'Protocolomschrijving'},
+        'Dx Einddatum': {'column': 'Einddatum'},
+        'Dx Gerelateerde onderzoeken': {'column': 'Gerelateerde onderzoeken'},
     }
     header = input_file.readline().rstrip().split(',')  # expect header on first line
     for udf in udf_column:
@@ -95,6 +98,8 @@ def from_helix(lims, email_settings, input_file):
                 udf_data[udf] = data[udf_column[udf]['index']].replace(',', '.')
             elif udf in ['Dx Monsternummer', 'Dx Fractienummer']:
                 udf_data[udf] = clarity_epp.upload.utils.transform_sample_name(data[udf_column[udf]['index']])
+            elif udf == 'Dx Gerelateerde onderzoeken':
+                udf_data[udf] = data[udf_column[udf]['index']].replace(',', ';')
             else:
                 udf_data[udf] = data[udf_column[udf]['index']]
 
