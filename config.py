@@ -26,10 +26,51 @@ stoftestcode_workflow = {
 }
 
 # Export meetw protocol steps
-meetw_zui_processes = ['Dx Sample registratie zuivering v1.0', 'Dx Hamilton uitvullen v1.0', 'Dx Hamilton zuiveren v1.0', 'Dx Zuiveren gDNA manueel v1.0', 'Dx manueel gezuiverd placement v1.0', 'Dx gDNA Normalisatie Caliper v1.0', 'Dx Fragmenteren & BBSS v1.0']
-meetw_libprep_processes = ['Dx LibraryPrep Caliper KAPA v1.0', 'Dx Library Prep amplificatie & clean up KAPA v1.0']
-meetw_enrich_processes = ['Dx Multiplexen library prep v2.0', 'Dx Enrichment DNA fragments v1.0', 'Dx Post Enrichment clean up v1.0', 'Dx Aliquot Post Enrichment (clean) v1.0', 'Dx Post Enrichment PCR & clean up v1.0', 'Dx Aliquot Post Enrichment PCR (clean) v1.0']
-meetw_seq_processes = ['Dx Multiplexen library pool v1.1', 'Dx Multiplexen sequence pool v1.1', 'Dx Library pool denatureren en laden (NextSeq) v1.0', 'Dx NextSeq Run v1.0', 'Dx Library pool denatureren en laden (NovaSeq) v1.0', 'Dx Automated NovaSeq Run (standaard) v1.0', 'Dx QC controle Lab sequencen v1.0']
+meetw_zui_processes = [
+    'Dx Sample registratie zuivering v1.0', 'Dx Sample registratie zuivering v1.1',
+    'Dx Hamilton uitvullen v1.0', 'Dx Hamilton uitvullen v1.1',
+    'Dx Hamilton zuiveren v1.0', 'Dx Hamilton zuiveren v1.1',
+    'Dx Zuiveren gDNA manueel v1.0', 'Dx Zuiveren gDNA manueel v1.1',
+    'Dx manueel gezuiverd placement v1.0', 'Dx manueel gezuiverd placement v1.1', 'Dx manueel gezuiverd placement v1.2',
+    'Dx gDNA Normalisatie Caliper v1.0', 'Dx gDNA Normalisatie Caliper v1.1',
+    'Dx Fragmenteren & BBSS v1.0', 'Dx Fragmenteren & BBSS v1.1',
+    'Dx Fragmenteren v1.0'
+]
+
+meetw_libprep_processes = [
+    'Dx LibraryPrep Caliper KAPA v1.0', 'Dx LibraryPrep Caliper KAPA v1.1',
+    'Dx Library Prep amplificatie & clean up KAPA v1.0', 'Dx Library Prep amplificatie & clean up KAPA v1.1'
+]
+
+meetw_enrich_processes = [
+    'Dx Multiplexen library prep v2.0', 'Dx Multiplexen library prep v2.1',
+    'Dx Enrichment DNA fragments v1.0', 'Dx Enrichment DNA fragments v1.1',
+    'Dx Post Enrichment clean up v1.0', 'Dx Post Enrichment clean up v1.1',
+    'Dx Aliquot Post Enrichment (clean) v1.0', 'Dx Aliquot Post Enrichment (clean) v1.1',
+    'Dx Post Enrichment PCR & clean up v1.0', 'Dx Post Enrichment PCR & clean up v1.1',
+    'Dx Aliquot Post Enrichment PCR (clean) v1.0', 'Dx Aliquot Post Enrichment PCR (clean) v1.1',
+    'Dx Library Prep & Target Enrichment Magnis v1.0'
+]
+
+meetw_sampleprep_processes = ['Dx Library Prep & Target Enrichment Magnis v1.0']
+
+meetw_seq_processes = [
+    'Dx Multiplexen library pool v1.0', 'Dx Multiplexen library pool v1.1',
+    'Dx Multiplexen Enrichment pools Magnis v1.0',
+    'Dx Multiplexen sequence pool v1.1', 'Dx Multiplexen sequence pool v1.2',
+    'Dx Library pool denatureren en laden (NextSeq) v1.0', 'Dx Library pool denatureren en laden (NextSeq) v1.1',
+    'Dx NextSeq Run v1.0', 'Dx NextSeq Run v1.1',
+    'Dx Library pool denatureren en laden (NovaSeq) v1.0', 'Dx Library pool denatureren en laden (NovaSeq) v1.1',
+    'Dx Library pool denatureren en laden (NovaSeq) v1.2', 'Dx Library pool denatureren en laden (NovaSeq) v1.3',
+    'Dx Automated NovaSeq Run (standaard) v1.0', 'Dx Automated NovaSeq Run (standaard) v1.1', 'AUTOMATED - NovaSeq Run (NovaSeq 6000 v3.1)',
+    'Dx QC controle Lab sequencen v1.0', 'Dx QC controle Lab sequencen v1.1'
+]
+
+# Sequencer types
+sequence_process_types = [
+    'Dx NextSeq Run v1.0', 'Dx NextSeq Run v1.1',
+    'Dx Automated NovaSeq Run (standaard) v1.0', 'Dx Automated NovaSeq Run (standaard) v1.1', 'AUTOMATED - NovaSeq Run (NovaSeq 6000 v3.1)',
+]
 
 # Sequencer types
 sequence_process_types = ['Dx NextSeq Run v1.0', 'Dx Automated NovaSeq Run (standaard) v1.0']
