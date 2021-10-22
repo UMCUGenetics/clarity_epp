@@ -33,15 +33,23 @@ def set_runid_name(lims, process_id):
                 analyte.put()
 
 
-def route_to_workflow(lims, process_id):
+def route_to_workflow(lims, process_id, workflow):
     """Route artifacts to a workflow."""
     process = Process(lims, id=process_id)
-    route_artifacts = []
 
-    for action_artifact in process.step.actions.get_next_actions():
-        artifact = action_artifact['artifact']
-        action = action_artifact['action']
-        if action == 'complete' and artifact.samples[0].udf['Dx Stoftest code'] != config.research_stoftest_code:
-            route_artifacts.append(artifact)
+    # Get all artifacts with workflow status == completed.
+    artifacts_completed = [
+        action_artifact['artifact'] for action_artifact in process.step.actions.get_next_actions()
+        if action_artifact['action'] == 'complete'
+    ]
 
-    lims.route_artifacts(route_artifacts, workflow_uri=Workflow(lims, id=config.post_bioinf_workflow).uri)
+    if workflow == 'post_bioinf':
+        # Remove research artifacts
+        route_artifacts = [
+            artifact for artifact in artifacts_completed
+            if artifact.samples[0].udf['Dx Stoftest code'] != config.research_stoftest_code
+        ]
+        lims.route_artifacts(route_artifacts, workflow_uri=Workflow(lims, id=config.post_bioinf_workflow).uri)
+
+    elif workflow == 'sequencing':
+        lims.route_artifacts(artifacts_completed, workflow_uri=Workflow(lims, id=config.sequencing_workflow).uri)

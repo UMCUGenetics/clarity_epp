@@ -37,7 +37,7 @@ def unpooling(lims, process_id):
             if len(node.find('samples').findall('sample')) == 1:
                 sample_artifact = Artifact(lims, uri=node.attrib['uri'])
                 sample = sample_artifact.samples[0] # 1 sample per artifact.
-                
+
                 # Get sample sequencing run and project from samplesheet
                 sample_artifact.udf['Dx Sequencing Run ID'] = run_id
                 if 'Sample Type' in sample.udf and 'library' in sample.udf['Sample Type']:  # Use sample.name for external (clarity_portal) samples
@@ -45,8 +45,8 @@ def unpooling(lims, process_id):
                 else:  # Use sample_artifact.name for Dx samples (upload via Helix)
                     sample_artifact.udf['Dx Sequencing Run Project'] = sample_projects[sample_artifact.name]
                 sample_artifact.put()
-                
+
                 if sample_artifact.samples[0].project and sample_artifact.samples[0].project.udf['Application'] == 'DX':  # Only move DX production samples to post sequencing workflow
                     sample_artifacts.append(sample_artifact)
 
-    lims.route_artifacts(sample_artifacts, workflow_uri=Workflow(lims, id=config.post_seq_workflow).uri)
+    lims.route_artifacts(sample_artifacts, workflow_uri=Workflow(lims, id=config.post_sequencing_workflow).uri)
