@@ -41,7 +41,7 @@ def samplesheet_purify(lims, process_id, output_file):
 
 def samplesheet_dilute_library_pool(lims, process_id, output_file):
     """Create manual pipetting samplesheet for sequencing pools."""
-    output_file.write('Sample\tul Sample\tul EB\n')
+    output_file.write('Sample\tContainer\tWell\tul Sample\tul EB\n')
     process = Process(lims, id=process_id)
 
     output = []  # save pool data to list, to be able to sort on pool number.
@@ -63,8 +63,10 @@ def samplesheet_dilute_library_pool(lims, process_id, output_file):
         ul_sample = (nM_pool/nM_dna) * output_ul
         ul_EB = output_ul - ul_sample
 
-        line = '{pool_name}\t{ul_sample:.2f}\t{ul_EB:.2f}\n'.format(
+        line = '{pool_name}\t{container}\t{well}\t{ul_sample:.2f}\t{ul_EB:.2f}\n'.format(
             pool_name=input.name,
+            container=input.location[0].name,
+            well=input.location[1],
             ul_sample=ul_sample,
             ul_EB=ul_EB
         )
