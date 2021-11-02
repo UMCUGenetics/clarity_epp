@@ -178,7 +178,7 @@ def samplesheet_dilute(lims, process_id, output_file):
 
         # Store output lines by well
         well = ''.join(input_artifact.location[1].split(':'))
-        output[well] = '{name}\t{plate_id_input}\t{well}\t{plate_id_output}\t{volume_dna}\t{volume_water}\n'.format(
+        output[well] = '{name}\t{plate_id_input}\t{well}\t{plate_id_output}\t{volume_dna:.1f}\t{volume_water:.1f}\n'.format(
             name=input_artifact.name,
             plate_id_input=input_artifact.location[0].id,
             well=well,
