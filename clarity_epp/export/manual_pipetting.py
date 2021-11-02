@@ -3,6 +3,8 @@ import re
 
 from genologics.entities import Process
 
+import clarity_epp.export.utils
+
 
 def samplesheet_purify(lims, process_id, output_file):
     """Create manual pipetting samplesheet for purifying samples."""
@@ -348,12 +350,7 @@ def samplesheet_normalization(lims, process_id, output_file):
     process = Process(lims, id=process_id)
 
     # Find all QC process types
-    qc_process_types = []
-    for process_type in lims.get_process_types():
-        if 'Dx Qubit QC' in process_type.name:
-            qc_process_types.append(process_type.name)
-        elif 'Dx Tecan Spark 10M QC' in process_type.name:
-            qc_process_types.append(process_type.name)
+    qc_process_types = clarity_epp.export.utils.get_process_types(lims, ['Dx Qubit QC', 'Dx Tecan Spark 10M QC'])
 
     for input_artifact in process.all_inputs(resolve=True):
         artifact = process.outputs_per_input(input_artifact.id, Analyte=True)[0]  # assume one artifact per input
@@ -492,12 +489,7 @@ def samplesheet_mip_multiplex_pool(lims, process_id, output_file):
     input_artifacts = []
 
     # Find all Dx Tapestation 2200/4200 QC process types
-    qc_process_types = []
-    for process_type in lims.get_process_types():
-        if 'Dx Tapestation 2200 QC' in process_type.name:
-            qc_process_types.append(process_type.name)
-        elif 'Dx Tapestation 4200 QC' in process_type.name:
-            qc_process_types.append(process_type.name)
+    qc_process_types = clarity_epp.export.utils.get_process_types(lims, ['Dx Tapestation 2200 QC', 'Dx Tapestation 4200 QC'])
 
     # Write header
     output_file.write('{sample}\t{volume}\t{plate_id}\t{well_id}\t{concentration}\t{manual}\n'.format(

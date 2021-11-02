@@ -28,6 +28,8 @@ def export_caliper(args):
     """Export samplesheets for caliper machine."""
     if args.type == 'normalise':
         clarity_epp.export.caliper.samplesheet_normalise(lims, args.process_id, args.output_file)
+    elif args.type == 'dilute':
+        clarity_epp.export.caliper.samplesheet_dilute(lims, args.process_id, args.output_file)
 
 
 def export_email(args):
@@ -230,7 +232,7 @@ if __name__ == "__main__":
     parser_export_bioanalyzer.set_defaults(func=export_bioanalyzer)
 
     parser_export_caliper = subparser_export.add_parser('caliper', help='Create caliper samplesheets', parents=[output_parser])
-    parser_export_caliper.add_argument('type', choices=['normalise'], help='Samplesheet type')
+    parser_export_caliper.add_argument('type', choices=['normalise', 'dilute'], help='Samplesheet type')
     parser_export_caliper.add_argument('process_id', help='Clarity lims process id')
     parser_export_caliper.set_defaults(func=export_caliper)
 

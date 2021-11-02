@@ -33,3 +33,19 @@ def sort_artifact_list(artifact):
         return int(artifact.id.split('-')[1])
     else:
         return -1
+
+
+def get_process_types(lims, process_types_names):
+    """Get process types by partial name.
+
+    If complete name is known use lims.get_process_types(displayname="complete name")
+    """
+    all_process_types = lims.get_process_types()
+    process_types = []
+
+    for process_type in all_process_types:
+        for process_types_name in process_types_names:
+            if process_types_name in process_type.name:
+                process_types.append(process_type.name)
+
+    return process_types

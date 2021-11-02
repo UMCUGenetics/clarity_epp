@@ -33,12 +33,7 @@ def samplesheet_normalise(lims, process_id, output_file):
         parent_process_barcode = parent_process_barcode_manual
 
     # Get all Qubit and Tecan Spark QC types
-    qc_process_types = []
-    for process_type in lims.get_process_types():
-        if 'Dx Qubit QC' in process_type.name:
-            qc_process_types.append(process_type.name)
-        elif 'Dx Tecan Spark 10M QC' in process_type.name:
-            qc_process_types.append(process_type.name)
+    qc_process_types = clarity_epp.export.utils.get_process_types(lims, ['Dx Qubit QC, Dx Tecan Spark 10M QC'])
 
     # Get all unique input artifact ids
     parent_processes = list(set(parent_processes))
@@ -49,7 +44,7 @@ def samplesheet_normalise(lims, process_id, output_file):
     input_artifact_ids = list(set(input_artifact_ids))
 
     # Get unique QC processes for input artifacts
-    qc_processes = list(set(lims.get_processes(type=[qc_process_types], inputartifactlimsid=input_artifact_ids)))
+    qc_processes = list(set(lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact_ids)))
 
     samples_measurements_qubit = {}
     sample_concentration = {}
@@ -156,3 +151,43 @@ def samplesheet_normalise(lims, process_id, output_file):
                 volume_H2O=volume_H2O[well]
             )
         )
+
+
+def samplesheet_dilute(lims, process_id, output_file):
+    """Create Caliper samplesheet for diluting samples."""
+    # output_file.write('Sample\tContainer\tWell\tul Sample\tul EB\n')
+    output_file.write(
+        'Monsternummer\tPlate_Id_input\tWell\tPlate_Id_output\tPipetteervolume DNA (ul)\tPipetteervolume H2O (ul)\n'
+    )
+    process = Process(lims, id=process_id)
+
+    output = {}  # save output data to dict, to be able to sort on well.
+    nM_pool = process.udf['Dx Pool verdunning (nM)']
+    output_ul = process.udf['Eindvolume (ul)']
+
+    for input_artifact in process.all_inputs():
+        output_artifact = process.outputs_per_input(input_artifact.id, Analyte=True)[0]
+
+        # Get QC stats
+        size = float(input_artifact.udf['Dx Fragmentlengte (bp)'])
+        concentration = float(input_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+
+        # Calculate dilution
+        nM_dna = (concentration * 1000 * (1/660.0) * (1/size)) * 1000
+        ul_sample = (nM_pool/nM_dna) * output_ul
+        ul_water = output_ul - ul_sample
+
+        # Store output lines by well
+        well = ''.join(input_artifact.location[1].split(':'))
+        output[well] = '{name}\t{plate_id_input}\t{well}\t{plate_id_output}\t{volume_dna}\t{volume_water}\n'.format(
+            name=input_artifact.name,
+            plate_id_input=input_artifact.location[0].id,
+            well=well,
+            plate_id_output=output_artifact.location[0].id,
+            volume_dna=ul_sample,
+            volume_water=ul_water
+        )
+
+    # Write output, sort by well
+    for well in clarity_epp.export.utils.sort_96_well_plate(output.keys()):
+        output_file.write(output[well])
