@@ -155,7 +155,6 @@ def samplesheet_normalise(lims, process_id, output_file):
 
 def samplesheet_dilute(lims, process_id, output_file):
     """Create Caliper samplesheet for diluting samples."""
-    # output_file.write('Sample\tContainer\tWell\tul Sample\tul EB\n')
     output_file.write(
         'Monsternummer\tPlate_Id_input\tWell\tPlate_Id_output\tPipetteervolume DNA (ul)\tPipetteervolume H2O (ul)\n'
     )
