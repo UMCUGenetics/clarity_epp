@@ -575,3 +575,22 @@ def samplesheet_mip_pool_dilution(lims, process_id, output_file):
             ul_sample_40=ul_sample * 4,
             ul_EB_40=ul_EB * 4,
         ))
+
+
+def samplesheet_pool_samples(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for pooling samples."""
+    process = Process(lims, id=process_id)
+
+    # print header
+    output_file.write('Sample\tContainer\tWell\tPool\n')
+
+    # print pool scheme per input artifact
+    for input_artifact in process.all_inputs(resolve=True):
+        output_file.write(
+            '{sample}\t{container}\t{well}\t{pool}\n'.format(
+                sample=input_artifact.name,
+                container=input_artifact.location[0].name,
+                well=''.join(input_artifact.location[1].split(':')),
+                pool=process.outputs_per_input(input_artifact.id, Analyte=True)[0].name
+            )
+        )

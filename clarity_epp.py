@@ -88,6 +88,8 @@ def export_manual_pipetting(args):
         clarity_epp.export.manual_pipetting.samplesheet_mip_multiplex_pool(lims, args.process_id, args.output_file)
     elif args.type == 'mip_dilute_pool':
         clarity_epp.export.manual_pipetting.samplesheet_mip_pool_dilution(lims, args.process_id, args.output_file)
+    elif args.type == 'pool_samples':
+        clarity_epp.export.manual_pipetting.samplesheet_pool_samples(lims, args.process_id, args.output_file)
 
 
 def export_ped_file(args):
@@ -274,7 +276,7 @@ if __name__ == "__main__":
         'type',
         choices=[
             'purify', 'dilute_library_pool', 'multiplex_library_pool', 'multiplex_sequence_pool', 'normalization',
-            'capture', 'exonuclease', 'pcr_exonuclease', 'mip_multiplex_pool', 'mip_dilute_pool'
+            'capture', 'exonuclease', 'pcr_exonuclease', 'mip_multiplex_pool', 'mip_dilute_pool', 'pool_samples'
         ],
         help='Samplesheet type'
     )
@@ -345,7 +347,6 @@ if __name__ == "__main__":
     parser_upload_magnis = subparser_upload.add_parser('magnis', help='Upload magnis results')
     parser_upload_magnis.add_argument('process_id', help='Clarity lims process id')
     parser_upload_magnis.set_defaults(func=upload_magnis_results)
-
 
     # QC
     parser_qc = subparser.add_parser('qc', help='Set QC values/flags')
