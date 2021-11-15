@@ -35,8 +35,8 @@ def results(lims, process_id):
 
     # Check sample reagents and fill Lotnr check flag
     for output in process.analytes()[0]:
-        label_index_nunmber = int(output.reagent_labels[0][3:5])
-        if lot_error or label_index_nunmber != index_strip_number:
+        label_index_number = int(output.reagent_labels[0][3:5])
+        if lot_error or label_index_number != index_strip_number:
             output.udf['Lotnr check'] = False
         else:
             output.udf['Lotnr check'] = True
