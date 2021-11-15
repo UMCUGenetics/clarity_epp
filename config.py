@@ -22,7 +22,7 @@ stoftestcode_workflow = {
     'NGS_022': '1107',  # DEV Dx Exoom KAPA v1.9
     'NGS_023': '1107',  # DEV Dx Exoom KAPA v1.9
     'NGS_xxx': '1106',  # DEV Dx smMIP Fingerprint v1.2
-    'NGS_025': '1253',  # DEV Dx Exoom Magnis test v1.1
+    'NGS_025': '1201',  # DEV Dx Exoom Magnis v1.0
 }
 
 # Export meetw protocol steps
@@ -71,9 +71,6 @@ sequence_process_types = [
     'Dx NextSeq Run v1.0', 'Dx NextSeq Run v1.1',
     'Dx Automated NovaSeq Run (standaard) v1.0', 'Dx Automated NovaSeq Run (standaard) v1.1', 'AUTOMATED - NovaSeq Run (NovaSeq 6000 v3.1)',
 ]
-
-# Sequencer types
-sequence_process_types = ['Dx NextSeq Run v1.0', 'Dx Automated NovaSeq Run (standaard) v1.0']
 
 # Post sequencing workflow
 sequencing_workflow = '1301' # DEV Dx Illumina Sequencing v1.0
