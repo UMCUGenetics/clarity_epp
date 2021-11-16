@@ -74,8 +74,8 @@ sequence_process_types = [
 
 # Post sequencing workflow
 sequencing_workflow = '1301' # DEV Dx Illumina Sequencing v1.0
-post_sequencing_workflow = '901'  # DEV Dx Bioinformatica analyses v1.0
-post_bioinf_workflow = '902' # DEV Dx NGS onderzoeken afronden v1.0
+post_sequencing_workflow = '902'  # DEV Dx Bioinformatica analyses v1.0
+post_bioinf_workflow = '952' # DEV Dx NGS onderzoeken afronden v1.0
 research_stoftest_code = 'NGS_023'
 
 # Research Onderzoeksindicatie
