@@ -158,7 +158,7 @@ def helix_all(lims, process_id, output_file):
 
 def helix_all_magnis(lims, process_id, output_file):
     """Export workflow information in helix table format (Magnis Workflow)."""
-    output_file.write("meet_id\twerklijst_nummer\tonderzoeknr\tmonsternummer\tZuivering OK?\tZuivering herh?\tSampleprep OK?\tSampleprep herh?\tSequencen OK?\tSequencen herh?\tBfx analyse OK?\tSamplenaam\tvcf-file\tCNV vcf-file\tQC data\n")
+    output_file.write("meet_id\twerklijst_nummer\tonderzoeknr\tmonsternummer\tZuivering OK?\tZuivering herh?\tSampleprep OK?\tSampleprep herh?\tSequencen OK?\tSequencen herh?\tBfx analyse OK?\tSamplenaam\tvcf-file\tCNV vcf-file\n")
     process = Process(lims, id=process_id)
 
     for artifact in process.analytes()[0]:
@@ -194,7 +194,7 @@ def helix_all_magnis(lims, process_id, output_file):
                 meetw_seq, meetw_seq_herh = determin_meetw(config.meetw_seq_processes, sample_filter_processes, 2)
 
                 output_file.write(
-                    "{meet_id}\t{werklijst}\t{onderzoeksnummer}\t{monsternummer}\t{meetw_zui}\t{meetw_zui_herh}\t{meetw_sampleprep}\t{meetw_sampleprep_herh}\t{meetw_seq}\t{meetw_seq_herh}\t{meetw_bfx}\t{sample_name}\t{vcf_file}\t{cnv_vcf_file}\t{qc_data}\n".format(
+                    "{meet_id}\t{werklijst}\t{onderzoeksnummer}\t{monsternummer}\t{meetw_zui}\t{meetw_zui_herh}\t{meetw_sampleprep}\t{meetw_sampleprep_herh}\t{meetw_seq}\t{meetw_seq_herh}\t{meetw_bfx}\t{sample_name}\t{vcf_file}\t{cnv_vcf_file}\n".format(
                         meet_id=sample.udf['Dx Meet ID'].split(';')[0],
                         werklijst=sample.udf['Dx Werklijstnummer'].split(';')[0],
                         onderzoeksnummer=sample.udf['Dx Onderzoeknummer'].split(';')[0],
@@ -206,6 +206,5 @@ def helix_all_magnis(lims, process_id, output_file):
                         sample_name=sample.name,
                         vcf_file='',
                         cnv_vcf_file='',
-                        qc_data='',
                     )
                 )
