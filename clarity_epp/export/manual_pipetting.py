@@ -584,13 +584,27 @@ def samplesheet_pool_samples(lims, process_id, output_file):
     # print header
     output_file.write('Sample\tContainer\tWell\tPool\n')
 
-    # print pool scheme per input artifact
+    # Get all input artifact and store per container
+    input_containers = {}
     for input_artifact in process.all_inputs(resolve=True):
-        output_file.write(
-            '{sample}\t{container}\t{well}\t{pool}\n'.format(
-                sample=input_artifact.name,
-                container=input_artifact.location[0].name,
-                well=''.join(input_artifact.location[1].split(':')),
-                pool=process.outputs_per_input(input_artifact.id, Analyte=True)[0].name
+        container = input_artifact.location[0].name
+        well = ''.join(input_artifact.location[1].split(':'))
+
+        if container not in input_containers:
+            input_containers[container] = {}
+
+        input_containers[container][well] = input_artifact
+
+    # print pool scheme per input artifact
+    # sort on container and well
+    for input_container in sorted(input_containers.keys()):
+        input_artifacts = input_containers[input_container]
+        for well in clarity_epp.export.utils.sort_96_well_plate(input_artifacts.keys()):
+            output_file.write(
+                '{sample}\t{container}\t{well}\t{pool}\n'.format(
+                    sample=input_artifacts[well].name,
+                    container=input_artifacts[well].location[0].name,
+                    well=well,
+                    pool=process.outputs_per_input(input_artifacts[well].id, Analyte=True)[0].name
+                )
             )
-        )
