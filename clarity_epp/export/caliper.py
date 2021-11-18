@@ -33,7 +33,7 @@ def samplesheet_normalise(lims, process_id, output_file):
         parent_process_barcode = parent_process_barcode_manual
 
     # Get all Qubit and Tecan Spark QC types
-    qc_process_types = clarity_epp.export.utils.get_process_types(lims, ['Dx Qubit QC, Dx Tecan Spark 10M QC'])
+    qc_process_types = clarity_epp.export.utils.get_process_types(lims, ['Dx Qubit QC', 'Dx Tecan Spark 10M QC'])
 
     # Get all unique input artifact ids
     parent_processes = list(set(parent_processes))
