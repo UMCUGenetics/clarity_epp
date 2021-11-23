@@ -608,3 +608,22 @@ def samplesheet_pool_samples(lims, process_id, output_file):
                     pool=process.outputs_per_input(input_artifacts[well].id, Analyte=True)[0].name
                 )
             )
+
+
+def samplesheet_pool_magnis_pools(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for pooling magnis pools. Correct for pools with < 8 samples"""
+    process = Process(lims, id=process_id)
+
+    # print header
+    output_file.write('Pool\tContainer\tSample count\tVolume (ul)\n')
+
+    # Get input pools, sort by name and print volume
+    for input_artifact in sorted(process.all_inputs(resolve=True), key=lambda artifact: artifact.name):
+        output_file.write(
+            '{pool}\t{container}\t{sample_count}\t{volume}\n'.format(
+                pool=input_artifact.name,
+                container=input_artifact.container.name,
+                sample_count=len(input_artifact.samples),
+                volume=len(input_artifact.samples) * 1.25
+            )
+        )
