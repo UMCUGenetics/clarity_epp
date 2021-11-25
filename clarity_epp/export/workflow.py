@@ -2,6 +2,7 @@
 from genologics.entities import Process
 
 import config
+from .. import get_sequence_name
 
 
 def determin_meetw(meetw_processes, sample_processes, repeat_cutoff=2):
@@ -203,7 +204,7 @@ def helix_all_magnis(lims, process_id, output_file):
                         meetw_sampleprep=meetw_sampleprep, meetw_sampleprep_herh=meetw_sampleprep_herh,
                         meetw_seq=meetw_seq, meetw_seq_herh=meetw_seq_herh,
                         meetw_bfx='J',
-                        sample_name=sample.name,
+                        sample_name=get_sequence_name(sample),
                         vcf_file='',
                         cnv_vcf_file='',
                     )
