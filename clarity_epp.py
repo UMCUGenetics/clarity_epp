@@ -28,6 +28,8 @@ def export_caliper(args):
     """Export samplesheets for caliper machine."""
     if args.type == 'normalise':
         clarity_epp.export.caliper.samplesheet_normalise(lims, args.process_id, args.output_file)
+    elif args.type == 'dilute':
+        clarity_epp.export.caliper.samplesheet_dilute(lims, args.process_id, args.output_file)
 
 
 def export_email(args):
@@ -59,6 +61,11 @@ def export_labels(args):
         clarity_epp.export.labels.storage_location(lims, args.process_id, args.output_file)
 
 
+def export_magnis(args):
+    """Export magnis samplesheet."""
+    clarity_epp.export.magnis.samplesheet(lims, args.process_id, args.output_file)
+
+
 def export_manual_pipetting(args):
     """Export samplesheets for manual pipetting."""
     if args.type == 'purify':
@@ -81,6 +88,10 @@ def export_manual_pipetting(args):
         clarity_epp.export.manual_pipetting.samplesheet_mip_multiplex_pool(lims, args.process_id, args.output_file)
     elif args.type == 'mip_dilute_pool':
         clarity_epp.export.manual_pipetting.samplesheet_mip_pool_dilution(lims, args.process_id, args.output_file)
+    elif args.type == 'pool_samples':
+        clarity_epp.export.manual_pipetting.samplesheet_pool_samples(lims, args.process_id, args.output_file)
+    elif args.type == 'pool_magnis_pools':
+        clarity_epp.export.manual_pipetting.samplesheet_pool_magnis_pools(lims, args.process_id, args.output_file)
 
 
 def export_ped_file(args):
@@ -123,6 +134,8 @@ def export_workflow(args):
         clarity_epp.export.workflow.helix_lab(lims, args.process_id, args.output_file)
     elif args.type == 'data_analysis':
         clarity_epp.export.workflow.helix_data_analysis(lims, args.process_id, args.output_file)
+    elif args.type == 'magnis':
+        clarity_epp.export.workflow.helix_all_magnis(lims, args.process_id, args.output_file)
 
 
 # Upload Functions
@@ -144,6 +157,11 @@ def upload_tapestation_results(args):
 def upload_bioanalyzer_results(args):
     """Upload bioanalyzer results."""
     clarity_epp.upload.bioanalyzer.results(lims, args.process_id)
+
+
+def upload_magnis_results(args):
+    """Upload magnis results."""
+    clarity_epp.upload.magnis.results(lims, args.process_id)
 
 
 # QC functions
@@ -178,7 +196,7 @@ def placement_artifact_set_name(args):
 
 def placement_route_artifact(args):
     """Route artifacts to a workflow"""
-    clarity_epp.placement.artifact.route_to_workflow(lims, args.process_id)
+    clarity_epp.placement.artifact.route_to_workflow(lims, args.process_id, args.workflow)
 
 
 def placement_barcode(args):
@@ -218,7 +236,7 @@ if __name__ == "__main__":
     parser_export_bioanalyzer.set_defaults(func=export_bioanalyzer)
 
     parser_export_caliper = subparser_export.add_parser('caliper', help='Create caliper samplesheets', parents=[output_parser])
-    parser_export_caliper.add_argument('type', choices=['normalise'], help='Samplesheet type')
+    parser_export_caliper.add_argument('type', choices=['normalise', 'dilute'], help='Samplesheet type')
     parser_export_caliper.add_argument('process_id', help='Clarity lims process id')
     parser_export_caliper.set_defaults(func=export_caliper)
 
@@ -247,6 +265,12 @@ if __name__ == "__main__":
     parser_export_labels.add_argument('-d', '--description',  nargs='?', help='Container name description')
     parser_export_labels.set_defaults(func=export_labels)
 
+    parser_export_magnis = subparser_export.add_parser(
+        'magnis', help='Export magnis samplesheet', parents=[output_parser]
+    )
+    parser_export_magnis.add_argument('process_id', help='Clarity lims process id')
+    parser_export_magnis.set_defaults(func=export_magnis)
+
     parser_export_manual_pipetting = subparser_export.add_parser(
         'manual', help='Create manual pipetting exports', parents=[output_parser]
     )
@@ -254,7 +278,8 @@ if __name__ == "__main__":
         'type',
         choices=[
             'purify', 'dilute_library_pool', 'multiplex_library_pool', 'multiplex_sequence_pool', 'normalization',
-            'capture', 'exonuclease', 'pcr_exonuclease', 'mip_multiplex_pool', 'mip_dilute_pool'
+            'capture', 'exonuclease', 'pcr_exonuclease', 'mip_multiplex_pool', 'mip_dilute_pool', 'pool_samples',
+            'pool_magnis_pools'
         ],
         help='Samplesheet type'
     )
@@ -298,7 +323,7 @@ if __name__ == "__main__":
     parser_export_workflow = subparser_export.add_parser(
         'workflow', help='Export workflow result file', parents=[output_parser]
     )
-    parser_export_workflow.add_argument('type', choices=['all', 'lab', 'data_analysis'], help='Workflow type')
+    parser_export_workflow.add_argument('type', choices=['all', 'lab', 'data_analysis', 'magnis'], help='Workflow type')
     parser_export_workflow.add_argument('process_id', help='Clarity lims process id')
     parser_export_workflow.set_defaults(func=export_workflow)
 
@@ -321,6 +346,10 @@ if __name__ == "__main__":
     parser_upload_tecan = subparser_upload.add_parser('tecan', help='Upload tecan results')
     parser_upload_tecan.add_argument('process_id', help='Clarity lims process id')
     parser_upload_tecan.set_defaults(func=upload_tecan_results)
+
+    parser_upload_magnis = subparser_upload.add_parser('magnis', help='Upload magnis results')
+    parser_upload_magnis.add_argument('process_id', help='Clarity lims process id')
+    parser_upload_magnis.set_defaults(func=upload_magnis_results)
 
     # QC
     parser_qc = subparser.add_parser('qc', help='Set QC values/flags')
@@ -353,6 +382,7 @@ if __name__ == "__main__":
 
     parser_placement_route_artifact = subparser_placement.add_parser('route_artifact', help='Route artifact to a workflow')
     parser_placement_route_artifact.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_route_artifact.add_argument('workflow', choices=['post_bioinf', 'sequencing'], help='Workflow')
     parser_placement_route_artifact.set_defaults(func=placement_route_artifact)
 
     parser_placement_barcode = subparser_placement.add_parser('barcode_check', help='Check barcode clarity_epp.placement')
