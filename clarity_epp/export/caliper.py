@@ -64,7 +64,7 @@ def samplesheet_normalise(lims, process_id, output_file):
     volume_DNA = {}
     volume_H2O = {}
     conc_measured = {}
-    output_ng = process.udf['Output genormaliseerd gDNA']
+    output_ng = float(process.udf['Output genormaliseerd gDNA'])
     conc = {}
     output_ul = process.udf['Eindvolume (ul) genormaliseerd gDNA']
     output_plate_barcode = process.output_containers()[0].name
