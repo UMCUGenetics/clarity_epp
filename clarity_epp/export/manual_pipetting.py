@@ -3,6 +3,8 @@ import re
 
 from genologics.entities import Process
 
+import clarity_epp.export.utils
+
 
 def samplesheet_purify(lims, process_id, output_file):
     """Create manual pipetting samplesheet for purifying samples."""
@@ -41,32 +43,39 @@ def samplesheet_purify(lims, process_id, output_file):
 
 def samplesheet_dilute_library_pool(lims, process_id, output_file):
     """Create manual pipetting samplesheet for sequencing pools."""
-    output_file.write('Sample pool\tul Sample\tul EB\n')
+    output_file.write('Sample\tContainer\tWell\tul Sample\tul EB\n')
     process = Process(lims, id=process_id)
 
-    pool_lines = []  # save pool data to list, to be able to sort on pool number.
+    output = []  # save pool data to list, to be able to sort on pool number.
+    nM_pool = process.udf['Dx Pool verdunning (nM)']
+    output_ul = process.udf['Eindvolume (ul)']
 
-    for pool in process.all_inputs():
-        pool_number = int(re.search(r'Pool #(\d+)_', pool.name).group(1))
-        pool_input_artifact = pool.input_artifact_list()[0]
+    for input in process.all_inputs():
+        search_number = re.search(r'Pool #(\d+)_', input.name)
+        if search_number:
+            input_number = int(search_number.group(1))
+        else:
+            input_number = 0
+        qc_artifact = input.input_artifact_list()[0]
 
-        size = float(pool_input_artifact.udf['Dx Fragmentlengte (bp)'])
-        concentration = float(pool_input_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
-        nM_pool = process.udf['Dx Pool verdunning (nM)']
+        size = float(qc_artifact.udf['Dx Fragmentlengte (bp)'])
+        concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
 
         nM_dna = (concentration * 1000 * (1/660.0) * (1/size)) * 1000
-        ul_sample = (nM_pool/nM_dna) * 20
-        ul_EB = 20 - ul_sample
+        ul_sample = (nM_pool/nM_dna) * output_ul
+        ul_EB = output_ul - ul_sample
 
-        pool_line = '{pool_name}\t{ul_sample:.2f}\t{ul_EB:.2f}\n'.format(
-            pool_name=pool.name,
+        line = '{pool_name}\t{container}\t{well}\t{ul_sample:.2f}\t{ul_EB:.2f}\n'.format(
+            pool_name=input.name,
+            container=input.location[0].name,
+            well=input.location[1],
             ul_sample=ul_sample,
             ul_EB=ul_EB
         )
-        pool_lines.append((pool_number, pool_line))
+        output.append((input_number, line))
 
-    for pool_number, pool_line in sorted(pool_lines):
-        output_file.write(pool_line)
+    for number, line in sorted(output):
+        output_file.write(line)
 
 
 def library_dilution_calculator(concentration, size, trio, pedigree, ng):
@@ -341,12 +350,7 @@ def samplesheet_normalization(lims, process_id, output_file):
     process = Process(lims, id=process_id)
 
     # Find all QC process types
-    qc_process_types = []
-    for process_type in lims.get_process_types():
-        if 'Dx Qubit QC' in process_type.name:
-            qc_process_types.append(process_type.name)
-        elif 'Dx Tecan Spark 10M QC' in process_type.name:
-            qc_process_types.append(process_type.name)
+    qc_process_types = clarity_epp.export.utils.get_process_types(lims, ['Dx Qubit QC', 'Dx Tecan Spark 10M QC'])
 
     for input_artifact in process.all_inputs(resolve=True):
         artifact = process.outputs_per_input(input_artifact.id, Analyte=True)[0]  # assume one artifact per input
@@ -485,12 +489,7 @@ def samplesheet_mip_multiplex_pool(lims, process_id, output_file):
     input_artifacts = []
 
     # Find all Dx Tapestation 2200/4200 QC process types
-    qc_process_types = []
-    for process_type in lims.get_process_types():
-        if 'Dx Tapestation 2200 QC' in process_type.name:
-            qc_process_types.append(process_type.name)
-        elif 'Dx Tapestation 4200 QC' in process_type.name:
-            qc_process_types.append(process_type.name)
+    qc_process_types = clarity_epp.export.utils.get_process_types(lims, ['Dx Tapestation 2200 QC', 'Dx Tapestation 4200 QC'])
 
     # Write header
     output_file.write('{sample}\t{volume}\t{plate_id}\t{well_id}\t{concentration}\t{manual}\n'.format(
@@ -576,3 +575,55 @@ def samplesheet_mip_pool_dilution(lims, process_id, output_file):
             ul_sample_40=ul_sample * 4,
             ul_EB_40=ul_EB * 4,
         ))
+
+
+def samplesheet_pool_samples(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for pooling samples."""
+    process = Process(lims, id=process_id)
+
+    # print header
+    output_file.write('Sample\tContainer\tWell\tPool\n')
+
+    # Get all input artifact and store per container
+    input_containers = {}
+    for input_artifact in process.all_inputs(resolve=True):
+        container = input_artifact.location[0].name
+        well = ''.join(input_artifact.location[1].split(':'))
+
+        if container not in input_containers:
+            input_containers[container] = {}
+
+        input_containers[container][well] = input_artifact
+
+    # print pool scheme per input artifact
+    # sort on container and well
+    for input_container in sorted(input_containers.keys()):
+        input_artifacts = input_containers[input_container]
+        for well in clarity_epp.export.utils.sort_96_well_plate(input_artifacts.keys()):
+            output_file.write(
+                '{sample}\t{container}\t{well}\t{pool}\n'.format(
+                    sample=input_artifacts[well].name,
+                    container=input_artifacts[well].location[0].name,
+                    well=well,
+                    pool=process.outputs_per_input(input_artifacts[well].id, Analyte=True)[0].name
+                )
+            )
+
+
+def samplesheet_pool_magnis_pools(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for pooling magnis pools. Correct for pools with < 8 samples"""
+    process = Process(lims, id=process_id)
+
+    # print header
+    output_file.write('Pool\tContainer\tSample count\tVolume (ul)\n')
+
+    # Get input pools, sort by name and print volume
+    for input_artifact in sorted(process.all_inputs(resolve=True), key=lambda artifact: artifact.name):
+        output_file.write(
+            '{pool}\t{container}\t{sample_count}\t{volume}\n'.format(
+                pool=input_artifact.name,
+                container=input_artifact.container.name,
+                sample_count=len(input_artifact.samples),
+                volume=len(input_artifact.samples) * 1.25
+            )
+        )
