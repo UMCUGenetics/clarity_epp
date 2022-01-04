@@ -64,7 +64,7 @@ def samplesheet_normalise(lims, process_id, output_file):
     volume_DNA = {}
     volume_H2O = {}
     conc_measured = {}
-    output_ng = process.udf['Output genormaliseerd gDNA']
+    output_ng = float(process.udf['Output genormaliseerd gDNA'])
     conc = {}
     output_ul = process.udf['Eindvolume (ul) genormaliseerd gDNA']
     output_plate_barcode = process.output_containers()[0].name
@@ -137,8 +137,8 @@ def samplesheet_normalise(lims, process_id, output_file):
                     conc[placement] = output_ng/100
                 else:
                     conc[placement] = conc_measured[placement]
-                volume_DNA[placement] = int(round(float(output_ng)/conc[placement]))
-                volume_H2O[placement] = output_ul-int(round(float(output_ng)/conc[placement]))
+                volume_DNA[placement] = int(round(output_ng/conc[placement]))
+                volume_H2O[placement] = output_ul-int(round(output_ng/conc[placement]))
 
     for well in clarity_epp.export.utils.sort_96_well_plate(monsternummer.keys()):
         output_file.write(
