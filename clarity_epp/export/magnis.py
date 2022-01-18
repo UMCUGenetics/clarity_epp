@@ -15,11 +15,11 @@ def samplesheet(lims, process_id, output_file):
         well_strip[placement] = artifact.name
 
     # Write Header
-    output_file.write('sample_id\tinstrument_name\n')
+    output_file.write('sample_instrument\n')
 
     # Write samples
     for well in clarity_epp.export.utils.sort_96_well_plate(well_strip.keys()):
-        output_file.write('{sample}\t{instrument_name}\n'.format(
+        output_file.write('{sample}_{instrument_name}\n'.format(
             sample=well_strip[well],
             instrument_name=process.udf['Instrument naam']
         ))
