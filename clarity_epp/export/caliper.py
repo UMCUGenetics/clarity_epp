@@ -1,4 +1,5 @@
 """Caliper export functions."""
+import string
 
 from genologics.entities import Process
 
@@ -187,6 +188,15 @@ def samplesheet_dilute(lims, process_id, output_file):
             volume_water=ul_water
         )
 
-    # Write output, sort by well
-    for well in clarity_epp.export.utils.sort_96_well_plate(output.keys()):
-        output_file.write(output[well])
+    wells = []
+    for col in range(1, 13):
+        wells.extend(['{}{}'.format(row, str(col)) for row in string.ascii_uppercase[:8]])
+
+    for well in wells:
+        if well in output:
+            output_file.write(output[well])
+        else:
+            output_file.write('Leeg\tNone\t{well}\t{plate_id_output}\t0\t0\n'.format(
+                well=well,
+                plate_id_output=output_artifact.location[0].name,
+            ))
