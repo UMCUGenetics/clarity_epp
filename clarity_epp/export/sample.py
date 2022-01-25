@@ -151,4 +151,4 @@ def sample_indications(lims, output_file, artifact_name=None, sequencing_run=Non
                 )
             )
     else:
-        print("Can't find sample(s).")
+        print("no_sample_found")
