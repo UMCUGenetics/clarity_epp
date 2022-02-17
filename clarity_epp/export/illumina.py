@@ -58,12 +58,13 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
                             break
 
                 else:  # Dx clinic sample
-                    if 'SNP fingerprint MIP' in sample.udf['Dx Protocolomschrijving'] and not families[family]['NICU']:
+                    newest_protocol = sample.udf['Dx Protocolomschrijving'].split(';')[0]
+                    if 'SNP fingerprint MIP' in newest_protocol and not families[family]['NICU']:
                         project_type = 'Fingerprint'
                         families[family]['project_type'] = project_type
                         families[family]['split_project_type'] = False
                         trim_last_base = False
-                    elif 'PID09.V7_smMIP' in sample.udf['Dx Protocolomschrijving'] and not families[family]['NICU']:
+                    elif 'PID09.V7_smMIP' in newest_protocol and not families[family]['NICU']:
                         project_type = 'ERARE'
                         families[family]['project_type'] = project_type
                         families[family]['split_project_type'] = False
@@ -73,11 +74,11 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
                         project_type = 'NICU_{0}'.format(sample.udf['Dx Familienummer'])
                         families[family]['project_type'] = project_type
                         families[family]['split_project_type'] = False
-                    elif 'elidS30409818' in sample.udf['Dx Protocolomschrijving'] and not families[family]['NICU']:
+                    elif 'elidS30409818' in newest_protocol and not families[family]['NICU']:
                         project_type = 'CREv2'
                         families[family]['project_type'] = project_type
                         families[family]['split_project_type'] = True
-                    elif 'elidS31285117' in sample.udf['Dx Protocolomschrijving'] and not families[family]['NICU']:
+                    elif 'elidS31285117' in newest_protocol and not families[family]['NICU']:
                         project_type = 'SSv7'
                         families[family]['project_type'] = project_type
                         families[family]['split_project_type'] = True
