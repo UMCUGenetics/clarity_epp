@@ -2,7 +2,7 @@ from collections import OrderedDict
 import re
 
 from genologics.lims import Lims
-from genologics.entities import Artifact, SampleHistory, Protocol
+from genologics.entities import Artifact
 
 # Setup lims connection
 baseuri = 'https://usf-lims.umcutrecht.nl'
@@ -11,7 +11,7 @@ password = 'lims_user_password'
 lims = Lims(baseuri, username, password)
 
 # Get DX projects and filter on year based on project name
-dx_projects = [project for project in lims.get_projects(udf={'Application': 'DX'}) if project.name.startswith('Dx WL20')]
+dx_projects = [project for project in lims.get_projects(udf={'Application': 'DX'}) if project.name.startswith('Dx WL21')]
 sample_count = 0
 
 # Expected actions
@@ -20,16 +20,19 @@ action_list = ['total', 'complete', 'nextstep', 'remove', 'rework', 'repeat', 'c
 # Expected processes
 processes = [
     'Dx Sample registratie zuivering', 'Dx Hamilton uitvullen', 'Dx Hamilton zuiveren',
-    'Dx Zuiveren gDNA manueel', 'Dx manueel gezuiverd placement', 'Dx gDNA Normalisatie Caliper', 'Dx Fragmenteren & BBSS',
-    'Dx LibraryPrep Caliper KAPA', 'Dx Library Prep amplificatie & clean up KAPA', 'Dx Multiplexen library prep',
-    'Dx Enrichment DNA fragments', 'Dx Post Enrichment clean up', 'Dx Aliquot Post Enrichment (clean)',
-    'Dx Post Enrichment PCR & clean up', 'Dx Aliquot Post Enrichment PCR (clean)',
-    'Dx Library pool verdunnen', 'Dx Multiplexen library pool', 'Dx Multiplexen sequence pool',
-    'Dx Library pool denatureren en laden (NovaSeq)', 'Dx Automated NovaSeq Run (standaard)',
-    'Dx Library pool denatureren en laden (Nextseq)', 'Dx NextSeq Run',
+    'Dx Zuiveren gDNA manueel', 'Dx manueel gezuiverd placement', 'Dx gDNA Normalisatie Caliper', 'Dx Fragmenteren',
+    'Dx Library Prep & Target Enrichment Magnis', 'Dx Placement Enrichment Magnis',
+    'Dx 3nM verdunning Magnis', 'Dx Multiplexen Enrichment samples (3nM) Magnis', 'Dx Multiplexen Enrichment pools Magnis',
+    'Dx Multiplexen sequence pool', 'Dx Library pool denatureren en laden (NovaSeq)', 'AUTOMATED - NovaSeq Run (NovaSeq 6000)',
     'Dx Library pool denatureren en laden (NovaSeq) Dx QC controle Lab sequencen',
-    'Dx Library pool denatureren en laden (Nextseq) Dx QC controle Lab sequencen',
     'Dx NGS labwerk afronden', 'Dx Bioinformatica analyses', 'Dx NGS onderzoeken afronden',
+
+    # CREv2
+    'Dx Fragmenteren & BBSS', 'Dx LibraryPrep Caliper KAPA', 'Dx Library Prep amplificatie & clean up KAPA',
+    'Dx Multiplexen library prep', 'Dx Enrichment DNA fragments', 'Dx Post Enrichment clean up',
+    'Dx Aliquot Post Enrichment (clean)', 'Dx Post Enrichment PCR & clean up', 'Dx Aliquot Post Enrichment PCR (clean)',
+    'Dx Library pool verdunnen', 'Dx Multiplexen library pool', 'Dx Automated NovaSeq Run (standaard)',
+    'Dx Library pool denatureren en laden (NovaSeq) Dx QC controle Lab sequencen',
 ]
 
 # Append combined process name for qc processes
@@ -38,8 +41,11 @@ qc_processes = [
     'Dx Tapestation 2200 QC', 'Dx Tapestation 4200 QC', 'Dx Aggregate QC'
 ]
 processes_before_qc = [
-    'Dx Hamilton zuiveren', 'Dx Zuiveren gDNA manueel', 'Dx Fragmenteren & BBSS', 'Dx LibraryPrep Caliper KAPA',
-    'Dx Library Prep amplificatie & clean up KAPA', 'Dx Post Enrichment PCR & clean up', 'Dx Multiplexen library pool'
+    'Dx Hamilton zuiveren', 'Dx Zuiveren gDNA manueel', 'Dx Placement Enrichment Magnis',
+    'Dx Multiplexen Enrichment pools Magnis',
+    # CREv2
+    'Dx Fragmenteren & BBSS', 'Dx LibraryPrep Caliper KAPA', 'Dx Library Prep amplificatie & clean up KAPA',
+    'Dx Post Enrichment PCR & clean up', 'Dx Multiplexen library pool'
 ]
 for process in processes_before_qc:
     for qc_process in qc_processes:
@@ -91,11 +97,11 @@ for project in dx_projects:
                         process_action_counts[process_name]['total'] += 1
                         process_action_counts[process_name][str(action['action'])] += 1
 
-print 'Total Sample count: {0}'.format(str(sample_count))
-print 'Process\t{action_list}'.format(action_list='\t'.join(action_list))
+print('Total Sample count: {0}'.format(str(sample_count)))
+print('Process\t{action_list}'.format(action_list='\t'.join(action_list)))
 for process in process_action_counts:
     if process_action_counts[process]['total']:
-        print '{process}\t{action_list}'.format(
+        print('{process}\t{action_list}'.format(
             process=process,
             action_list='\t'.join([str(process_action_counts[process][action]) if action in process_action_counts[process] else '0' for action in action_list])
-        )
+        ))
