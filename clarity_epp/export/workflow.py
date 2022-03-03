@@ -29,7 +29,7 @@ def helix_magnis(lims, process_id, output_file):
     ))
     process = Process(lims, id=process_id)
 
-    for artifact in process.analytes()[0]:
+    for artifact in process.all_inputs():
         for sample in artifact.samples:
             if 'Dx Werklijstnummer' in sample.udf:  # Only check samples with a 'Werklijstnummer'
                 sample_artifacts = lims.get_artifacts(samplelimsid=sample.id, type='Analyte')
@@ -67,6 +67,14 @@ def helix_magnis(lims, process_id, output_file):
                 meetw_sampleprep, meetw_sampleprep_herh = determin_meetw(config.meetw_sampleprep_processes, sample_filter_processes, 2)
                 meetw_seq, meetw_seq_herh = determin_meetw(config.meetw_seq_processes, sample_filter_processes, 2)
 
+                # Determine vcf files
+                gatk_vcf = ''
+                exomedepth_vcf = ''
+                if 'Dx GATK vcf' in artifact.udf:
+                    gatk_vcf = artifact.udf['Dx GATK vcf']
+                if 'Dx ExomeDepth vcf' in artifact.udf:
+                    exomedepth_vcf = artifact.udf['Dx ExomeDepth vcf']
+
                 output_file.write((
                     "{meet_id}\t{werklijst}\t{onderzoeksnummer}\t{monsternummer}\t{meetw_zui}\t{meetw_zui_herh}\t"
                     "{meetw_sampleprep}\t{meetw_sampleprep_herh}\t{meetw_seq}\t{meetw_seq_herh}\t{meetw_bfx}\t"
@@ -81,7 +89,7 @@ def helix_magnis(lims, process_id, output_file):
                         meetw_seq=meetw_seq, meetw_seq_herh=meetw_seq_herh,
                         meetw_bfx='J',
                         sample_name=get_sequence_name(sample),
-                        vcf_file='',
-                        cnv_vcf_file='',
+                        vcf_file=gatk_vcf,
+                        cnv_vcf_file=exomedepth_vcf,
                     )
                 )
