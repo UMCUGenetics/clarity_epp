@@ -128,14 +128,8 @@ def export_tecan(args):
 
 def export_workflow(args):
     """Export workflow overview files."""
-    if args.type == 'all':
-        clarity_epp.export.workflow.helix_all(lims, args.process_id, args.output_file)
-    elif args.type == 'lab':
-        clarity_epp.export.workflow.helix_lab(lims, args.process_id, args.output_file)
-    elif args.type == 'data_analysis':
-        clarity_epp.export.workflow.helix_data_analysis(lims, args.process_id, args.output_file)
-    elif args.type == 'magnis':
-        clarity_epp.export.workflow.helix_all_magnis(lims, args.process_id, args.output_file)
+    if args.type == 'magnis':
+        clarity_epp.export.workflow.helix_magnis(lims, args.process_id, args.output_file)
 
 
 # Upload Functions
