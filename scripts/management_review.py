@@ -32,7 +32,6 @@ processes = [
     'Dx Multiplexen library prep', 'Dx Enrichment DNA fragments', 'Dx Post Enrichment clean up',
     'Dx Aliquot Post Enrichment (clean)', 'Dx Post Enrichment PCR & clean up', 'Dx Aliquot Post Enrichment PCR (clean)',
     'Dx Library pool verdunnen', 'Dx Multiplexen library pool', 'Dx Automated NovaSeq Run (standaard)',
-    'Dx Library pool denatureren en laden (NovaSeq) Dx QC controle Lab sequencen',
 ]
 
 # Append combined process name for qc processes
