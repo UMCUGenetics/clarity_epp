@@ -209,6 +209,14 @@ def placement_complete_step(args):
     clarity_epp.placement.step.finish_protocol_complete(lims, args.process_id)
 
 
+def placement_sample_fingerprint(args):
+    """Find mip/wes samples from same person."""
+    if args.type == 'mip':
+        clarity_epp.placement.sample.find_mip_sample(lims, args.process_id)
+    elif args.type == 'wes':
+        clarity_epp.placement.sample.find_wes_sample(lims, args.process_id)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
@@ -393,6 +401,12 @@ if __name__ == "__main__":
     parser_placement_unpooling = subparser_placement.add_parser('unpooling', help='Unpooling of sequencing pool')
     parser_placement_unpooling.add_argument('process_id', help='Clarity lims process id')
     parser_placement_unpooling.set_defaults(func=placement_unpooling)
+
+    parser_placement_sample_fingerprint = subparser_placement.add_parser('sample_fingerprint', help='Find mip/wes samples from same person.')
+    parser_placement_sample_fingerprint.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_sample_fingerprint.add_argument('type', choices=['mip', 'wes'], help='Find sample type')
+    parser_placement_sample_fingerprint.set_defaults(func=placement_sample_fingerprint)
+
 
     args = parser.parse_args()
     args.func(args)
