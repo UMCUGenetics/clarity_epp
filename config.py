@@ -17,7 +17,7 @@ email = {
     ]
 }
 
-# Import samples: stoftestcode to workflow
+# stoftestcode settings
 stoftestcode_workflow = {
     'NGS_008': '1107',  # DEV Dx Exoom KAPA v1.9
     'NGS_022': '1107',  # DEV Dx Exoom KAPA v1.9
@@ -25,6 +25,7 @@ stoftestcode_workflow = {
     'NGS_027': '1106',  # DEV Dx smMIP Fingerprint v1.2
     'NGS_025': '1201',  # DEV Dx Exoom Magnis v1.0
 }
+stoftestcode_wes = 'NGS_025'
 
 # Export meetw protocol steps
 meetw_zui_processes = [
