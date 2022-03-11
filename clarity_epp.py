@@ -174,6 +174,11 @@ def qc_qubit(args):
     clarity_epp.qc.qubit.set_qc_flag(lims, args.process_id)
 
 
+def qc_sample_mip(args):
+    """Set mip data ready udf for wes samples from same person and test."""
+    clarity_epp.qc.sample.set_mip_data_ready(lims, args.process_id)
+
+
 # Placement functions
 def placement_automatic(args):
     """Copy container layout from previous step."""
@@ -207,14 +212,6 @@ def placement_unpooling(args):
 def placement_complete_step(args):
     """Complete protocol step (Dx Mark protocol complete)."""
     clarity_epp.placement.step.finish_protocol_complete(lims, args.process_id)
-
-
-def placement_sample_fingerprint(args):
-    """Find mip/wes samples from same person."""
-    if args.type == 'mip':
-        clarity_epp.placement.sample.find_mip_sample(lims, args.process_id)
-    elif args.type == 'wes':
-        clarity_epp.placement.sample.find_wes_sample(lims, args.process_id)
 
 
 if __name__ == "__main__":
@@ -369,6 +366,12 @@ if __name__ == "__main__":
     parser_qc_qubit.add_argument('process_id', help='Clarity lims process id')
     parser_qc_qubit.set_defaults(func=qc_qubit)
 
+    parser_qc_sample_mip = subparser_qc.add_parser(
+        'sample_mip', help='Set mip data ready udf for wes samples from same person and test.'
+    )
+    parser_qc_sample_mip.add_argument('process_id', help='Clarity lims process id')
+    parser_qc_sample_mip.set_defaults(func=qc_sample_mip)
+
     # placement
     parser_placement = subparser.add_parser('placement', help='Container placement functions')
     subparser_placement = parser_placement.add_subparsers()
@@ -401,12 +404,6 @@ if __name__ == "__main__":
     parser_placement_unpooling = subparser_placement.add_parser('unpooling', help='Unpooling of sequencing pool')
     parser_placement_unpooling.add_argument('process_id', help='Clarity lims process id')
     parser_placement_unpooling.set_defaults(func=placement_unpooling)
-
-    parser_placement_sample_fingerprint = subparser_placement.add_parser('sample_fingerprint', help='Find mip/wes samples from same person.')
-    parser_placement_sample_fingerprint.add_argument('process_id', help='Clarity lims process id')
-    parser_placement_sample_fingerprint.add_argument('type', choices=['mip', 'wes'], help='Find sample type')
-    parser_placement_sample_fingerprint.set_defaults(func=placement_sample_fingerprint)
-
 
     args = parser.parse_args()
     args.func(args)
