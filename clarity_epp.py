@@ -174,6 +174,11 @@ def qc_qubit(args):
     clarity_epp.qc.qubit.set_qc_flag(lims, args.process_id)
 
 
+def qc_sample_mip(args):
+    """Set mip data ready udf for wes samples from same person and test."""
+    clarity_epp.qc.sample.set_mip_data_ready(lims, args.process_id)
+
+
 # Placement functions
 def placement_automatic(args):
     """Copy container layout from previous step."""
@@ -360,6 +365,12 @@ if __name__ == "__main__":
     parser_qc_qubit = subparser_qc.add_parser('qubit', help='Set qubit qc flag')
     parser_qc_qubit.add_argument('process_id', help='Clarity lims process id')
     parser_qc_qubit.set_defaults(func=qc_qubit)
+
+    parser_qc_sample_mip = subparser_qc.add_parser(
+        'sample_mip', help='Set mip data ready udf for wes samples from same person and test.'
+    )
+    parser_qc_sample_mip.add_argument('process_id', help='Clarity lims process id')
+    parser_qc_sample_mip.set_defaults(func=qc_sample_mip)
 
     # placement
     parser_placement = subparser.add_parser('placement', help='Container placement functions')
