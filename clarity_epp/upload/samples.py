@@ -25,7 +25,8 @@ def from_helix(lims, email_settings, input_file):
 
     # Get researcher using helix initials
     for researcher in lims.get_researchers():
-        if researcher.fax == helix_initials:  # Use FAX as intials field as the lims initials field can't be edited via the 5.0 web interface.
+        # Use FAX as intials field as the lims initials field can't be edited via the 5.0 web interface.
+        if researcher.fax == helix_initials:
             email_settings['to_import_helix'].append(researcher.email)
             break
     else:   # No researcher found
@@ -107,10 +108,13 @@ def from_helix(lims, email_settings, input_file):
             else:
                 udf_data[udf] = data[udf_column[udf]['index']]
 
-        sample_name = udf_data['Dx Monsternummer']
+        sample_name = '{0}_{1}'.format(udf_data['Dx Monsternummer'], udf_data['Dx Meet ID'])
 
         # Set 'Dx Handmatig' udf
-        if udf_data['Dx Foetus'] or udf_data['Dx Overleden'] or udf_data['Dx Materiaal type'] not in ['BL', 'BLHEP', 'BM', 'BMEDTA']:
+        if (
+            udf_data['Dx Foetus'] or udf_data['Dx Overleden'] or
+            udf_data['Dx Materiaal type'] not in ['BL', 'BLHEP', 'BM', 'BMEDTA']
+        ):
             udf_data['Dx Handmatig'] = True
         else:
             udf_data['Dx Handmatig'] = False
@@ -127,7 +131,10 @@ def from_helix(lims, email_settings, input_file):
         elif udf_data['Dx Onderzoeksreden'] == 'Informativiteitstest':
             udf_data['Dx Familie status'] = 'Ouder'
         else:
-            udf_data['Dx Import warning'] = ';'.join(['Onbekende onderzoeksreden, familie status niet ingevuld.', udf_data['Dx Import warning']])
+            udf_data['Dx Import warning'] = '; '.join([
+                'Onbekende onderzoeksreden, familie status niet ingevuld.',
+                udf_data['Dx Import warning']
+            ])
 
         # Set 'Dx Geslacht' and 'Dx Geboortejaar' with 'Foetus' information if 'Dx Foetus == True'
         if udf_data['Dx Foetus']:
@@ -140,59 +147,57 @@ def from_helix(lims, email_settings, input_file):
 
         # Check 'Dx Familienummer' and correct
         if '/' in udf_data['Dx Familienummer']:
-            udf_data['Dx Import warning'] = ';'.join([
+            udf_data['Dx Import warning'] = '; '.join([
                 'Meerdere familienummers, laatste wordt gebruikt. ({0})'.format(udf_data['Dx Familienummer']),
                 udf_data['Dx Import warning']
             ])
             udf_data['Dx Familienummer'] = udf_data['Dx Familienummer'].split('/')[-1].strip(' ')
 
-        sample_list = lims.get_samples(name=sample_name)
-
-        if sample_list:
-            sample = sample_list[0]
-            if udf_data['Dx Protocolomschrijving'] in sample.udf['Dx Protocolomschrijving']:
-                message += "{0}\tERROR: Duplicate sample and Protocolomschrijving code: {1}.\n".format(sample_name, udf_data['Dx Protocolomschrijving'])
-            else:
-                # Update existing sample if new Protocolomschrijving and thus workflow.
-
-                # Append udf fields
-                append_udf = [
-                    'Dx Onderzoeknummer', 'Dx Onderzoeksindicatie', 'Dx Onderzoeksreden', 'Dx Werklijstnummer', 'Dx Protocolcode', 'Dx Protocolomschrijving',
-                    'Dx Meet ID', 'Dx Stoftest code', 'Dx Stoftest omschrijving'
-                ]
-                for udf in append_udf:
-                    sample.udf[udf] = ';'.join([udf_data[udf], str(sample.udf[udf])])
-
-                # Update udf fields
-                update_udf = ['Dx Overleden', 'Dx Spoed', 'Dx NICU Spoed', 'Dx Handmatig', 'Dx Opslaglocatie', 'Dx Import warning']
-                for udf in update_udf:
-                    sample.udf[udf] = udf_data[udf]
-
-                # Add to new workflow
-                workflow = clarity_epp.upload.utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])
-                if workflow:
-                    sample.put()
-                    lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
-                    message += "{0}\tUpdated and added to workflow: {1}.\n".format(sample.name, workflow.name)
+        # Check other samples from patient
+        sample_list = lims.get_samples(udf={'Dx Persoons ID': udf_data['Dx Persoons ID']})
+        for sample in sample_list:
+            if sample.udf['Dx Monsternummer'] == udf_data['Dx Monsternummer']:
+                if (
+                    sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving'] and
+                    sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
+                ):
+                    udf_data['Dx Import warning'] = '; '.join([
+                        '{sample}: Monsternummer hetzelfde, Protocolomschrijving hetzelfde.'.format(sample=sample.name),
+                        udf_data['Dx Import warning']
+                    ])
                 else:
-                    message += "{0}\tERROR: Stoftest code {1} is not linked to a workflow.\n".format(sample.name, udf_data['Dx Stoftest code'])
+                    udf_data['Dx Import warning'] = '; '.join([
+                        '{sample}: Monsternummer hetzelfde, Protocolomschrijving uniek.'.format(sample=sample.name),
+                        udf_data['Dx Import warning']
+                    ])
+            elif (
+                    sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving'] and
+                    sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
+                ):
+                    udf_data['Dx Import warning'] = '; '.join([
+                        '{sample}: Monsternummer uniek, Protocolomschrijving hetzelfde.'.format(sample=sample.name),
+                        udf_data['Dx Import warning']
+                    ])
 
-        else:
-            # Check other samples from patient
-            sample_list = lims.get_samples(udf={'Dx Persoons ID': udf_data['Dx Persoons ID']})
-            for sample in sample_list:
-                if sample.udf['Dx Protocolomschrijving'] == udf_data['Dx Protocolomschrijving'] and sample.udf['Dx Foetus'] == udf_data['Dx Foetus']:
-                    udf_data['Dx Import warning'] = ';'.join(['Onderzoek reeds uitgevoerd.', udf_data['Dx Import warning']])
-
-            # Add sample to workflow
-            workflow = clarity_epp.upload.utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])
-            if workflow:
-                container = Container.create(lims, type=container_type, name=udf_data['Dx Fractienummer'])
-                sample = Sample.create(lims, container=container, position='1:1', project=project, name=sample_name, udf=udf_data)
-                lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
-                message += "{0}\tCreated and added to workflow: {1}.\n".format(sample.name, workflow.name)
+        # Add sample to workflow
+        workflow = clarity_epp.upload.utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])
+        if workflow:
+            container = Container.create(lims, type=container_type, name=udf_data['Dx Fractienummer'])
+            sample = Sample.create(lims, container=container, position='1:1', project=project, name=sample_name, udf=udf_data)
+            lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
+            if udf_data['Dx Import warning']:
+                message += "{0}\tCreated and added to workflow: {1}.\tImport warning: {2}\n".format(
+                    sample.name,
+                    workflow.name,
+                    udf_data['Dx Import warning']
+                )
             else:
-                message += "{0}\tERROR: Stoftest code {1} is not linked to a workflow.\n".format(sample_name, udf_data['Dx Stoftest code'])
+                message += "{0}\tCreated and added to workflow: {1}.\n".format(sample.name, workflow.name)
+        else:
+            message += "{0}\tERROR: Stoftest code {1} is not linked to a workflow.\n".format(
+                sample_name,
+                udf_data['Dx Stoftest code']
+            )
 
     # Send final email
     send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
