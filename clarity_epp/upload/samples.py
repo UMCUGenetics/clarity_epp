@@ -20,7 +20,7 @@ def from_helix(lims, email_settings, input_file):
     except ConnectionError:
         subject = "ERROR Lims Helix Upload: {0}".format(project_name)
         message = "Can't connect to lims server, please contact a lims administrator."
-        send_email(email_settings['from'], email_settings['to_import_helix'], subject, message)
+        send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
         sys.exit(message)
 
     # Get researcher using helix initials
@@ -31,7 +31,7 @@ def from_helix(lims, email_settings, input_file):
     else:   # No researcher found
         subject = "ERROR Lims Helix Upload: {0}".format(project_name)
         message = "Can't find researcher with initials: {0}.".format(helix_initials)
-        send_email(email_settings['from'], email_settings['to_import_helix'], subject, message)
+        send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
         sys.exit(message)
 
     # Create project
@@ -40,7 +40,7 @@ def from_helix(lims, email_settings, input_file):
     else:
         subject = "ERROR Lims Helix Upload: {0}".format(project_name)
         message = "Duplicate project / werklijst. Samples not loaded."
-        send_email(email_settings['from'], email_settings['to_import_helix'], subject, message)
+        send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
         sys.exit(message)
 
     container_type = Containertype(lims, id='2')  # Tube
@@ -195,4 +195,4 @@ def from_helix(lims, email_settings, input_file):
                 message += "{0}\tERROR: Stoftest code {1} is not linked to a workflow.\n".format(sample_name, udf_data['Dx Stoftest code'])
 
     # Send final email
-    send_email(email_settings['from'], email_settings['to_import_helix'], subject, message)
+    send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)

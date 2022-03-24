@@ -517,7 +517,7 @@ def samplesheet_mip_multiplex_pool(lims, process_id, output_file):
             'name': input_artifact.name,
             'concentration': concentration,
             'plate_id': input_artifact.location[0].id,
-            'well_id': input_artifact.location[1],
+            'well_id': ''.join(input_artifact.location[1].split(':')),
             'manual': input_artifact.samples[0].udf['Dx Handmatig']
         })
 
@@ -525,22 +525,33 @@ def samplesheet_mip_multiplex_pool(lims, process_id, output_file):
     concentrations = [input_artifact['concentration'] for input_artifact in input_artifacts if not input_artifact['manual']]
     avg_concentration = sum(concentrations) / len(concentrations)
 
+    # Set volume and store input_artifact per plate to be able print samplesheet sorted on plate and well
+    input_containers = {}
     for input_artifact in input_artifacts:
         if input_artifact['concentration'] < avg_concentration * 0.5:
-            volume = 20
+            input_artifact['volume'] = 20
         elif input_artifact['concentration'] > avg_concentration * 1.5:
-            volume = 2
+            input_artifact['volume'] = 2
         else:
-            volume = 5
+            input_artifact['volume'] = 5
 
-        output_file.write('{sample}\t{volume}\t{plate_id}\t{well_id}\t{concentration}\t{manual}\n'.format(
-            sample=input_artifact['name'],
-            volume=volume,
-            plate_id=input_artifact['plate_id'],
-            well_id=input_artifact['well_id'],
-            concentration=input_artifact['concentration'],
-            manual=input_artifact['manual'],
-        ))
+        if input_artifact['plate_id'] not in input_containers:
+            input_containers[input_artifact['plate_id']] = {}
+
+        input_containers[input_artifact['plate_id']][input_artifact['well_id']] = input_artifact
+
+    for input_container in sorted(input_containers.keys()):
+        input_artifacts = input_containers[input_container]
+        for well in clarity_epp.export.utils.sort_96_well_plate(input_artifacts.keys()):
+            input_artifact = input_artifacts[well]
+            output_file.write('{sample}\t{volume}\t{plate_id}\t{well_id}\t{concentration}\t{manual}\n'.format(
+                sample=input_artifact['name'],
+                volume=input_artifact['volume'],
+                plate_id=input_artifact['plate_id'],
+                well_id=input_artifact['well_id'],
+                concentration=input_artifact['concentration'],
+                manual=input_artifact['manual'],
+            ))
 
 
 def samplesheet_mip_pool_dilution(lims, process_id, output_file):

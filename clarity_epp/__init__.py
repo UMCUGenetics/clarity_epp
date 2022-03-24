@@ -39,7 +39,7 @@ def get_sequence_name(sample):
     return sequence_name
 
 
-def send_email(sender, receivers, subject, text, attachment=None):
+def send_email(server, sender, receivers, subject, text, attachment=None):
     """Send emails."""
     mail = MIMEMultipart()
     mail['Subject'] = subject
@@ -66,6 +66,6 @@ def send_email(sender, receivers, subject, text, attachment=None):
     msg = MIMEText(text)
     mail.attach(msg)
 
-    s = smtplib.SMTP('smtp-open.umcutrecht.nl')
+    s = smtplib.SMTP(server)
     s.sendmail(sender, receivers, mail.as_string())
     s.quit()

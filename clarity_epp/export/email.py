@@ -24,5 +24,5 @@ def sequencing_run(lims, email_settings, process_id):
         message += "\nManager Review LIMS:\n"
         message += "{0}: {1}\n".format(process.step.actions.escalation['author'].name, process.step.actions.escalation['request'])
         message += "{0}: {1}\n".format(process.step.actions.escalation['reviewer'].name, process.step.actions.escalation['answer'])
-    
-    send_email(email_settings['from'], email_settings['to_sequencing_run_complete'], subject, message)
+
+    send_email(email_settings['server'], email_settings['from'], email_settings['to_sequencing_run_complete'], subject, message)
