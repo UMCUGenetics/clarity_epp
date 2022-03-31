@@ -74,6 +74,7 @@ def from_helix(lims, email_settings, input_file):
         'Dx Protocolomschrijving': {'column': 'Protocolomschrijving'},
         'Dx Einddatum': {'column': 'Einddatum'},
         'Dx Gerelateerde onderzoeken': {'column': 'Gerelateerde onderzoeken'},
+        'Dx Exoomequivalent': 1,
     }
     header = input_file.readline().rstrip().split(',')  # expect header on first line
     for udf in udf_column:

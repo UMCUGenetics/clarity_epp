@@ -593,7 +593,7 @@ def samplesheet_pool_samples(lims, process_id, output_file):
     process = Process(lims, id=process_id)
 
     # print header
-    output_file.write('Sample\tContainer\tWell\tPool\n')
+    output_file.write('Sample\tContainer\tWell\tPool\tVolume (ul)\n')
 
     # Get all input artifact and store per container
     input_containers = {}
@@ -611,12 +611,21 @@ def samplesheet_pool_samples(lims, process_id, output_file):
     for input_container in sorted(input_containers.keys()):
         input_artifacts = input_containers[input_container]
         for well in clarity_epp.export.utils.sort_96_well_plate(input_artifacts.keys()):
+            input_artifact = input_artifacts[well]
+            input_sample = input_artifact.samples[0]  # Asume one sample
+
+            if 'Dx Exoomequivalent' in input_sample.udf:
+                volume = 5 * input_sample['Dx Exoomequivalent']
+            else:
+                volume = 5
+
             output_file.write(
-                '{sample}\t{container}\t{well}\t{pool}\n'.format(
-                    sample=input_artifacts[well].name,
-                    container=input_artifacts[well].location[0].name,
+                '{sample}\t{container}\t{well}\t{pool}\t{volume}\n'.format(
+                    sample=input_artifact.name,
+                    container=input_artifact.location[0].name,
                     well=well,
-                    pool=process.outputs_per_input(input_artifacts[well].id, Analyte=True)[0].name
+                    pool=process.outputs_per_input(input_artifact.id, Analyte=True)[0].name,
+                    volume=volume
                 )
             )
 
@@ -630,11 +639,18 @@ def samplesheet_pool_magnis_pools(lims, process_id, output_file):
 
     # Get input pools, sort by name and print volume
     for input_artifact in sorted(process.all_inputs(resolve=True), key=lambda artifact: artifact.name):
+        sample_count = 0
+        for sample in input_artifact.samples:
+            if 'Dx Exoomequivalent' in sample.udf:
+                sample_count += sample.udf['Dx Exoomequivalent']
+            else:
+                sample_count += 1
+
         output_file.write(
             '{pool}\t{container}\t{sample_count}\t{volume}\n'.format(
                 pool=input_artifact.name,
                 container=input_artifact.container.name,
-                sample_count=len(input_artifact.samples),
-                volume=len(input_artifact.samples) * 1.25
+                sample_count=sample_count,
+                volume=sample_count * 1.25
             )
         )
