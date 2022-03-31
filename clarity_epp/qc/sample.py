@@ -9,8 +9,12 @@ def set_mip_data_ready(lims, process_id):
     """Set mip data ready udf for wes samples from same person and test."""
     process = Process(lims, id=process_id)
 
-    # Get process samples, asumes one sample per artifact
-    process_samples = [artifact.samples[0] for artifact in process.all_inputs(unique=True)]
+    # Get process samples, asumes one sample per artifact and only use artifacts with workflow status == completed.
+    process_samples = [
+        action_artifact['artifact'].samples[0] for action_artifact in process.step.actions.get_next_actions()
+        if action_artifact['action'] == 'complete'
+    ]
+
     for sample in process_samples:
         related_wes_samples = lims.get_samples(udf={
             'Dx Persoons ID': sample.udf['Dx Persoons ID'],
