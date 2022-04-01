@@ -19,6 +19,7 @@ def set_mip_data_ready(lims, process_id):
         if sample.udf['Dx Stoftest code'] == config.stoftestcode_mip:
             # Update MIP sample with data ready tag
             sample.udf['Dx data ready'] = True
+            sample.put()
 
             # Find related WES sample and update related sample with sequence name of MIP sample
             related_wes_samples = lims.get_samples(udf={
