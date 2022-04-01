@@ -16,15 +16,18 @@ def set_mip_data_ready(lims, process_id):
     ]
 
     for sample in process_samples:
-        related_wes_samples = lims.get_samples(udf={
-            'Dx Persoons ID': sample.udf['Dx Persoons ID'],
-            'Dx Onderzoeknummer': sample.udf['Dx Onderzoeknummer'],
-            'Dx Stoftest code': config.stoftestcode_wes
-        })
-        if related_wes_samples:
-            for sample in related_wes_samples:
-                # sample.udf['Dx mip available'] = True  # Do we need this?
-                sample.udf['Dx mip'] = get_sequence_name(sample)
-                sample.put()
-        else:
-            print(sample.name, "Can't find related WES sample.")
+        # MIP sample
+        if sample.udf['Dx Stoftest code'] == config.stoftestcode_mip:
+            related_wes_samples = lims.get_samples(udf={
+                'Dx Persoons ID': sample.udf['Dx Persoons ID'],
+                'Dx Onderzoeknummer': sample.udf['Dx Onderzoeknummer'],
+                'Dx Stoftest code': config.stoftestcode_wes
+            })
+            if related_wes_samples:
+                for related_wes_sample in related_wes_samples:
+                    related_wes_sample.udf['Dx mip'] = get_sequence_name(sample)
+                    related_wes_sample.put()
+
+        # WES sample
+        # elif sample.udf['Dx Stoftest code'] == config.stoftestcode_wes:
+
