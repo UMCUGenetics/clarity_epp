@@ -74,7 +74,6 @@ def from_helix(lims, email_settings, input_file):
         'Dx Protocolomschrijving': {'column': 'Protocolomschrijving'},
         'Dx Einddatum': {'column': 'Einddatum'},
         'Dx Gerelateerde onderzoeken': {'column': 'Gerelateerde onderzoeken'},
-        'Dx Exoomequivalent': 1,
     }
     header = input_file.readline().rstrip().split(',')  # expect header on first line
     for udf in udf_column:
@@ -88,7 +87,7 @@ def from_helix(lims, email_settings, input_file):
     for line in input_file:
         data = line.rstrip().strip('"').split('","')
 
-        udf_data = {'Sample Type': 'DNA isolated', 'Dx Import warning': ''}  # required lims input
+        udf_data = {'Sample Type': 'DNA isolated', 'Dx Import warning': '', 'Dx Exoomequivalent': 1}  # required lims input
         for udf in udf_column:
             # Transform specific udf
             if udf in ['Dx Overleden', 'Dx Spoed', 'Dx NICU Spoed']:
