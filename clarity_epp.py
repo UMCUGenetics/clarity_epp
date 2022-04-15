@@ -116,6 +116,11 @@ def export_sample_indications(args):
     )
 
 
+def export_sample_related_mip(args):
+    """Export related MIP samples"""
+    clarity_epp.export.sample.sample_related_mip(lims, args.process_id, args.output_file)
+
+
 def export_tapestation(args):
     """Export samplesheets for Tapestation machine."""
     clarity_epp.export.tapestation.samplesheet(lims, args.process_id, args.output_file)
@@ -308,6 +313,12 @@ if __name__ == "__main__":
         '-p', '--sequencing_run_project',  nargs='?', help='Sequencing run project name'
     )
     parser_export_sample_indications.set_defaults(func=export_sample_indications)
+
+    parser_export_sample_related_mip = subparser_export.add_parser(
+        'sample_related_mip', help='Export related mip samples.', parents=[output_parser]
+    )
+    parser_export_sample_related_mip.add_argument('process_id', help='Clarity lims process id')
+    parser_export_sample_related_mip.set_defaults(func=export_sample_related_mip)
 
     parser_export_tapestation = subparser_export.add_parser(
         'tapestation', help='Create tapestation samplesheets', parents=[output_parser]
