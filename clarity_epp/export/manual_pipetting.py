@@ -345,9 +345,10 @@ def samplesheet_multiplex_sequence_pool(lims, process_id, output_file):
 def samplesheet_normalization(lims, process_id, output_file):
     """Create manual pipetting samplesheet for normalizing (MIP) samples."""
     output_file.write(
-        'Sample\tConcentration (ng/ul)\tVolume sample (ul)\tVolume water (ul)\tOutput (ng)\tIndampen\n'
+        'Sample\tConcentration (ng/ul)\tVolume sample (ul)\tVolume water (ul)\tOutput (ng)\tIndampen\tContainer\tWell\n'
     )
     process = Process(lims, id=process_id)
+    output = {}
 
     # Find all QC process types
     qc_process_types = clarity_epp.export.utils.get_process_types(lims, ['Dx Qubit QC', 'Dx Tecan Spark 10M QC'])
@@ -382,14 +383,22 @@ def samplesheet_normalization(lims, process_id, output_file):
             evaporate = 'J'
             water_volume = 0
 
-        output_file.write('{sample}\t{concentration:.1f}\t{sample_volume:.1f}\t{water_volume:.1f}\t{output:.1f}\t{evaporate}\n'.format(
+        # Save output under container location (well)
+        well = ''.join(artifact.location[1].split(':'))
+        output[well] = '{sample}\t{concentration:.1f}\t{sample_volume:.1f}\t{water_volume:.1f}\t{output:.1f}\t{evaporate}\t{container}\t{well}\n'.format(
             sample=sample.name,
             concentration=concentration,
             sample_volume=sample_volume,
             water_volume=water_volume,
             output=input_ng,
-            evaporate=evaporate
-        ))
+            evaporate=evaporate,
+            container=artifact.location[0].name,
+            well=well
+        )
+
+        for well in clarity_epp.export.utils.sort_96_well_plate(output.keys()):
+            output_file.write(output[well])
+
 
 
 def samplesheet_capture(lims, process_id, output_file):
