@@ -396,8 +396,8 @@ def samplesheet_normalization(lims, process_id, output_file):
             well=well
         )
 
-        for well in clarity_epp.export.utils.sort_96_well_plate(output.keys()):
-            output_file.write(output[well])
+    for well in clarity_epp.export.utils.sort_96_well_plate(output.keys()):
+        output_file.write(output[well])
 
 
 
