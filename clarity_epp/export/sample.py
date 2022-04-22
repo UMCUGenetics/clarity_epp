@@ -147,12 +147,20 @@ def sample_indications(lims, output_file, artifact_name=None, sequencing_run=Non
     if samples:
         output_file.write('Sample\tIndication\n')
         for sample_name, sample in samples.items():
-            output_file.write(
-                '{sample}\t{indication}\n'.format(
-                    sample=sample_name,
-                    indication=sample.udf['Dx Onderzoeksindicatie'].split(';')[0]  # select newest indication
+            if 'Dx Onderzoeksindicatie' in sample.udf:
+                output_file.write(
+                    '{sample}\t{indication}\n'.format(
+                        sample=sample_name,
+                        indication=sample.udf['Dx Onderzoeksindicatie'].split(';')[0]  # select newest indication
+                    )
                 )
-            )
+            else:
+                output_file.write(
+                    '{sample}\t{indication}\n'.format(
+                        sample=sample_name,
+                        indication='unkown_indication'
+                    )
+                )
     else:
         print("no_sample_found")
 
