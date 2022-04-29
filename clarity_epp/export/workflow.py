@@ -95,8 +95,8 @@ def helix_magnis(lims, process_id, output_file):
                 )
 
 
-def helix_mip_fingerprint(lims, process_id, output_file):
-    """Export workflow information in helix table format (MIP Fingerprint Workflow)."""
+def helix_mip(lims, process_id, output_file):
+    """Export workflow information in helix table format (MIP Workflow)."""
     output_file.write((
         "meet_id\twerklijst_nummer\tonderzoeknr\tmonsternummer\tLibprep OK?\tLibprep herh?\t"
         "Sequencen OK?\tSequencen herh?\tMIP bfx analyse OK?\n"
