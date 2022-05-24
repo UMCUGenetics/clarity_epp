@@ -511,16 +511,16 @@ def samplesheet_mip_multiplex_pool(lims, process_id, output_file):
         ))
 
     for input_artifact in process.all_inputs(resolve=True):
+        concentration = None
         # Find last qc process for artifact
-        qc_process = sorted(
-            lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id),
-            key=lambda process: int(process.id.split('-')[-1])
-        )[-1]
+        qc_processes = lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id)
 
-        # Find concentration measurement
-        for qc_artifact in qc_process.outputs_per_input(input_artifact.id):
-            if qc_artifact.name == input_artifact.name:
-                concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+        if qc_processes:
+            qc_process = sorted(qc_processes, key=lambda process: int(process.id.split('-')[-1]))[-1]
+            # Find concentration measurement
+            for qc_artifact in qc_process.outputs_per_input(input_artifact.id):
+                if qc_artifact.name == input_artifact.name:
+                    concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
 
         input_artifacts.append({
             'name': input_artifact.name,
@@ -530,13 +530,21 @@ def samplesheet_mip_multiplex_pool(lims, process_id, output_file):
             'manual': input_artifact.samples[0].udf['Dx Handmatig']
         })
 
-    # Calculate avg concentration for all non manual samples
-    concentrations = [input_artifact['concentration'] for input_artifact in input_artifacts if not input_artifact['manual']]
+    # Calculate avg concentration for all non manual samples with a measured concentration
+    concentrations = [
+        input_artifact['concentration'] for input_artifact in input_artifacts
+        if input_artifact['concentration'] and not input_artifact['manual']
+    ]
     avg_concentration = sum(concentrations) / len(concentrations)
 
     # Set volume and store input_artifact per plate to be able print samplesheet sorted on plate and well
     input_containers = {}
     for input_artifact in input_artifacts:
+        # Set avg concentration as concentration for artifacts without a measured concentration
+        if not input_artifact['concentration']:
+            input_artifact['concentration'] = avg_concentration
+
+        # Set volumes
         if input_artifact['concentration'] < avg_concentration * 0.5:
             input_artifact['volume'] = 20
         elif input_artifact['concentration'] > avg_concentration * 1.5:
@@ -553,7 +561,7 @@ def samplesheet_mip_multiplex_pool(lims, process_id, output_file):
         input_artifacts = input_containers[input_container]
         for well in clarity_epp.export.utils.sort_96_well_plate(input_artifacts.keys()):
             input_artifact = input_artifacts[well]
-            output_file.write('{sample}\t{volume}\t{plate_id}\t{well_id}\t{concentration}\t{manual}\n'.format(
+            output_file.write('{sample}\t{volume}\t{plate_id}\t{well_id}\t{concentration:.3f}\t{manual}\n'.format(
                 sample=input_artifact['name'],
                 volume=input_artifact['volume'],
                 plate_id=input_artifact['plate_id'],
