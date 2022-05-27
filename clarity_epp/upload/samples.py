@@ -157,7 +157,7 @@ def from_helix(lims, email_settings, input_file):
         sample_list = lims.get_samples(udf={'Dx Persoons ID': udf_data['Dx Persoons ID']})
         for sample in sample_list:
             if sample.udf['Dx Monsternummer'] == udf_data['Dx Monsternummer']:
-                if (
+                if(
                     sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving'] and
                     sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
                 ):
@@ -170,14 +170,14 @@ def from_helix(lims, email_settings, input_file):
                         '{sample}: Monsternummer hetzelfde, Protocolomschrijving uniek.'.format(sample=sample.name),
                         udf_data['Dx Import warning']
                     ])
-            elif (
-                    sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving'] and
-                    sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
-                ):
-                    udf_data['Dx Import warning'] = '; '.join([
-                        '{sample}: Monsternummer uniek, Protocolomschrijving hetzelfde.'.format(sample=sample.name),
-                        udf_data['Dx Import warning']
-                    ])
+            elif(
+                sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving'] and
+                sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
+            ):
+                udf_data['Dx Import warning'] = '; '.join([
+                    '{sample}: Monsternummer uniek, Protocolomschrijving hetzelfde.'.format(sample=sample.name),
+                    udf_data['Dx Import warning']
+                ])
 
         # Add sample to workflow
         workflow = clarity_epp.upload.utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])

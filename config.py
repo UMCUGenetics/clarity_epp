@@ -68,7 +68,6 @@ meetw_seq_mip_processes = [
     'Dx Library pool denatureren en laden (Nextseq) v1.1',
     'Dx NextSeq Run v1.1',
     'Dx QC controle Lab sequencen v1.1',
-    'Dx NGS labwerk afronden v1.2'
 ]
 
 # Sequencer types

@@ -233,7 +233,12 @@ def samplesheet_multiplex_library_pool(lims, process_id, output_file):
                                 sample_given_ul.udf['Dx Familie status']
                             )
 
-                    output.udf['Dx input pool (ng)'] = round(ng_sample[output.samples[0].name] + ng_sample[output.samples[1].name] + ng_sample[output.samples[2].name], 2)
+                    output.udf['Dx input pool (ng)'] = round(
+                        ng_sample[output.samples[0].name] +
+                        ng_sample[output.samples[1].name] +
+                        ng_sample[output.samples[2].name],
+                        2
+                    )
                     output.put()
 
                 else:
@@ -385,7 +390,10 @@ def samplesheet_normalization(lims, process_id, output_file):
 
         # Save output under container location (well)
         well = ''.join(artifact.location[1].split(':'))
-        output[well] = '{sample}\t{concentration:.1f}\t{sample_volume:.1f}\t{water_volume:.1f}\t{output:.1f}\t{evaporate}\t{container}\t{well}\n'.format(
+        output[well] = (
+            '{sample}\t{concentration:.1f}\t{sample_volume:.1f}\t{water_volume:.1f}\t'
+            '{output:.1f}\t{evaporate}\t{container}\t{well}\n'
+        ).format(
             sample=sample.name,
             concentration=concentration,
             sample_volume=sample_volume,
@@ -398,7 +406,6 @@ def samplesheet_normalization(lims, process_id, output_file):
 
     for well in clarity_epp.export.utils.sort_96_well_plate(output.keys()):
         output_file.write(output[well])
-
 
 
 def samplesheet_capture(lims, process_id, output_file):
@@ -576,7 +583,9 @@ def samplesheet_mip_pool_dilution(lims, process_id, output_file):
     process = Process(lims, id=process_id)
 
     # Write header
-    output_file.write('{sample}\t{ul_sample_10}\t{ul_EB_10}\t{ul_sample_20}\t{ul_EB_20}\t{ul_sample_40}\t{ul_EB_40}\t\n'.format(
+    output_file.write((
+        '{sample}\t{ul_sample_10}\t{ul_EB_10}\t{ul_sample_20}\t{ul_EB_20}\t{ul_sample_40}\t{ul_EB_40}\t\n'
+    ).format(
         sample='Sample',
         ul_sample_10='ul Sample (10 ul)',
         ul_EB_10='ul EB buffer (10 ul)',
@@ -590,11 +599,14 @@ def samplesheet_mip_pool_dilution(lims, process_id, output_file):
         concentration = float(input_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
         fragment_length = float(input_artifact.udf['Dx Fragmentlengte (bp)'])
 
-        dna = (concentration * (10.0**3.0 / 1.0) * (1.0 / 649.0) * (1.0 / fragment_length) ) * 1000.0
+        dna = (concentration * (10.0**3.0 / 1.0) * (1.0 / 649.0) * (1.0 / fragment_length)) * 1000.0
         ul_sample = 2 / dna * 10
         ul_EB = 10 - ul_sample
 
-        output_file.write('{sample}\t{ul_sample_10:.2f}\t{ul_EB_10:.2f}\t{ul_sample_20:.2f}\t{ul_EB_20:.2f}\t{ul_sample_40:.2f}\t{ul_EB_40:.2f}\t\n'.format(
+        output_file.write((
+            '{sample}\t{ul_sample_10:.2f}\t{ul_EB_10:.2f}\t{ul_sample_20:.2f}\t{ul_EB_20:.2f}\t'
+            '{ul_sample_40:.2f}\t{ul_EB_40:.2f}\t\n'
+        ).format(
             sample=input_artifact.name,
             ul_sample_10=ul_sample,
             ul_EB_10=ul_EB,

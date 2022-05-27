@@ -42,7 +42,8 @@ def helix_magnis(lims, process_id, output_file):
                 )
 
                 sample_all_processes = {}
-                # reset after 'Dx Sample registratie zuivering' process -> this is a new import from helix, should not be counted as a repeat
+                # reset after 'Dx Sample registratie zuivering' process
+                # this is a new import from helix, should not be counted as a repeat
                 sample_filter_processes = {}
 
                 for sample_artifact in sample_artifacts:
@@ -63,9 +64,15 @@ def helix_magnis(lims, process_id, output_file):
 
                 # Determine meetw
                 repeat_cutoff = len(sample.udf['Dx Werklijstnummer'].split(';')) * 2
-                meetw_zui, meetw_zui_herh = determin_meetw(config.meetw_zui_wes_processes, sample_all_processes, repeat_cutoff)
-                meetw_sampleprep, meetw_sampleprep_herh = determin_meetw(config.meetw_sampleprep_wes_processes, sample_filter_processes, 2)
-                meetw_seq, meetw_seq_herh = determin_meetw(config.meetw_seq_wes_processes, sample_filter_processes, 2)
+                meetw_zui, meetw_zui_herh = determin_meetw(
+                    config.meetw_zui_wes_processes, sample_all_processes, repeat_cutoff
+                )
+                meetw_sampleprep, meetw_sampleprep_herh = determin_meetw(
+                    config.meetw_sampleprep_wes_processes, sample_filter_processes, 2
+                )
+                meetw_seq, meetw_seq_herh = determin_meetw(
+                    config.meetw_seq_wes_processes, sample_filter_processes, 2
+                )
 
                 # Determine vcf files
                 gatk_vcf = ''
@@ -114,7 +121,8 @@ def helix_mip(lims, process_id, output_file):
                     sample_artifacts,
                     key=lambda artifact: int(artifact.parent_process.id.split('-')[-1])
                 )
-                # reset after 'Dx Sample registratie zuivering' process -> this is a new import from helix, should not be counted as a repeat
+                # reset after 'Dx Sample registratie zuivering' process
+                # this is a new import from helix, should not be counted as a repeat
                 sample_filter_processes = {}
 
                 for sample_artifact in sample_artifacts:
@@ -129,8 +137,12 @@ def helix_mip(lims, process_id, output_file):
                         sample_filter_processes[process_name] = set([process_id])
 
                 # Determine meetw
-                meetw_libprep, meetw_libprep_herh = determin_meetw(config.meetw_libprep_mip_processes, sample_filter_processes, 2)
-                meetw_seq, meetw_seq_herh = determin_meetw(config.meetw_seq_mip_processes, sample_filter_processes, 2)
+                meetw_libprep, meetw_libprep_herh = determin_meetw(
+                    config.meetw_libprep_mip_processes, sample_filter_processes, 2
+                )
+                meetw_seq, meetw_seq_herh = determin_meetw(
+                    config.meetw_seq_mip_processes, sample_filter_processes, 2
+                )
 
                 output_file.write((
                     "{meet_id}\t{werklijst}\t{onderzoeksnummer}\t{monsternummer}\t"
