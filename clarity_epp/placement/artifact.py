@@ -56,8 +56,8 @@ def route_to_workflow(lims, process_id, workflow):
             if sample.udf['Dx Stoftest code'] != config.research_stoftest_code:
                 # Find trio
                 if(
-                    sample.udf['Dx Familie status'] == 'Ouder' or
-                    ('Dx Gerelateerde onderzoeken' in sample.udf and sample.udf['Dx Gerelateerde onderzoeken'])
+                    sample.udf['Dx Familie status'] == 'Ouder'
+                    or ('Dx Gerelateerde onderzoeken' in sample.udf and sample.udf['Dx Gerelateerde onderzoeken'])
                 ):
                     stoftest_artifacts[sample.udf['Dx Stoftest code']]['trio'].append(artifact)
                 else:
