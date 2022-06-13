@@ -165,12 +165,13 @@ def samplesheet_dilute(lims, process_id, output_file):
     nM_pool = process.udf['Dx Pool verdunning (nM)']
     output_ul = process.udf['Eindvolume (ul)']
 
-    # Get input and output plate id from 1 sample
-    plate_id_artifact = process.all_inputs()[0]
+    # Get input and output plate id from 1 sample, input plate is the same for all samples.
+    input_artifacts = process.all_inputs()
+    plate_id_artifact = input_artifacts[0]
     plate_id_input = plate_id_artifact.location[0].name
     plate_id_output = process.outputs_per_input(plate_id_artifact.id, Analyte=True)[0].location[0].name
 
-    for input_artifact in process.all_inputs():
+    for input_artifact in input_artifacts:
         # Get QC stats
         size = float(input_artifact.udf['Dx Fragmentlengte (bp)'])
         concentration = float(input_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
