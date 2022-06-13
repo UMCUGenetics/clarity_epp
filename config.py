@@ -18,17 +18,14 @@ email = {
 }
 
 # Import samples: stoftestcode to workflow
-stoftestcode_workflow = {
-    'NGS_008': '1107',  # DEV Dx Exoom KAPA v1.9
-    'NGS_022': '1107',  # DEV Dx Exoom KAPA v1.9
-    'NGS_023': '1107',  # DEV Dx Exoom KAPA v1.9
-    'NGS_xxx': '1106',  # DEV Dx smMIP Fingerprint v1.2
-    'NGS_027': '1106',  # DEV Dx smMIP Fingerprint v1.2
-    'NGS_025': '1201',  # DEV Dx Exoom Magnis v1.0
-}
-
-stoftestcode_mip = 'NGS_027'
 stoftestcode_wes = 'NGS_025'
+stoftestcode_mip = 'NGS_027'
+stoftestcode_research = 'NGS_023'
+
+stoftestcode_workflow = {
+    stoftestcode_wes: '1106',  # DEV Dx smMIP Fingerprint v1.2
+    stoftestcode_mip: '1201',  # DEV Dx Exoom Magnis v1.0
+}
 
 # Export meetw protocol steps WES
 meetw_zui_wes_processes = [
@@ -82,12 +79,10 @@ sequencing_workflow = '1301'  # DEV Dx Illumina Sequencing v1.0
 post_sequencing_workflow = '902'  # DEV Dx Bioinformatica analyses v1.0
 post_bioinf_workflow = {  # Contains workflow and workflow stage (number) for single or trio samples
     # WES : DEV Dx NGS WES onderzoeken afronden v1.1
-    'NGS_025': {'single': {'workflow': '1401', 'stage': 0}, 'trio': {'workflow': '1401', 'stage': 1}},
-     # MIP : DEV Dx NGS smMIP onderzoeken afronden v1.0
-    'NGS_027': {'single': {'workflow': '1202', 'stage': 0}, 'trio': {'workflow': '1202', 'stage': 0}}
+    stoftestcode_wes: {'single': {'workflow': '1401', 'stage': 0}, 'trio': {'workflow': '1401', 'stage': 1}},
+    # MIP : DEV Dx NGS smMIP onderzoeken afronden v1.0
+    stoftestcode_mip: {'single': {'workflow': '1202', 'stage': 0}, 'trio': {'workflow': '1202', 'stage': 0}}
 }
-
-research_stoftest_code = 'NGS_023'
 
 # Research Onderzoeksindicatie
 research_onderzoeksindicatie_project = {

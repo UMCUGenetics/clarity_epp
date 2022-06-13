@@ -53,7 +53,7 @@ def route_to_workflow(lims, process_id, workflow):
                 stoftest_artifacts[sample.udf['Dx Stoftest code']] = {'single': [], 'trio': []}
 
             # Remove research artifacts
-            if sample.udf['Dx Stoftest code'] != config.research_stoftest_code:
+            if sample.udf['Dx Stoftest code'] != config.stoftestcode_research:
                 # Find trio
                 if(
                     sample.udf['Dx Familie status'] == 'Ouder'
