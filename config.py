@@ -81,8 +81,10 @@ sequence_process_types = [
 sequencing_workflow = '1301'  # DEV Dx Illumina Sequencing v1.0
 post_sequencing_workflow = '902'  # DEV Dx Bioinformatica analyses v1.0
 post_bioinf_workflow = {  # Contains workflow and workflow stage (number) for single or trio samples
-    'NGS_025': {'single': ['1401', 0], 'trio': ['1401', 1]},  # WES : DEV Dx NGS WES onderzoeken afronden v1.1
-    'NGS_027': {'single': ['1202', 0], 'trio': ['1202', 0]}  # MIP : DEV Dx NGS smMIP onderzoeken afronden v1.0
+    # WES : DEV Dx NGS WES onderzoeken afronden v1.1
+    'NGS_025': {'single': {'workflow': '1401', 'stage': 0}, 'trio': {'workflow': '1401', 'stage': 1}},
+     # MIP : DEV Dx NGS smMIP onderzoeken afronden v1.0
+    'NGS_027': {'single': {'workflow': '1202', 'stage': 0}, 'trio': {'workflow': '1202', 'stage': 0}}
 }
 
 research_stoftest_code = 'NGS_023'

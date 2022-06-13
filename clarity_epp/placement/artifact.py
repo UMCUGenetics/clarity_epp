@@ -65,13 +65,13 @@ def route_to_workflow(lims, process_id, workflow):
 
         for stoftest, route_artifacts in stoftest_artifacts.items():
             if route_artifacts['single']:
-                workflow = Workflow(lims, id=config.post_bioinf_workflow[stoftest]['single'][0])
-                stage = workflow.stages[config.post_bioinf_workflow[stoftest]['single'][1]]
+                workflow = Workflow(lims, id=config.post_bioinf_workflow[stoftest]['single']['workflow'])
+                stage = workflow.stages[config.post_bioinf_workflow[stoftest]['single']['stage']]
                 lims.route_artifacts(route_artifacts['single'], workflow_uri=workflow.uri, stage_uri=stage.uri)
 
             if route_artifacts['trio']:
-                workflow = Workflow(lims, id=config.post_bioinf_workflow[stoftest]['trio'][0])
-                stage = workflow.stages[config.post_bioinf_workflow[stoftest]['trio'][1]]
+                workflow = Workflow(lims, id=config.post_bioinf_workflow[stoftest]['trio']['workflow'])
+                stage = workflow.stages[config.post_bioinf_workflow[stoftest]['trio']['stage']]
                 lims.route_artifacts(route_artifacts['trio'], workflow_uri=workflow.uri, stage_uri=stage.uri)
 
     elif workflow == 'sequencing':
