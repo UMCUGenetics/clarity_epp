@@ -1,7 +1,10 @@
 """Sample export functions."""
 import datetime
 
+from genologics.entities import Process
+
 import clarity_epp.export.utils
+from .. import get_sequence_name
 
 
 def removed_samples(lims, output_file):
@@ -144,11 +147,36 @@ def sample_indications(lims, output_file, artifact_name=None, sequencing_run=Non
     if samples:
         output_file.write('Sample\tIndication\n')
         for sample_name, sample in samples.items():
-            output_file.write(
-                '{sample}\t{indication}\n'.format(
-                    sample=sample_name,
-                    indication=sample.udf['Dx Onderzoeksindicatie'].split(';')[0]  # select newest indication
+            if 'Dx Onderzoeksindicatie' in sample.udf:
+                output_file.write(
+                    '{sample}\t{indication}\n'.format(
+                        sample=sample_name,
+                        indication=sample.udf['Dx Onderzoeksindicatie'].split(';')[0]  # select newest indication
+                    )
                 )
-            )
+            else:
+                output_file.write(
+                    '{sample}\t{indication}\n'.format(
+                        sample=sample_name,
+                        indication='unkown_indication'
+                    )
+                )
     else:
         print("no_sample_found")
+
+
+def sample_related_mip(lims, process_id, output_file):
+    """Export related mip samples for all samples in process."""
+    process = Process(lims, id=process_id)
+
+    # Create output item per artifact
+    output = []
+    for artifact in process.all_inputs():
+        output.append('{sample},{related_mip}'.format(
+            sample=artifact.name,
+            related_mip=artifact.samples[0].udf['Dx mip']
+        ))
+
+    # Print output items, last line only contains a line end to work with fingerprintDB.
+    output_file.write(',\n'.join(output))
+    output_file.write('\n')

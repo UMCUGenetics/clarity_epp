@@ -165,9 +165,13 @@ def samplesheet_dilute(lims, process_id, output_file):
     nM_pool = process.udf['Dx Pool verdunning (nM)']
     output_ul = process.udf['Eindvolume (ul)']
 
-    for input_artifact in process.all_inputs():
-        output_artifact = process.outputs_per_input(input_artifact.id, Analyte=True)[0]
+    # Get input and output plate id from 1 sample, input plate is the same for all samples.
+    input_artifacts = process.all_inputs()
+    plate_id_artifact = input_artifacts[0]
+    plate_id_input = plate_id_artifact.location[0].name
+    plate_id_output = process.outputs_per_input(plate_id_artifact.id, Analyte=True)[0].location[0].name
 
+    for input_artifact in input_artifacts:
         # Get QC stats
         size = float(input_artifact.udf['Dx Fragmentlengte (bp)'])
         concentration = float(input_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
@@ -181,9 +185,9 @@ def samplesheet_dilute(lims, process_id, output_file):
         well = ''.join(input_artifact.location[1].split(':'))
         output[well] = '{name}\t{plate_id_input}\t{well}\t{plate_id_output}\t{volume_dna:.1f}\t{volume_water:.1f}\n'.format(
             name=input_artifact.name,
-            plate_id_input=input_artifact.location[0].name,
+            plate_id_input=plate_id_input,
             well=well,
-            plate_id_output=output_artifact.location[0].name,
+            plate_id_output=plate_id_output,
             volume_dna=ul_sample,
             volume_water=ul_water
         )
@@ -196,7 +200,8 @@ def samplesheet_dilute(lims, process_id, output_file):
         if well in output:
             output_file.write(output[well])
         else:
-            output_file.write('Leeg\tNone\t{well}\t{plate_id_output}\t0\t0\n'.format(
+            output_file.write('Leeg\t{plate_id_input}\t{well}\t{plate_id_output}\t0\t0\n'.format(
+                plate_id_input=plate_id_input,
                 well=well,
-                plate_id_output=output_artifact.location[0].name,
+                plate_id_output=plate_id_output,
             ))

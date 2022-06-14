@@ -233,7 +233,12 @@ def samplesheet_multiplex_library_pool(lims, process_id, output_file):
                                 sample_given_ul.udf['Dx Familie status']
                             )
 
-                    output.udf['Dx input pool (ng)'] = round(ng_sample[output.samples[0].name] + ng_sample[output.samples[1].name] + ng_sample[output.samples[2].name], 2)
+                    output.udf['Dx input pool (ng)'] = round(
+                        ng_sample[output.samples[0].name] +
+                        ng_sample[output.samples[1].name] +
+                        ng_sample[output.samples[2].name],
+                        2
+                    )
                     output.put()
 
                 else:
@@ -345,9 +350,10 @@ def samplesheet_multiplex_sequence_pool(lims, process_id, output_file):
 def samplesheet_normalization(lims, process_id, output_file):
     """Create manual pipetting samplesheet for normalizing (MIP) samples."""
     output_file.write(
-        'Sample\tConcentration (ng/ul)\tVolume sample (ul)\tVolume water (ul)\tOutput (ng)\tIndampen\n'
+        'Sample\tConcentration (ng/ul)\tVolume sample (ul)\tVolume water (ul)\tOutput (ng)\tIndampen\tContainer\tWell\n'
     )
     process = Process(lims, id=process_id)
+    output = {}
 
     # Find all QC process types
     qc_process_types = clarity_epp.export.utils.get_process_types(lims, ['Dx Qubit QC', 'Dx Tecan Spark 10M QC'])
@@ -382,14 +388,24 @@ def samplesheet_normalization(lims, process_id, output_file):
             evaporate = 'J'
             water_volume = 0
 
-        output_file.write('{sample}\t{concentration:.1f}\t{sample_volume:.1f}\t{water_volume:.1f}\t{output:.1f}\t{evaporate}\n'.format(
+        # Save output under container location (well)
+        well = ''.join(artifact.location[1].split(':'))
+        output[well] = (
+            '{sample}\t{concentration:.1f}\t{sample_volume:.1f}\t{water_volume:.1f}\t'
+            '{output:.1f}\t{evaporate}\t{container}\t{well}\n'
+        ).format(
             sample=sample.name,
             concentration=concentration,
             sample_volume=sample_volume,
             water_volume=water_volume,
             output=input_ng,
-            evaporate=evaporate
-        ))
+            evaporate=evaporate,
+            container=artifact.location[0].name,
+            well=well
+        )
+
+    for well in clarity_epp.export.utils.sort_96_well_plate(output.keys()):
+        output_file.write(output[well])
 
 
 def samplesheet_capture(lims, process_id, output_file):
@@ -502,16 +518,16 @@ def samplesheet_mip_multiplex_pool(lims, process_id, output_file):
         ))
 
     for input_artifact in process.all_inputs(resolve=True):
+        concentration = None
         # Find last qc process for artifact
-        qc_process = sorted(
-            lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id),
-            key=lambda process: int(process.id.split('-')[-1])
-        )[-1]
+        qc_processes = lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id)
 
-        # Find concentration measurement
-        for qc_artifact in qc_process.outputs_per_input(input_artifact.id):
-            if qc_artifact.name == input_artifact.name:
-                concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+        if qc_processes:
+            qc_process = sorted(qc_processes, key=lambda process: int(process.id.split('-')[-1]))[-1]
+            # Find concentration measurement
+            for qc_artifact in qc_process.outputs_per_input(input_artifact.id):
+                if qc_artifact.name == input_artifact.name:
+                    concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
 
         input_artifacts.append({
             'name': input_artifact.name,
@@ -521,13 +537,21 @@ def samplesheet_mip_multiplex_pool(lims, process_id, output_file):
             'manual': input_artifact.samples[0].udf['Dx Handmatig']
         })
 
-    # Calculate avg concentration for all non manual samples
-    concentrations = [input_artifact['concentration'] for input_artifact in input_artifacts if not input_artifact['manual']]
+    # Calculate avg concentration for all non manual samples with a measured concentration
+    concentrations = [
+        input_artifact['concentration'] for input_artifact in input_artifacts
+        if input_artifact['concentration'] and not input_artifact['manual']
+    ]
     avg_concentration = sum(concentrations) / len(concentrations)
 
     # Set volume and store input_artifact per plate to be able print samplesheet sorted on plate and well
     input_containers = {}
     for input_artifact in input_artifacts:
+        # Set avg concentration as concentration for artifacts without a measured concentration
+        if not input_artifact['concentration']:
+            input_artifact['concentration'] = avg_concentration
+
+        # Set volumes
         if input_artifact['concentration'] < avg_concentration * 0.5:
             input_artifact['volume'] = 20
         elif input_artifact['concentration'] > avg_concentration * 1.5:
@@ -544,7 +568,7 @@ def samplesheet_mip_multiplex_pool(lims, process_id, output_file):
         input_artifacts = input_containers[input_container]
         for well in clarity_epp.export.utils.sort_96_well_plate(input_artifacts.keys()):
             input_artifact = input_artifacts[well]
-            output_file.write('{sample}\t{volume}\t{plate_id}\t{well_id}\t{concentration}\t{manual}\n'.format(
+            output_file.write('{sample}\t{volume}\t{plate_id}\t{well_id}\t{concentration:.3f}\t{manual}\n'.format(
                 sample=input_artifact['name'],
                 volume=input_artifact['volume'],
                 plate_id=input_artifact['plate_id'],
@@ -559,7 +583,9 @@ def samplesheet_mip_pool_dilution(lims, process_id, output_file):
     process = Process(lims, id=process_id)
 
     # Write header
-    output_file.write('{sample}\t{ul_sample_10}\t{ul_EB_10}\t{ul_sample_20}\t{ul_EB_20}\t{ul_sample_40}\t{ul_EB_40}\t\n'.format(
+    output_file.write((
+        '{sample}\t{ul_sample_10}\t{ul_EB_10}\t{ul_sample_20}\t{ul_EB_20}\t{ul_sample_40}\t{ul_EB_40}\t\n'
+    ).format(
         sample='Sample',
         ul_sample_10='ul Sample (10 ul)',
         ul_EB_10='ul EB buffer (10 ul)',
@@ -573,11 +599,14 @@ def samplesheet_mip_pool_dilution(lims, process_id, output_file):
         concentration = float(input_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
         fragment_length = float(input_artifact.udf['Dx Fragmentlengte (bp)'])
 
-        dna = (concentration * (10.0**3.0 / 1.0) * (1.0 / 649.0) * (1.0 / fragment_length) ) * 1000.0
+        dna = (concentration * (10.0**3.0 / 1.0) * (1.0 / 649.0) * (1.0 / fragment_length)) * 1000.0
         ul_sample = 2 / dna * 10
         ul_EB = 10 - ul_sample
 
-        output_file.write('{sample}\t{ul_sample_10:.2f}\t{ul_EB_10:.2f}\t{ul_sample_20:.2f}\t{ul_EB_20:.2f}\t{ul_sample_40:.2f}\t{ul_EB_40:.2f}\t\n'.format(
+        output_file.write((
+            '{sample}\t{ul_sample_10:.2f}\t{ul_EB_10:.2f}\t{ul_sample_20:.2f}\t{ul_EB_20:.2f}\t'
+            '{ul_sample_40:.2f}\t{ul_EB_40:.2f}\t\n'
+        ).format(
             sample=input_artifact.name,
             ul_sample_10=ul_sample,
             ul_EB_10=ul_EB,
@@ -593,7 +622,7 @@ def samplesheet_pool_samples(lims, process_id, output_file):
     process = Process(lims, id=process_id)
 
     # print header
-    output_file.write('Sample\tContainer\tWell\tPool\n')
+    output_file.write('Sample\tContainer\tWell\tPool\tVolume (ul)\n')
 
     # Get all input artifact and store per container
     input_containers = {}
@@ -611,12 +640,21 @@ def samplesheet_pool_samples(lims, process_id, output_file):
     for input_container in sorted(input_containers.keys()):
         input_artifacts = input_containers[input_container]
         for well in clarity_epp.export.utils.sort_96_well_plate(input_artifacts.keys()):
+            input_artifact = input_artifacts[well]
+            input_sample = input_artifact.samples[0]  # Asume one sample
+
+            if 'Dx Exoomequivalent' in input_sample.udf:
+                volume = 5 * input_sample['Dx Exoomequivalent']
+            else:
+                volume = 5
+
             output_file.write(
-                '{sample}\t{container}\t{well}\t{pool}\n'.format(
-                    sample=input_artifacts[well].name,
-                    container=input_artifacts[well].location[0].name,
+                '{sample}\t{container}\t{well}\t{pool}\t{volume}\n'.format(
+                    sample=input_artifact.name,
+                    container=input_artifact.location[0].name,
                     well=well,
-                    pool=process.outputs_per_input(input_artifacts[well].id, Analyte=True)[0].name
+                    pool=process.outputs_per_input(input_artifact.id, Analyte=True)[0].name,
+                    volume=volume
                 )
             )
 
@@ -630,11 +668,18 @@ def samplesheet_pool_magnis_pools(lims, process_id, output_file):
 
     # Get input pools, sort by name and print volume
     for input_artifact in sorted(process.all_inputs(resolve=True), key=lambda artifact: artifact.name):
+        sample_count = 0
+        for sample in input_artifact.samples:
+            if 'Dx Exoomequivalent' in sample.udf:
+                sample_count += sample.udf['Dx Exoomequivalent']
+            else:
+                sample_count += 1
+
         output_file.write(
             '{pool}\t{container}\t{sample_count}\t{volume}\n'.format(
                 pool=input_artifact.name,
                 container=input_artifact.container.name,
-                sample_count=len(input_artifact.samples),
-                volume=len(input_artifact.samples) * 1.25
+                sample_count=sample_count,
+                volume=sample_count * 1.25
             )
         )
