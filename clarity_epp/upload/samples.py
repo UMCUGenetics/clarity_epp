@@ -112,8 +112,9 @@ def from_helix(lims, email_settings, input_file):
 
         # Set 'Dx Handmatig' udf
         if (
-            udf_data['Dx Foetus'] or udf_data['Dx Overleden'] or
-            udf_data['Dx Materiaal type'] not in ['BL', 'BLHEP', 'BM', 'BMEDTA']
+            udf_data['Dx Foetus']
+            or udf_data['Dx Overleden']
+            or udf_data['Dx Materiaal type'] not in ['BL', 'BLHEP', 'BM', 'BMEDTA']
         ):
             udf_data['Dx Handmatig'] = True
         else:
@@ -158,8 +159,8 @@ def from_helix(lims, email_settings, input_file):
         for sample in sample_list:
             if sample.udf['Dx Monsternummer'] == udf_data['Dx Monsternummer']:
                 if(
-                    sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving'] and
-                    sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
+                    sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving']
+                    and sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
                 ):
                     udf_data['Dx Import warning'] = '; '.join([
                         '{sample}: Monsternummer hetzelfde, Protocolomschrijving hetzelfde.'.format(sample=sample.name),
@@ -171,8 +172,8 @@ def from_helix(lims, email_settings, input_file):
                         udf_data['Dx Import warning']
                     ])
             elif(
-                sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving'] and
-                sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
+                sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving']
+                and sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
             ):
                 udf_data['Dx Import warning'] = '; '.join([
                     '{sample}: Monsternummer uniek, Protocolomschrijving hetzelfde.'.format(sample=sample.name),
