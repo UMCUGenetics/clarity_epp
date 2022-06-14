@@ -44,12 +44,35 @@ def route_to_workflow(lims, process_id, workflow):
     ]
 
     if workflow == 'post_bioinf':
-        # Remove research artifacts
-        route_artifacts = [
-            artifact for artifact in artifacts_completed
-            if artifact.samples[0].udf['Dx Stoftest code'] != config.research_stoftest_code
-        ]
-        lims.route_artifacts(route_artifacts, workflow_uri=Workflow(lims, id=config.post_bioinf_workflow).uri)
+        stoftest_artifacts = {}
+        for artifact in artifacts_completed:
+            sample = artifact.samples[0]  # Asume 1 sample per artifact
+
+            # Add stoftest to dict
+            if sample.udf['Dx Stoftest code'] not in stoftest_artifacts:
+                stoftest_artifacts[sample.udf['Dx Stoftest code']] = {'single': [], 'trio': []}
+
+            # Remove research artifacts
+            if sample.udf['Dx Stoftest code'] != config.stoftestcode_research:
+                # Find trio
+                if(
+                    sample.udf['Dx Familie status'] == 'Ouder'
+                    or ('Dx Gerelateerde onderzoeken' in sample.udf and sample.udf['Dx Gerelateerde onderzoeken'])
+                ):
+                    stoftest_artifacts[sample.udf['Dx Stoftest code']]['trio'].append(artifact)
+                else:
+                    stoftest_artifacts[sample.udf['Dx Stoftest code']]['single'].append(artifact)
+
+        for stoftest, route_artifacts in stoftest_artifacts.items():
+            if route_artifacts['single']:
+                workflow = Workflow(lims, id=config.post_bioinf_workflow[stoftest]['single']['workflow'])
+                stage = workflow.stages[config.post_bioinf_workflow[stoftest]['single']['stage']]
+                lims.route_artifacts(route_artifacts['single'], workflow_uri=workflow.uri, stage_uri=stage.uri)
+
+            if route_artifacts['trio']:
+                workflow = Workflow(lims, id=config.post_bioinf_workflow[stoftest]['trio']['workflow'])
+                stage = workflow.stages[config.post_bioinf_workflow[stoftest]['trio']['stage']]
+                lims.route_artifacts(route_artifacts['trio'], workflow_uri=workflow.uri, stage_uri=stage.uri)
 
     elif workflow == 'sequencing':
         lims.route_artifacts(artifacts_completed, workflow_uri=Workflow(lims, id=config.sequencing_workflow).uri)
