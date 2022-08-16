@@ -17,7 +17,7 @@ Date,${DATE}
 ${PROCESS.UDF.Read 1 Cycles}
 ${PROCESS.UDF.Read 2 Cycles}
 [Settings]
-Adapter,${PROCESS.UDF.Adapter}
+AdapterRead1,${PROCESS.UDF.Adapter}
 AdapterRead2,${PROCESS.UDF.Adapter Read 2}
 TrimUMI,${PROCESS.UDF.UMI - Trim}
 Read1UMILength,${PROCESS.UDF.UMI - Read 1 Length}
