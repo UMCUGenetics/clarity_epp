@@ -181,17 +181,57 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
     samplesheet_artifact = Artifact(lims, id=artifact_id)
     file_id = samplesheet_artifact.files[0].id
 
+    # Setup custom settings
+    custom_settings = ''
+    # Setup OverrideCycles
+    if trim_last_base or process.udf['UMI - Trim']:
+        override_cycles = [
+            '',  # read 1
+            'I{0}'.format(process.udf['Index Read 1']),  # index 1
+            'I{0}'.format(process.udf['Index Read 2']),  # index 2
+            '',  # read 2
+        ]
+
+        if trim_last_base and process.udf['UMI - Trim']:
+            override_cycles[0] = 'U{umi}Y{read}N1'.format(
+                umi=process.udf['UMI - Read 1 Length'],
+                read=process.udf['Read 1 Cycles'] - process.udf['UMI - Read 1 Length'] - 1
+            )
+            override_cycles[3] = 'U{umi}Y{read}N1'.format(
+                umi=process.udf['UMI - Read 2 Length'],
+                read=process.udf['Read 2 Cycles'] - process.udf['UMI - Read 2 Length'] - 1
+            )
+            custom_settings = 'TrimUMI,1'
+
+        elif trim_last_base:
+            override_cycles[0] = 'Y{read}N1'.format(read=process.udf['Read 1 Cycles'] - 1)
+            override_cycles[3] = 'Y{read}N1'.format(read=process.udf['Read 2 Cycles'] - 1)
+
+        elif process.udf['UMI - Trim']:
+            override_cycles[0] = 'U{umi}Y{read}'.format(
+                umi=process.udf['UMI - Read 1 Length'],
+                read=process.udf['Read 1 Cycles'] - process.udf['UMI - Read 1 Length']
+            )
+            override_cycles[3] = 'U{umi}Y{read}'.format(
+                umi=process.udf['UMI - Read 2 Length'],
+                read=process.udf['Read 2 Cycles'] - process.udf['UMI - Read 2 Length']
+            )
+            custom_settings = 'TrimUMI,1'
+
+        custom_settings = '{settings}\nOverrideCycles,{override_cycles}\n'.format(
+            settings=custom_settings,
+            override_cycles=';'.join(override_cycles)
+        )
+
     for line in lims.get_file_contents(id=file_id).rstrip().split('\n'):
-        if line.startswith('[Settings]') and trim_last_base:
+        if line.startswith('[Settings]') and custom_settings:
             output_file.write('{line}\n'.format(line=line))
-            output_file.write('Read1EndWithCycle,{value}\n'.format(value=process.udf['Read 1 Cycles']-1))
-            output_file.write('Read2EndWithCycle,{value}\n'.format(value=process.udf['Read 2 Cycles']-1))
+            output_file.write(custom_settings)
             settings_section = True
 
-        elif line.startswith('[Data]') and trim_last_base and not settings_section:
+        elif line.startswith('[Data]') and custom_settings and not settings_section:
             output_file.write('[Settings]\n')
-            output_file.write('Read1EndWithCycle,{value}\n'.format(value=process.udf['Read 1 Cycles']-1))
-            output_file.write('Read2EndWithCycle,{value}\n'.format(value=process.udf['Read 2 Cycles']-1))
+            output_file.write(custom_settings)
             output_file.write('{line}\n'.format(line=line))
 
         elif line.startswith('Sample_ID'):  # Samples header line
