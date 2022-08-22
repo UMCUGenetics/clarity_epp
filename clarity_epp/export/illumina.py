@@ -201,7 +201,7 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
                 umi=process.udf['UMI - Read 2 Length'],
                 read=process.udf['Read 2 Cycles'] - process.udf['UMI - Read 2 Length'] - 1
             )
-            custom_settings = 'TrimUMI,1'
+            custom_settings = 'TrimUMI,1\n'
 
         elif trim_last_base:
             override_cycles[0] = 'Y{read}N1'.format(read=process.udf['Read 1 Cycles'] - 1)
@@ -216,9 +216,9 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
                 umi=process.udf['UMI - Read 2 Length'],
                 read=process.udf['Read 2 Cycles'] - process.udf['UMI - Read 2 Length']
             )
-            custom_settings = 'TrimUMI,1'
+            custom_settings = 'TrimUMI,1\n'
 
-        custom_settings = '{settings}\nOverrideCycles,{override_cycles}\n'.format(
+        custom_settings = '{settings}OverrideCycles,{override_cycles}\n'.format(
             settings=custom_settings,
             override_cycles=';'.join(override_cycles)
         )
