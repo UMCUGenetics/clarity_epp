@@ -116,6 +116,11 @@ def export_sample_indications(args):
     )
 
 
+def export_sample_related_mip(args):
+    """Export related MIP samples"""
+    clarity_epp.export.sample.sample_related_mip(lims, args.process_id, args.output_file)
+
+
 def export_tapestation(args):
     """Export samplesheets for Tapestation machine."""
     clarity_epp.export.tapestation.samplesheet(lims, args.process_id, args.output_file)
@@ -130,6 +135,8 @@ def export_workflow(args):
     """Export workflow overview files."""
     if args.type == 'magnis':
         clarity_epp.export.workflow.helix_magnis(lims, args.process_id, args.output_file)
+    elif args.type == 'mip':
+        clarity_epp.export.workflow.helix_mip(lims, args.process_id, args.output_file)
 
 
 # Upload Functions
@@ -172,6 +179,11 @@ def qc_illumina(args):
 def qc_qubit(args):
     """Set QC status based on qubit measurement."""
     clarity_epp.qc.qubit.set_qc_flag(lims, args.process_id)
+
+
+def qc_sample_mip(args):
+    """Set mip data ready udf for wes samples from same person and test."""
+    clarity_epp.qc.sample.set_mip_data_ready(lims, args.process_id)
 
 
 # Placement functions
@@ -304,6 +316,12 @@ if __name__ == "__main__":
     )
     parser_export_sample_indications.set_defaults(func=export_sample_indications)
 
+    parser_export_sample_related_mip = subparser_export.add_parser(
+        'sample_related_mip', help='Export related mip samples.', parents=[output_parser]
+    )
+    parser_export_sample_related_mip.add_argument('process_id', help='Clarity lims process id')
+    parser_export_sample_related_mip.set_defaults(func=export_sample_related_mip)
+
     parser_export_tapestation = subparser_export.add_parser(
         'tapestation', help='Create tapestation samplesheets', parents=[output_parser]
     )
@@ -317,7 +335,7 @@ if __name__ == "__main__":
     parser_export_workflow = subparser_export.add_parser(
         'workflow', help='Export workflow result file', parents=[output_parser]
     )
-    parser_export_workflow.add_argument('type', choices=['magnis'], help='Workflow type')
+    parser_export_workflow.add_argument('type', choices=['magnis', 'mip'], help='Workflow type')
     parser_export_workflow.add_argument('process_id', help='Clarity lims process id')
     parser_export_workflow.set_defaults(func=export_workflow)
 
@@ -360,6 +378,12 @@ if __name__ == "__main__":
     parser_qc_qubit = subparser_qc.add_parser('qubit', help='Set qubit qc flag')
     parser_qc_qubit.add_argument('process_id', help='Clarity lims process id')
     parser_qc_qubit.set_defaults(func=qc_qubit)
+
+    parser_qc_sample_mip = subparser_qc.add_parser(
+        'sample_mip', help='Set mip data ready udf for wes samples from same person and test.'
+    )
+    parser_qc_sample_mip.add_argument('process_id', help='Clarity lims process id')
+    parser_qc_sample_mip.set_defaults(func=qc_sample_mip)
 
     # placement
     parser_placement = subparser.add_parser('placement', help='Container placement functions')
