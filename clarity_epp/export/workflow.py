@@ -79,8 +79,13 @@ def helix_magnis(lims, process_id, output_file):
                 exomedepth_vcf = ''
                 if 'Dx GATK vcf' in artifact.udf:
                     gatk_vcf = artifact.udf['Dx GATK vcf']
+                elif 'Dx GATK vcf' in artifact.input_artifact_list()[0].udf:  # Look one more step back.
+                    gatk_vcf = artifact.input_artifact_list()[0].udf['Dx GATK vcf']
+
                 if 'Dx ExomeDepth vcf' in artifact.udf:
                     exomedepth_vcf = artifact.udf['Dx ExomeDepth vcf']
+                elif 'Dx ExomeDepth vcf' in artifact.input_artifact_list()[0].udf:  # Look one more step back.
+                    exomedepth_vcf = artifact.input_artifact_list()[0].udf['Dx ExomeDepth vcf']
 
                 output_file.write((
                     "{meet_id}\t{werklijst}\t{onderzoeksnummer}\t{monsternummer}\t{meetw_zui}\t{meetw_zui_herh}\t"
