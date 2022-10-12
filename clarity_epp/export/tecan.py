@@ -5,9 +5,8 @@ from genologics.entities import Process
 import clarity_epp.export.utils
 
 
-def samplesheet(lims, process_id, output_file):
+def samplesheet_qc(lims, process_id, type, output_file):
     """Create Tecan samplesheet."""
-    output_file.write('Position\tSample\n')
     process = Process(lims, id=process_id)
     well_plate = {}
 
@@ -18,8 +17,18 @@ def samplesheet(lims, process_id, output_file):
         else:
             well_plate[placement] = artifact.name
 
-    for well in clarity_epp.export.utils.sort_96_well_plate(well_plate.keys()):
-        output_file.write('{well}\t{sample}\n'.format(
-            well=well,
-            sample=well_plate[well]
-        ))
+    if type == 'qc':
+        output_file.write('Position\tSample\n')
+        for well in clarity_epp.export.utils.sort_96_well_plate(well_plate.keys()):
+            output_file.write('{well}\t{sample}\n'.format(
+                well=well,
+                sample=well_plate[well]
+            ))
+
+    elif type == 'purify_normalise':
+        output_file.write('Sample\tPosition\n')
+        for well in clarity_epp.export.utils.sort_96_well_plate(well_plate.keys()):
+            output_file.write('{sample}\t{well}\n'.format(
+                sample=well_plate[well],
+                well=well
+            ))
