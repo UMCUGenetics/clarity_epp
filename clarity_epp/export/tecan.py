@@ -5,7 +5,7 @@ from genologics.entities import Process
 import clarity_epp.export.utils
 
 
-def samplesheet_qc(lims, process_id, type, output_file):
+def samplesheet(lims, process_id, type, output_file):
     """Create Tecan samplesheet."""
     process = Process(lims, id=process_id)
     well_plate = {}
