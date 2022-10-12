@@ -223,7 +223,7 @@ def placement_complete_step(args):
 
 def placement_tecan(args):
     """Placement tecan process, distribute artifacts over two containers"""
-    clarity_epp.placement.tecan.place_samples(lims, args.process_id)
+    clarity_epp.placement.tecan.place_artifacts(lims, args.process_id)
 
 
 if __name__ == "__main__":
