@@ -27,8 +27,8 @@ def place_artifacts(lims, process_id):
     well_plate = Containertype(lims, id='1')
     purify_container = Container.create(lims, type=well_plate)
     normalise_container = Container.create(lims, type=well_plate)
-    purify_container.name = f"zuiveren_{purify_container.name}"
-    normalise_container.name = f"normaliseren_{normalise_container.name}"
+    purify_container.name = "zuiveren_{id}".format(id=purify_container.name)
+    normalise_container.name = "normaliseren_{id}".format(id=normalise_container.name)
     purify_container.put()
     normalise_container.put()
 
