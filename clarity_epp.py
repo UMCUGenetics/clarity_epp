@@ -221,6 +221,11 @@ def placement_complete_step(args):
     clarity_epp.placement.step.finish_protocol_complete(lims, args.process_id)
 
 
+def placement_tecan(args):
+    """Placement tecan process, distribute artifacts over two containers"""
+    clarity_epp.placement.tecan.place_samples(lims, args.process_id)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
@@ -418,6 +423,10 @@ if __name__ == "__main__":
     parser_placement_unpooling = subparser_placement.add_parser('unpooling', help='Unpooling of sequencing pool')
     parser_placement_unpooling.add_argument('process_id', help='Clarity lims process id')
     parser_placement_unpooling.set_defaults(func=placement_unpooling)
+
+    parser_placement_tecan = subparser_placement.add_parser('tecan', help='Placement of samples in tecan step')
+    parser_placement_tecan.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_tecan.set_defaults(func=placement_tecan)
 
     args = parser.parse_args()
     args.func(args)
