@@ -33,18 +33,18 @@ def place_artifacts(lims, process_id):
     normalise_container.put()
 
     # Keep track of placements
-    purify_container_placement = []
-    normalise_container_placement = []
+    container_placement = {}
     placement_list = []
 
     # Place all artifacts
     for artifact in process.analytes()[0]:
-        if artifact.name not in purify_container_placement:
-            placement_list.append([artifact, (purify_container, get_well_location(len(purify_container_placement)))])
-            purify_container_placement.append(artifact.name)
-        else:
-            placement_list.append([artifact, (normalise_container, get_well_location(len(normalise_container_placement)))])
-            normalise_container_placement.append(artifact.name)
+        if artifact.name not in container_placement:  # Add first artifact to purify_container
+            well_location = get_well_location(len(container_placement))
+            placement_list.append([artifact, (purify_container, well_location)])
+            container_placement[artifact.name] = well_location
+        else:  # Add second artifact to normalise_container on same position
+            well_location = container_placement[artifact.name]
+            placement_list.append([artifact, (normalise_container, well_location)])
 
     process.step.placements.set_placement_list(placement_list)
     process.step.placements.post()
