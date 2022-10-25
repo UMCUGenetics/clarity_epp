@@ -556,9 +556,9 @@ def samplesheet_mip_multiplex_pool(lims, process_id, output_file):
         if input_artifact['concentration'] < avg_concentration * 0.5:
             input_artifact['volume'] = 20
         elif input_artifact['concentration'] > avg_concentration * 1.5:
-            input_artifact['volume'] = 2
+            input_artifact['volume'] = 1
         else:
-            input_artifact['volume'] = 5
+            input_artifact['volume'] = 2
 
         if input_artifact['plate_id'] not in input_containers:
             input_containers[input_artifact['plate_id']] = {}
