@@ -456,11 +456,11 @@ def sammplesheet_exonuclease(lims, process_id, output_file):
 
     # Caculate for sample count
     for i, item in enumerate(data):
-        data[i].append(sample_count * item[1] * 1.25)
+        data[i].append(sample_count * item[1] * 1.30)
 
     # Calculate total
     data.append([
-        'TOTAL (incl. 25% overmaat)',
+        'TOTAL (incl. 30% overmaat)',
         sum([item[1] for item in data]),
         sum([item[2] for item in data]),
     ])
