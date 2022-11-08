@@ -54,12 +54,25 @@ def route_to_workflow(lims, process_id, workflow):
 
             # Remove research artifacts
             if sample.udf['Dx Stoftest code'] != config.stoftestcode_research:
-                # Find trio
-                if(
-                    sample.udf['Dx Familie status'] == 'Ouder'
-                    or ('Dx Gerelateerde onderzoeken' in sample.udf and sample.udf['Dx Gerelateerde onderzoeken'])
+                # Lookup trio samples
+                # if parent check family members if parent belongs to trio
+                if sample.udf['Dx Familie status'] == 'Ouder':
+                    parent_status = 'single'
+                    for family_sample in lims.get_samples(udf={'Dx Familienummer': sample.udf['Dx Familienummer']}):
+                        if(
+                            'Dx Gerelateerde onderzoeken' in family_sample.udf
+                            and sample.udf['Dx Onderzoeknummer'] in family_sample.udf['Dx Gerelateerde onderzoeken']
+                            and len(family_sample.udf['Dx Gerelateerde onderzoeken'].split(';')) >= 2
+                        ):
+                            parent_status = 'trio'
+                    stoftest_artifacts[sample.udf['Dx Stoftest code']][parent_status].append(artifact)
+                # If child check if part of trio
+                elif(
+                    'Dx Gerelateerde onderzoeken' in sample.udf
+                    and len(sample.udf['Dx Gerelateerde onderzoeken'].split(';')) >= 2
                 ):
                     stoftest_artifacts[sample.udf['Dx Stoftest code']]['trio'].append(artifact)
+                # Else not trio
                 else:
                     stoftest_artifacts[sample.udf['Dx Stoftest code']]['single'].append(artifact)
 
