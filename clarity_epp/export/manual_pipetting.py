@@ -668,7 +668,7 @@ def samplesheet_pool_magnis_pools(lims, process_id, output_file):
     output_file.write('Pool\tContainer\tSample count\tVolume (ul)\n')
 
     # Get input pools, sort by name and print volume
-    for input_artifact in sorted(process.all_inputs(resolve=True), key=lambda artifact: artifact.name):
+    for input_artifact in sorted(process.all_inputs(resolve=True), key=lambda artifact: artifact.id):
         sample_count = 0
         for sample in input_artifact.samples:
             if 'Dx Exoomequivalent' in sample.udf:
