@@ -32,6 +32,7 @@ def samplesheet(lims, process_id, type, output_file):
     elif type == 'purify_normalise':
         output_file.write('SourceTubeID\tPositionID\tPositionIndex\n')
         for well in clarity_epp.export.utils.sort_96_well_plate(well_plate.keys()):
+            artifact = well_plate[well]
             sample = artifact.samples[0]  # assume one sample per tube
             output_file.write('{sample}\t{well}\t{index}\n'.format(
                 sample=sample.udf['Dx Fractienummer'],
