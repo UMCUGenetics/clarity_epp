@@ -683,3 +683,65 @@ def samplesheet_pool_magnis_pools(lims, process_id, output_file):
                 volume=sample_count * 1.25
             )
         )
+
+
+def samplesheet_amplification_array(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for amplification array."""
+    process = Process(lims, id=process_id)
+    artifacts = {}
+    qc_process_types = clarity_epp.export.utils.get_process_types(lims, ['Dx Qubit Flex QC'])
+
+    # print header
+    output_file.write((
+        'Monsternummer\tplaat_id_input\twell_id_input\tpipetteervolume DNA (ul)\tplaat_id_output\twell_id_output\t'
+        'pipetteervolume 0.1 NaOH (ul)\tpipetteervolume 0.5 NaOH (ul)\n'
+    ))
+
+    # Lookup input, output and qc artifacts
+    for input_artifact in process.all_inputs():
+        output_artifact = process.outputs_per_input(input_artifact.id, Analyte=True)[0]
+        output_well = ''.join(output_artifact.location[1].split(':'))
+
+        # Find QC process for aritfact and store latest
+        qc_input_artifact = input_artifact.input_artifact_list()[0]
+        qc_process = sorted(
+            lims.get_processes(type=qc_process_types, inputartifactlimsid=[qc_input_artifact.id]),
+            key=lambda process: int(process.id.split('-')[-1])
+        )[-1]  # get latest
+        qc_artifact = [
+            artifact for artifact in qc_process.all_outputs(resolve=True) if artifact.name == qc_input_artifact.name
+        ][0]  # asume 1 qc measurment per artifact
+
+        # Store by well
+        artifacts[output_well] = [input_artifact, output_artifact, qc_artifact]
+
+    # Sort by well and print samplesheet
+    for well in clarity_epp.export.utils.sort_96_well_plate(artifacts.keys()):
+        input_artifact, output_artifact, qc_artifact = artifacts[well]
+        concentration = qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)']
+
+        if concentration >= 50:
+            volume_dna = 4
+        else:
+            volume_dna = 200/concentration
+
+        if volume_dna <= 10:
+            volume_NaOH_1 = 4
+            volume_NaOH_5 = 0
+        else:
+            volume_NaOH_1 = 0
+            volume_NaOH_5 = volume_dna * 2/18
+
+        output_file.write((
+            '{sample}\t{input_plate}\t{input_well}\t{volume_dna}\t{output_plate}\t{output_well}\t'
+            '{volume_NaOH_1:.2f}\t{volume_NaOH_5:.2f}\n'
+        ).format(
+            sample=input_artifact.samples[0].udf['Dx Monsternummer'],
+            input_plate=input_artifact.location[0].name,
+            input_well=''.join(input_artifact.location[1].split(':')),
+            volume_dna=volume_dna,
+            output_plate=output_artifact.location[0].name,
+            output_well=''.join(output_artifact.location[1].split(':')),
+            volume_NaOH_1=volume_NaOH_1,
+            volume_NaOH_5=volume_NaOH_5,
+        ))
