@@ -169,6 +169,11 @@ def upload_magnis_results(args):
     clarity_epp.upload.magnis.results(lims, args.process_id)
 
 
+def upload_qubit_flex_results(args):
+    """Upload qubit flex results."""
+    clarity_epp.upload.qubit_flex.results_array(lims, args.process_id)
+
+
 # QC functions
 def qc_fragment_length(args):
     """Set QC status based on fragment length measurement."""
@@ -366,6 +371,10 @@ if __name__ == "__main__":
     parser_upload_magnis = subparser_upload.add_parser('magnis', help='Upload magnis results')
     parser_upload_magnis.add_argument('process_id', help='Clarity lims process id')
     parser_upload_magnis.set_defaults(func=upload_magnis_results)
+
+    parser_upload_qubit_flex = subparser_upload.add_parser('qubit_flex', help='Upload qubit flex results')
+    parser_upload_qubit_flex.add_argument('process_id', help='Clarity lims process id')
+    parser_upload_qubit_flex.set_defaults(func=upload_qubit_flex_results)
 
     # QC
     parser_qc = subparser.add_parser('qc', help='Set QC values/flags')
