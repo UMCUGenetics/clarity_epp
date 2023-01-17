@@ -123,11 +123,12 @@ def results_purify_normalise(lims, process_id):
             file_data = lims.get_file_contents(result_file.files[0].id).split('\n')
             header = file_data[0].rstrip().split(';')
             for line in file_data[1:]:
-                data = line.rstrip().split(';')
-                tecan_result[data[header.index('SampleID')]] = {
-                    'conc': float(data[header.index('Concentratie')]),
-                    'norm': txt_to_bool(data[header.index('Normalisatie')])
-                }
+                if line.rstrip():
+                    data = line.rstrip().split(';')
+                    tecan_result[data[header.index('SampleID')]] = {
+                        'conc': float(data[header.index('Concentratie')]),
+                        'norm': txt_to_bool(data[header.index('Normalisatie')])
+                    }
             break  # File found exit loop
 
     # Set concentration values on artifacts
