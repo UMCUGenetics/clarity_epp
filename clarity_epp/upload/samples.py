@@ -161,6 +161,18 @@ def from_helix(lims, email_settings, input_file):
             ])
             udf_data['Dx Familienummer'] = udf_data['Dx Familienummer'].split('/')[-1].strip(' ')
 
+        # Set NICU status for related samples using Dx Gerelateerde onderzoeken
+        if udf_data['Dx NICU Spoed']:
+            for related_research in udf_data['Dx Gerelateerde onderzoeken'].split(';'):
+                for related_sample in lims.get_samples(udf={'Dx Onderzoeknummer': related_research}):
+                    related_sample.udf['Dx NICU Spoed'] = udf_data['Dx NICU Spoed']
+                    related_sample.put()
+        # Set NICU status for sample if related sample is NICU
+        else:
+            for related_sample in lims.get_samples(udf={'Dx Familienummer': udf_data['Dx Familienummer']}):
+                if udf_data.udf['Dx Onderzoeknummer'] in related_sample.udf['Dx Gerelateerde onderzoeken']:
+                    udf_data['Dx NICU Spoed'] = related_sample.udf['Dx NICU Spoed']
+
         # Check other samples from patient
         sample_list = lims.get_samples(udf={'Dx Persoons ID': udf_data['Dx Persoons ID']})
         for sample in sample_list:
