@@ -364,13 +364,19 @@ def samplesheet_normalization(lims, process_id, output_file):
         sample = input_artifact.samples[0]  # asume one sample per input artifact
 
         # Find last qc process for artifact
-        qc_process = sorted(
-            lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id),
-            key=lambda process: int(process.id.split('-')[-1])
-        )[-1]
+        qc_process = lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id)
+        if qc_process:
+            qc_process = sorted(
+                lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id),
+                key=lambda process: int(process.id.split('-')[-1])
+            )[-1]
+            qc_artifacts = qc_process.outputs_per_input(input_artifact.id)
+        else:  # Fallback on previous process if qc process not found.
+            qc_process = input_artifact.parent_process
+            qc_artifacts = qc_process.all_outputs()
 
         # Find concentration measurement
-        for qc_artifact in qc_process.outputs_per_input(input_artifact.id):
+        for qc_artifact in qc_artifacts:
             if qc_artifact.name.split(' ')[0] == artifact.name:
                 concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
 
@@ -378,6 +384,7 @@ def samplesheet_normalization(lims, process_id, output_file):
         input_ng = float(artifact.udf['Dx Input (ng)'])
         if 'Dx pipetteervolume (ul)' in artifact.udf:
             input_ng = concentration * float(artifact.udf['Dx pipetteervolume (ul)'])
+
         sample_volume = input_ng / concentration
         water_volume = final_volume - sample_volume
         evaporate = 'N'
