@@ -115,6 +115,8 @@ def from_helix(lims, email_settings, input_file):
             udf_data['Dx Foetus']
             or udf_data['Dx Overleden']
             or udf_data['Dx Materiaal type'] not in ['BL', 'BLHEP', 'BM', 'BMEDTA']
+            or not udf_data['Dx Monsternummer'].startswith('D') and int(udf_data['Dx Monsternummer'][:4]) < 2010  # Samples older then 2010
+            or udf_data['Dx Monsternummer'].startswith('D')  # Old samples names, all older then 2005
         ):
             udf_data['Dx Handmatig'] = True
         else:
