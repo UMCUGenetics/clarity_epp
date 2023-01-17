@@ -57,7 +57,7 @@ if (index > 0) {
 }
 
 ${SAMPLE.NAME##NoSpecialCharacters}
-return token.replaceAll(\"[^a-zA-Z0-9_]\", \"_\")
+return token.replaceAll(\"[^a-zA-Z0-9-]\", \"-\")
 
 ${SAMPLE.PROJECT.NAME##NoSpecialCharacters}
 return token.replaceAll(\"[^a-zA-Z0-9_]\", \"_\")
