@@ -172,10 +172,11 @@ def sample_related_mip(lims, process_id, output_file):
     # Create output item per artifact
     output = []
     for artifact in process.all_inputs():
-        output.append('{sample},{related_mip}'.format(
-            sample=artifact.name,
-            related_mip=artifact.samples[0].udf['Dx mip']
-        ))
+        if 'Dx mip' in artifact.samples[0].udf:
+            output.append('{sample},{related_mip}'.format(
+                sample=artifact.name,
+                related_mip=artifact.samples[0].udf['Dx mip']
+            ))
 
     # Print output items, last line only contains a line end to work with fingerprintDB.
     output_file.write(',\n'.join(output))

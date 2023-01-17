@@ -644,7 +644,7 @@ def samplesheet_pool_samples(lims, process_id, output_file):
             input_sample = input_artifact.samples[0]  # Asume one sample
 
             if 'Dx Exoomequivalent' in input_sample.udf:
-                volume = 5 * input_sample['Dx Exoomequivalent']
+                volume = 5 * input_sample.udf['Dx Exoomequivalent']
             else:
                 volume = 5
 

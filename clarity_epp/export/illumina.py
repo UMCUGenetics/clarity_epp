@@ -17,13 +17,14 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
     def get_project(projects, urgent=False):
         """Inner function to get a project name for samples."""
         if urgent:  # Sort projects for urgent samples on name
-            projects = sorted(projects.items(), key=operator.itemgetter(0))
-            for project in projects:
+            projects_sorted = sorted(projects.items(), key=operator.itemgetter(0))
+            for project in projects_sorted:
                 if project[1] < 9:
                     return project[0]  # return first project with < 9 samples
-        else:  # Sort projects for other samples on number of samples
-            projects = sorted(projects.items(), key=operator.itemgetter(1))
-            return projects[0][0]  # return project with least amount of samples.
+
+        # Sort projects on number of samples, if not urgent or no projects left with <9 samples
+        projects_sorted = sorted(projects.items(), key=operator.itemgetter(1))
+        return projects_sorted[0][0]  # return project with least amount of samples.
 
     # Parse families
     families = {}
