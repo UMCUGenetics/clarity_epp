@@ -126,7 +126,7 @@ def results_purify_normalise(lims, process_id):
                 if line.rstrip():
                     data = line.rstrip().split(';')
                     tecan_result[data[header.index('SampleID')]] = {
-                        'conc': float(data[header.index('Concentratie')]),
+                        'conc': float(data[header.index('Concentratie(ng/ul)')]),
                         'norm': txt_to_bool(data[header.index('Normalisatie')])
                     }
             break  # File found exit loop
