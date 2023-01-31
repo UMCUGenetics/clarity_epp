@@ -398,7 +398,7 @@ def samplesheet_normalization(lims, process_id, output_file):
 
         # Save output under container location (well)
         well = ''.join(artifact.location[1].split(':'))
-        output[well] = (
+        output_data = (
             '{sample}\t{concentration:.1f}\t{sample_volume:.1f}\t{water_volume:.1f}\t'
             '{output:.1f}\t{evaporate}\t{container}\t{well}\n'
         ).format(
@@ -411,6 +411,10 @@ def samplesheet_normalization(lims, process_id, output_file):
             container=artifact.location[0].name,
             well=well
         )
+        if well == '11':  # Tube
+            output_file.write(output_data)
+        else:  # plate
+            output[well] = output_data
 
     for well in clarity_epp.export.utils.sort_96_well_plate(output.keys()):
         output_file.write(output[well])
