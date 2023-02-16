@@ -1,19 +1,21 @@
 """Clarity epp configuration."""
 
 # Genologics
-baseuri = 'https://change_this_lims.uri'
-username = 'change_this'
-password = 'change_this'
+baseuri = 'https://usf-lims-test.op.umcutrecht.nl'
+# baseuri = 'https://usf-lims.umcutrecht.nl'
+username = 'DX_EPP'
+password = 'rVz2REm4tnu7'
 
 # Email settings
 email = {
-    'server': 'smtp.server.nl',
-    'from': 'from@email.nl',
+    'server': 'pim.umcutrecht.nl',
+    'from': 'r.f.ernst-3@umcutrecht.nl',
     'to_import_helix': [
-        'to_1@mail.nl',
+        'r.f.ernst-3@umcutrecht.nl',
+        'e.janson@umcutrecht.nl',
     ],
     'to_sequencing_run_complete': [
-        'to_1@mail.nl',
+        'r.f.ernst-3@umcutrecht.nl',
     ]
 }
 
@@ -75,7 +77,7 @@ sequence_process_types = [
 ]
 
 # Post sequencing workflow
-sequencing_workflow = '1653'  # DEV Dx Illumina Sequencing v1.1
+sequencing_workflow = '1701'  # DEV Dx Illumina Sequencing v1.2
 post_sequencing_workflow = '902'  # DEV Dx Bioinformatica analyses v1.0
 post_bioinf_workflow = {  # Contains workflow and workflow stage (number) for single or trio samples
     # WES : DEV Dx NGS WES onderzoeken afronden v1.1
