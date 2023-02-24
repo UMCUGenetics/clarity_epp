@@ -1,21 +1,19 @@
 """Clarity epp configuration."""
 
 # Genologics
-baseuri = 'https://usf-lims-test.op.umcutrecht.nl'
-# baseuri = 'https://usf-lims.umcutrecht.nl'
-username = 'DX_EPP'
-password = 'rVz2REm4tnu7'
+baseuri = 'https://change_this_lims.uri'
+username = 'change_this'
+password = 'change_this'
 
 # Email settings
 email = {
-    'server': 'pim.umcutrecht.nl',
-    'from': 'r.f.ernst-3@umcutrecht.nl',
+    'server': 'smtp.server.nl',
+    'from': 'from@email.nl',
     'to_import_helix': [
-        'r.f.ernst-3@umcutrecht.nl',
-        'e.janson@umcutrecht.nl',
+        'to_1@mail.nl',
     ],
     'to_sequencing_run_complete': [
-        'r.f.ernst-3@umcutrecht.nl',
+        'to_1@mail.nl',
     ]
 }
 
