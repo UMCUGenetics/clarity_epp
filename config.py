@@ -23,8 +23,8 @@ stoftestcode_mip = 'NGS_027'
 stoftestcode_research = 'NGS_023'
 
 stoftestcode_workflow = {
-    stoftestcode_wes: '1106',  # DEV Dx smMIP Fingerprint v1.2
-    stoftestcode_mip: '1201',  # DEV Dx Exoom Magnis v1.0
+    stoftestcode_wes: '1654',  # DEV Dx Exoom Magnis v1.2
+    stoftestcode_mip: '1651',  # DEV Dx smMIP v1.2
 }
 
 # Export meetw protocol steps WES
@@ -35,17 +35,23 @@ meetw_zui_wes_processes = [
     'Dx Zuiveren gDNA manueel v1.1',
     'Dx manueel gezuiverd placement v1.2',
     'Dx gDNA Normalisatie Caliper v1.1',
-    'Dx Fragmenteren v1.0'
+    'Dx Uitvullen en zuiveren (Fluent 480) v1.0',
+    'Dx Normaliseren (Fluent 480) v1.0',
+    'Dx gDNA handmatige normalisatie WES v1.0'
 ]
 
-meetw_sampleprep_wes_processes = ['Dx Library Prep & Target Enrichment Magnis v1.0']
+meetw_sampleprep_wes_processes = [
+    'Dx Fragmenteren v1.0'
+    'Dx Library Prep & Target Enrichment Magnis v1.0'
+    ]
 
 meetw_seq_wes_processes = [
     'Dx Multiplexen Enrichment pools Magnis v1.0',
     'Dx Multiplexen sequence pool v1.2',
     'Dx Library pool denatureren en laden (NovaSeq) v1.3',
     'AUTOMATED - NovaSeq Run (NovaSeq 6000 v3.1)',
-    'Dx QC controle Lab sequencen v1.1'
+    'Dx QC controle Lab sequencen v1.1',
+    'Dx NovaSeq QC controle Lab sequencen v1.3'
 ]
 
 # Export meetw protocol steps MIP
@@ -75,7 +81,7 @@ sequence_process_types = [
 ]
 
 # Post sequencing workflow
-sequencing_workflow = '1301'  # DEV Dx Illumina Sequencing v1.0
+sequencing_workflow = '1701'  # DEV Dx Illumina Sequencing v1.2
 post_sequencing_workflow = '902'  # DEV Dx Bioinformatica analyses v1.0
 post_bioinf_workflow = {  # Contains workflow and workflow stage (number) for single or trio samples
     # WES : DEV Dx NGS WES onderzoeken afronden v1.1
