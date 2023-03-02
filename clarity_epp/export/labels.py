@@ -30,10 +30,13 @@ def container_sample(lims, process_id, output_file, description=''):
 def storage_location(lims, process_id, output_file):
     """Generate storage location label file."""
     process = Process(lims, id=process_id)
+
+    # Write header
+    output_file.write('Bakje\tpos\n')
+
     for artifact in process.analytes()[0]:
-        storage_location = artifact.samples[0].udf['Dx Opslaglocatie']
-        output_file.write('{sample}\t{storage_location}\t{birth_date}\n'.format(
-            sample=artifact.samples[0].name,
-            storage_location=storage_location,
-            birth_date=artifact.samples[0].udf['Dx Geboortejaar']
+        storage_location = artifact.samples[0].udf['Dx Opslaglocatie'].split()
+        output_file.write('{tray}\t{pos}\n'.format(
+            tray=storage_location[0][2:6],  # Select 4 digits from: CB[1-9][1-9][1-9][1-9]KK
+            pos=storage_location[1]
         ))

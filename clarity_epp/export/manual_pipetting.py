@@ -311,6 +311,7 @@ def samplesheet_multiplex_sequence_pool(lims, process_id, output_file):
     input_pools = []
     total_sample_count = 0
     total_load_uL = 0
+    final_volume = float(process.udf['Final volume'].split()[0])
 
     for input_pool in process.all_inputs():
         input_pool_conc = float(input_pool.udf['Dx Concentratie fluorescentie (ng/ul)'])
@@ -339,11 +340,11 @@ def samplesheet_multiplex_sequence_pool(lims, process_id, output_file):
     # Last calcuations and print sample
     for input_pool in input_pools:
         input_pool_load_pM = (float(process.udf['Dx Laadconcentratie (pM)'])/total_sample_count) * input_pool['sample_count']
-        input_pool_load_uL = 150.0 / (input_pool['pM']/input_pool_load_pM)
+        input_pool_load_uL = final_volume / (input_pool['pM']/input_pool_load_pM)
         total_load_uL += input_pool_load_uL
         output_file.write('{0}\t{1:.2f}\n'.format(input_pool['name'], input_pool_load_uL))
 
-    tris_HCL_uL = 150 - total_load_uL
+    tris_HCL_uL = final_volume - total_load_uL
     output_file.write('{0}\t{1:.2f}\n'.format('Tris-HCL', tris_HCL_uL))
 
 
@@ -363,13 +364,19 @@ def samplesheet_normalization(lims, process_id, output_file):
         sample = input_artifact.samples[0]  # asume one sample per input artifact
 
         # Find last qc process for artifact
-        qc_process = sorted(
-            lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id),
-            key=lambda process: int(process.id.split('-')[-1])
-        )[-1]
+        qc_process = lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id)
+        if qc_process:
+            qc_process = sorted(
+                lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id),
+                key=lambda process: int(process.id.split('-')[-1])
+            )[-1]
+            qc_artifacts = qc_process.outputs_per_input(input_artifact.id)
+        else:  # Fallback on previous process if qc process not found.
+            qc_process = input_artifact.parent_process
+            qc_artifacts = qc_process.all_outputs()
 
         # Find concentration measurement
-        for qc_artifact in qc_process.outputs_per_input(input_artifact.id):
+        for qc_artifact in qc_artifacts:
             if qc_artifact.name.split(' ')[0] == artifact.name:
                 concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
 
@@ -377,6 +384,7 @@ def samplesheet_normalization(lims, process_id, output_file):
         input_ng = float(artifact.udf['Dx Input (ng)'])
         if 'Dx pipetteervolume (ul)' in artifact.udf:
             input_ng = concentration * float(artifact.udf['Dx pipetteervolume (ul)'])
+
         sample_volume = input_ng / concentration
         water_volume = final_volume - sample_volume
         evaporate = 'N'
@@ -390,7 +398,7 @@ def samplesheet_normalization(lims, process_id, output_file):
 
         # Save output under container location (well)
         well = ''.join(artifact.location[1].split(':'))
-        output[well] = (
+        output_data = (
             '{sample}\t{concentration:.1f}\t{sample_volume:.1f}\t{water_volume:.1f}\t'
             '{output:.1f}\t{evaporate}\t{container}\t{well}\n'
         ).format(
@@ -403,6 +411,10 @@ def samplesheet_normalization(lims, process_id, output_file):
             container=artifact.location[0].name,
             well=well
         )
+        if well == '11':  # Tube
+            output_file.write(output_data)
+        else:  # plate
+            output[well] = output_data
 
     for well in clarity_epp.export.utils.sort_96_well_plate(output.keys()):
         output_file.write(output[well])
@@ -455,11 +467,11 @@ def sammplesheet_exonuclease(lims, process_id, output_file):
 
     # Caculate for sample count
     for i, item in enumerate(data):
-        data[i].append(sample_count * item[1] * 1.25)
+        data[i].append(sample_count * item[1] * 1.30)
 
     # Calculate total
     data.append([
-        'TOTAL (incl. 25% overmaat)',
+        'TOTAL (incl. 30% overmaat)',
         sum([item[1] for item in data]),
         sum([item[2] for item in data]),
     ])
@@ -555,9 +567,9 @@ def samplesheet_mip_multiplex_pool(lims, process_id, output_file):
         if input_artifact['concentration'] < avg_concentration * 0.5:
             input_artifact['volume'] = 20
         elif input_artifact['concentration'] > avg_concentration * 1.5:
-            input_artifact['volume'] = 2
+            input_artifact['volume'] = 1
         else:
-            input_artifact['volume'] = 5
+            input_artifact['volume'] = 2
 
         if input_artifact['plate_id'] not in input_containers:
             input_containers[input_artifact['plate_id']] = {}
@@ -667,7 +679,7 @@ def samplesheet_pool_magnis_pools(lims, process_id, output_file):
     output_file.write('Pool\tContainer\tSample count\tVolume (ul)\n')
 
     # Get input pools, sort by name and print volume
-    for input_artifact in sorted(process.all_inputs(resolve=True), key=lambda artifact: artifact.name):
+    for input_artifact in sorted(process.all_inputs(resolve=True), key=lambda artifact: artifact.id):
         sample_count = 0
         for sample in input_artifact.samples:
             if 'Dx Exoomequivalent' in sample.udf:

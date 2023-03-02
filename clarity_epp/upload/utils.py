@@ -4,14 +4,18 @@ from genologics.entities import Workflow
 import config
 
 
-def char_to_bool(letter):
+def txt_to_bool(txt):
     """Transform character (J/N) to Bool."""
-    if letter.upper() == 'J':
+    if txt.upper() == 'J':
         return True
-    elif letter.upper() == 'N':
+    elif txt.upper() == 'N':
+        return False
+    elif txt.upper() == "TRUE":
+        return True
+    elif txt.upper() == "FALSE":
         return False
     else:
-        raise ValueError('Invalid character, only J or N allowed.')
+        raise ValueError('Invalid text, only J, N, TRUE or FALSE allowed.')
 
 
 def transform_sex(value):
