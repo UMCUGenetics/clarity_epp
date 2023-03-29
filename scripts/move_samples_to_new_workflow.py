@@ -15,23 +15,23 @@ new_workflow = Workflow(lims, id='')  # Example: Dx Exoom KAPA v1.6 = 901
 skip_artifacts = ['']  # Add samples that should not be moved to new workflow
 
 artifacts = []
-print '# Old queue:', len(old_queue.artifacts)
+print('# Old queue:', len(old_queue.artifacts))
 
 for artifact in old_queue.artifacts:
     if artifact.name not in skip_artifacts:
-        print 'Move:', artifact.name
+        print('Move:', artifact.name)
         artifacts.append(artifact)
     else:
-        print 'Keep:', artifact.name
+        print('Keep:', artifact.name)
 
-print '# Move to new workflow:', len(artifacts)
+print('# Move to new workflow:', len(artifacts))
 
 # Move things to new workflow, uncomment to enable.
 # lims.route_artifacts(artifacts, stage_uri=old_stage.uri, unassign=True)  # remove from old stage
 # lims.route_artifacts(artifacts, workflow_uri=new_workflow.uri)  # add to new workflow
 
 old_queue = Queue(lims, id='')  # Example: Dx Sample registratie zuivering v1.0 = 1142 (same as step id)
-print '# Old queue:', len(old_queue.artifacts)
+print('# Old queue:', len(old_queue.artifacts))
 
 new_queue = Queue(lims, id='')  # Example: Dx Sample registratie zuivering v1.1 = 1342 (same as step id)
-print '# New queue:', len(new_queue.artifacts)
+print('# New queue:', len(new_queue.artifacts))

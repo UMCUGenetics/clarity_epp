@@ -91,7 +91,7 @@ def from_helix(lims, email_settings, input_file):
         for udf in udf_column:
             # Transform specific udf
             if udf in ['Dx Overleden', 'Dx Spoed', 'Dx NICU Spoed']:
-                udf_data[udf] = clarity_epp.upload.utils.char_to_bool(data[udf_column[udf]['index']])
+                udf_data[udf] = clarity_epp.upload.utils.txt_to_bool(data[udf_column[udf]['index']])
             elif udf in ['Dx Geslacht', 'Dx Foetus geslacht']:
                 udf_data[udf] = clarity_epp.upload.utils.transform_sex(data[udf_column[udf]['index']])
             elif udf == 'Dx Foetus':
