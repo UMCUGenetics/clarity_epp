@@ -685,41 +685,6 @@ def samplesheet_pool_magnis_pools(lims, process_id, output_file):
         )
 
 
-def samplesheet_filling_out_array(lims, process_id, output_file):
-    """Create manual pipetting samplesheet for manual filling out gDNA samples (Array)"""
-    process = Process(lims, id=process_id)
-
-    # print header
-    output_file.write(
-        'Monsternummer\tOpslagpositie\tUitvulplaat_id\tWell_id\tUitvul volume DNA (ul)\tUitvul volume water (ul)\n'
-        )
-    
-    artifacts_per_well = {}
-
-    for input_artifact in process.all_inputs():
-        output_artifact = process.outputs_per_input(input_artifact.id, Analyte=True)[0]
-        output_well = ''.join(output_artifact.location[1].split(':'))
-        artifacts_per_well[output_well] = output_artifact
-
-    for well in clarity_epp.export.utils.sort_96_well_plate(artifacts_per_well.keys()):
-        volume_DNA = 'niet bekend'
-        volume_water = 0
-        if 'Dx uitvul volume DNA (ul)' in artifacts_per_well[well].udf:
-            volume_DNA = artifacts_per_well[well].udf['Dx uitvul volume DNA (ul)']
-        if volume_DNA <= 10:
-            volume_water = 10 - volume_DNA
-        output_file.write(
-            '{sample}\t{storage}\t{container}\t{well}\t{volume_DNA}\t{volume_water}\n'.format(
-                sample=artifacts_per_well[well].samples[0].udf['Dx Monsternummer'],
-                storage=artifacts_per_well[well].samples[0].udf['Dx Opslaglocatie'],
-                container=artifacts_per_well[well].location[0].name,
-                well=well,
-                volume_DNA=volume_DNA,
-                volume_water=volume_water
-            )
-        )
-
-
 def samplesheet_normalization_array(lims, process_id, output_file):
     """Create manual pipetting samplesheet for normalization array."""
     process = Process(lims, id=process_id)
@@ -797,7 +762,7 @@ def samplesheet_normalization_array(lims, process_id, output_file):
             commentary=commentary
         ))
 
-        
+
 def samplesheet_amplification_array(lims, process_id, output_file):
     """Create manual pipetting samplesheet for amplification array."""
     process = Process(lims, id=process_id)
