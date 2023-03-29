@@ -94,6 +94,8 @@ def export_manual_pipetting(args):
         clarity_epp.export.manual_pipetting.samplesheet_pool_magnis_pools(lims, args.process_id, args.output_file)
     elif args.type == 'filling_out_array':
         clarity_epp.export.manual_pipetting.samplesheet_filling_out_array(lims, args.process_id, args.output_file)
+    elif args.type == 'normalization_array':
+        clarity_epp.export.manual_pipetting.samplesheet_normalization_array(lims, args.process_id, args.output_file)
     elif args.type == 'amplification_array':
         clarity_epp.export.manual_pipetting.samplesheet_amplification_array(lims, args.process_id, args.output_file)
 
@@ -294,7 +296,7 @@ if __name__ == "__main__":
         choices=[
             'purify', 'dilute_library_pool', 'multiplex_library_pool', 'multiplex_sequence_pool', 'normalization',
             'capture', 'exonuclease', 'pcr_exonuclease', 'mip_multiplex_pool', 'mip_dilute_pool', 'pool_samples',
-            'pool_magnis_pools', 'filling_out_array', 'amplification_array'
+            'pool_magnis_pools', 'filling_out_array', 'normalization_array', 'amplification_array'
         ],
         help='Samplesheet type'
     )

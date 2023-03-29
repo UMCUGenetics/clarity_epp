@@ -720,6 +720,84 @@ def samplesheet_filling_out_array(lims, process_id, output_file):
         )
 
 
+def samplesheet_normalization_array(lims, process_id, output_file):
+    """Create manual pipetting samplesheet for normalization array."""
+    process = Process(lims, id=process_id)
+    qc_process_types = clarity_epp.export.utils.get_process_types(
+        lims, ['Dx Qubit QC', 'Dx Qubit Flex QC', 'Dx Sample registratie Array']
+    )
+
+    # print header
+    output_file.write(
+        'Monsternummer\tPipetteervolume DNA (ul)\tPipetteervolume water (ul)\tEventuele opmerking\n'
+    )
+
+    for input_artifact in sorted(process.all_inputs(resolve=True), key=lambda artifact: artifact.name):
+        concentration = None
+        # Find last qc process for artifact
+        qc_processes = lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id)
+        qc_artifact_name = input_artifact.name
+        qc_artifact_id = input_artifact.id
+        if qc_processes == []:
+            qc_input_artifact = input_artifact.input_artifact_list()[0]
+            qc_processes = lims.get_processes(type=qc_process_types, inputartifactlimsid=qc_input_artifact.id)
+            qc_artifact_name = qc_input_artifact.name
+            qc_artifact_id = qc_input_artifact.id
+
+        if qc_processes:
+            qc_process = sorted(qc_processes, key=lambda process: int(process.id.split('-')[-1]))[-1]
+            # Find concentration measurement
+            qc_artifact = [
+                artifact for artifact in qc_process.all_outputs(resolve=True) if qc_artifact_name in artifact.name
+            ][0]  # asume 1 qc measurment per artifact
+            
+            for qc_artifact in qc_process.outputs_per_input(qc_artifact_id):
+                if input_artifact.name in qc_artifact.name:
+                    concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+
+        output_artifact = process.outputs_per_input(input_artifact.id, Analyte=True)[0]
+        if concentration == 0 or concentration == None:
+            volume_dna = 0
+        else:
+            if 'Dx input DNA array (ng)' in output_artifact.udf:
+                volume_dna = float(output_artifact.udf['Dx input DNA array (ng)']) / concentration
+            else:
+                volume_dna = 200 / concentration
+
+        commentary = ''
+        if 'Dx pipetteervolume (ul)' in output_artifact.udf:
+            if output_artifact.udf['Dx pipetteervolume (ul)'] < volume_dna:
+                commentary = ((
+                    'Dx pipetteervolume (ul) gebruikt i.p.v. berekend volume uit concentratie: {volume_dna:.2f}'
+                    ).format(volume_dna=volume_dna))
+                volume_dna = output_artifact.udf['Dx pipetteervolume (ul)']
+            elif volume_dna is 0:
+                commentary = 'Geen concentratie bekend, Dx pipetteervolume (ul) gebruikt'
+                volume_dna = output_artifact.udf['Dx pipetteervolume (ul)']
+
+        volume_water = 0
+        if volume_dna < 10:
+            if volume_dna == 0:
+                commentary = 'Geen concentratie bekend, vul "Dx pipetteervolume (ul)" en genereer opnieuw'
+            else:
+                volume_water = 10 - volume_dna
+        elif volume_dna > 18:
+            commentary = (('Berekend volume DNA ({volume_dna:.2f}) is groter dan maximum van 18 ul').format(
+                volume_dna=volume_dna
+            ))
+            volume_dna = 18
+
+        # print samplesheet
+        output_file.write((
+            '{sample}\t{volume_dna:.2f}\t{volume_water:.2f}\t{commentary}\n'
+        ).format(
+            sample=input_artifact.samples[0].udf['Dx Monsternummer'],
+            volume_dna=volume_dna,
+            volume_water=volume_water,
+            commentary=commentary
+        ))
+
+        
 def samplesheet_amplification_array(lims, process_id, output_file):
     """Create manual pipetting samplesheet for amplification array."""
     process = Process(lims, id=process_id)
@@ -733,7 +811,7 @@ def samplesheet_amplification_array(lims, process_id, output_file):
     ))
 
     # Lookup input, output and qc artifacts
-    for input_artifact in process.all_inputs():
+    for input_artifact in sorted(process.all_inputs(resolve=True), key=lambda artifact: artifact.name):
         output_artifact = process.outputs_per_input(input_artifact.id, Analyte=True)[0]
         output_well = ''.join(output_artifact.location[1].split(':'))
 
