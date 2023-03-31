@@ -207,6 +207,8 @@ def placement_artifact_set_name(args):
         clarity_epp.placement.artifact.set_sequence_name(lims, args.process_id)
     elif args.type == 'run_id':
         clarity_epp.placement.artifact.set_runid_name(lims, args.process_id)
+    elif args.type == 'container_array':
+        clarity_epp.placement.artifact.set_sample_name_array(lims, args.process_id)
 
 
 def placement_route_artifact(args):
@@ -407,7 +409,7 @@ if __name__ == "__main__":
     parser_placement_automatic.set_defaults(func=placement_automatic)
 
     parser_placement_artifact = subparser_placement.add_parser('artifact', help='Change artifact name to sequence name')
-    parser_placement_artifact.add_argument('type', choices=['sequence_name', 'run_id'], help='Check type')
+    parser_placement_artifact.add_argument('type', choices=['sequence_name', 'run_id', 'container_array'], help='Check type')
     parser_placement_artifact.add_argument('process_id', help='Clarity lims process id')
     parser_placement_artifact.set_defaults(func=placement_artifact_set_name)
 

@@ -2,6 +2,7 @@
 
 from genologics.entities import Process, Workflow
 
+from .. import convert_location
 from .. import get_sequence_name
 import config
 
@@ -76,3 +77,14 @@ def route_to_workflow(lims, process_id, workflow):
 
     elif workflow == 'sequencing':
         lims.route_artifacts(artifacts_completed, workflow_uri=Workflow(lims, id=config.sequencing_workflow).uri)
+
+
+def set_sample_name_array(lims, process_id):
+    """Change artifact name to containername_number."""
+    process = Process(lims, id=process_id)
+    for artifact in process.all_outputs():
+        output_container = artifact.location[0].name
+        output_well = ''.join(artifact.location[1].split(':'))
+        converted_location = convert_location(output_well)
+        artifact.name = ('{container_name}_{location}').format(container_name=output_container, location=converted_location)
+        artifact.put()
