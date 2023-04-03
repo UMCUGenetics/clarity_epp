@@ -134,7 +134,7 @@ def from_helix(lims, email_settings, input_file):
             udf_data['Dx Familie status'] = 'Kind'
         elif udf_data['Dx Onderzoeksreden'] == 'Dragerschapbepaling':
             udf_data['Dx Familie status'] = 'Kind'
-        elif udf_data['Dx Onderzoeksreden'] == 'Presymptomatisch onderzoek':
+        elif udf_data['Dx Onderzoeksreden'] == 'Presymptomatisch onderzoe':  # Helix export is truncated (Presymptomatisch onderzoek)
             udf_data['Dx Familie status'] = 'Kind'
         elif udf_data['Dx Onderzoeksreden'] == 'Informativiteitstest':
             udf_data['Dx Familie status'] = 'Ouder'
