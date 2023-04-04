@@ -132,7 +132,7 @@ def export_tapestation(args):
 
 def export_tecan(args):
     """Export samplesheets for tecan machine."""
-    clarity_epp.export.tecan.samplesheet(lims, args.process_id, args.output_file)
+    clarity_epp.export.tecan.samplesheet(lims, args.process_id, args.type, args.output_file)
 
 
 def export_workflow(args):
@@ -151,7 +151,10 @@ def upload_samples(args):
 
 def upload_tecan_results(args):
     """Upload tecan results."""
-    clarity_epp.upload.tecan.results(lims, args.process_id)
+    if args.type == 'qc':
+        clarity_epp.upload.tecan.results_qc(lims, args.process_id)
+    elif args.type == 'purify_normalise':
+        clarity_epp.upload.tecan.results_purify_normalise(lims, args.process_id)
 
 
 def upload_tapestation_results(args):
@@ -230,6 +233,11 @@ def placement_unpooling(args):
 def placement_complete_step(args):
     """Complete protocol step (Dx Mark protocol complete)."""
     clarity_epp.placement.step.finish_protocol_complete(lims, args.process_id)
+
+
+def placement_tecan(args):
+    """Placement tecan process, distribute artifacts over two containers"""
+    clarity_epp.placement.tecan.place_artifacts(lims, args.process_id)
 
 
 if __name__ == "__main__":
@@ -341,6 +349,7 @@ if __name__ == "__main__":
 
     parser_export_tecan = subparser_export.add_parser('tecan', help='Create tecan samplesheets', parents=[output_parser])
     parser_export_tecan.add_argument('process_id', help='Clarity lims process id')
+    parser_export_tecan.add_argument('type', choices=['qc', 'purify_normalise'], help='Samplesheet type')
     parser_export_tecan.set_defaults(func=export_tecan)
 
     parser_export_workflow = subparser_export.add_parser(
@@ -368,6 +377,7 @@ if __name__ == "__main__":
 
     parser_upload_tecan = subparser_upload.add_parser('tecan', help='Upload tecan results')
     parser_upload_tecan.add_argument('process_id', help='Clarity lims process id')
+    parser_upload_tecan.add_argument('type', choices=['qc', 'purify_normalise'], help='Tecan process type')
     parser_upload_tecan.set_defaults(func=upload_tecan_results)
 
     parser_upload_magnis = subparser_upload.add_parser('magnis', help='Upload magnis results')
@@ -432,6 +442,10 @@ if __name__ == "__main__":
     parser_placement_unpooling = subparser_placement.add_parser('unpooling', help='Unpooling of sequencing pool')
     parser_placement_unpooling.add_argument('process_id', help='Clarity lims process id')
     parser_placement_unpooling.set_defaults(func=placement_unpooling)
+
+    parser_placement_tecan = subparser_placement.add_parser('tecan', help='Placement of samples in tecan step')
+    parser_placement_tecan.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_tecan.set_defaults(func=placement_tecan)
 
     args = parser.parse_args()
     args.func(args)
