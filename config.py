@@ -41,7 +41,7 @@ meetw_zui_wes_processes = [
 ]
 
 meetw_sampleprep_wes_processes = [
-    'Dx Fragmenteren v1.0'
+    'Dx Fragmenteren v1.0',
     'Dx Library Prep & Target Enrichment Magnis v1.0'
     ]
 

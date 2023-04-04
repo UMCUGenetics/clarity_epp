@@ -10,23 +10,37 @@ def samplesheet_purify(lims, process_id, output_file):
     """Create manual pipetting samplesheet for purifying samples."""
     output_file.write('Fractienummer\tConcentration(ng/ul)\taantal ng te isoleren\tul gDNA\tul Water\n')
     process = Process(lims, id=process_id)
+    # Find all QC process types
+    qc_process_types = clarity_epp.export.utils.get_process_types(lims, ['Dx Qubit QC', 'Dx Tecan Spark 10M QC'])
 
     for container in process.output_containers():
         artifact = container.placements['1:1']  # asume tubes
         input_artifact = artifact.input_artifact_list()[0]  # asume one input artifact
         sample = artifact.samples[0]  # asume one sample per tube
 
+        # Find last qc process for artifact
+        qc_process = lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id)
+        if qc_process:
+            qc_process = sorted(
+                lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id),
+                key=lambda process: int(process.id.split('-')[-1])
+            )[-1]
+            for qc_artifact in qc_process.outputs_per_input(input_artifact.id):
+                if qc_artifact.name.split(' ')[0] == artifact.name:
+                    concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+
+        else:  # Fallback on previous process if qc process not found.
+            if 'Dx Concentratie fluorescentie (ng/ul)' in input_artifact.udf:
+                concentration = float(input_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+            elif 'Dx Concentratie OD (ng/ul)' in input_artifact.udf:
+                concentration = float(input_artifact.udf['Dx Concentratie OD (ng/ul)'])
+            elif 'Dx Concentratie (ng/ul)' in sample.udf:
+                concentration = float(sample.udf['Dx Concentratie (ng/ul)'])
+
         if 'Dx Fractienummer' in sample.udf:
             fractienummer = sample.udf['Dx Fractienummer']
         else:  # giab
             fractienummer = sample.name
-
-        if 'Dx Concentratie fluorescentie (ng/ul)' in input_artifact.udf:
-            concentration = float(input_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
-        elif 'Dx Concentratie OD (ng/ul)' in input_artifact.udf:
-            concentration = float(input_artifact.udf['Dx Concentratie OD (ng/ul)'])
-        elif 'Dx Concentratie (ng/ul)' in sample.udf:
-            concentration = float(sample.udf['Dx Concentratie (ng/ul)'])
 
         input_gdna_ng = float(artifact.udf['Dx input hoeveelheid (ng)'])
         ul_gdna = input_gdna_ng/concentration
