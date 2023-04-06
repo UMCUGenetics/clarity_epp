@@ -170,7 +170,10 @@ def from_helix(lims, email_settings, input_file):
         # Set NICU status for sample if related sample is NICU
         else:
             for related_sample in lims.get_samples(udf={'Dx Familienummer': udf_data['Dx Familienummer']}):
-                if udf_data.udf['Dx Onderzoeknummer'] in related_sample.udf['Dx Gerelateerde onderzoeken']:
+                if(
+                    'Dx Gerelateerde onderzoeken' in related_sample.udf and
+                    udf_data['Dx Onderzoeknummer'] in related_sample.udf['Dx Gerelateerde onderzoeken']
+                ):
                     udf_data['Dx NICU Spoed'] = related_sample.udf['Dx NICU Spoed']
 
         # Check other samples from patient
