@@ -1,7 +1,8 @@
 """Pool  placement functions."""
 
-from genologics.entities import Artifact, Process, Workflow
+from genologics.entities import Artifact, Process, Workflow, Step
 
+from .. import get_sequence_name
 import config
 
 
@@ -55,3 +56,30 @@ def unpooling(lims, process_id):
                         sample_artifacts.append(sample_artifact)
         # print(sample_artifacts)
         lims.route_artifacts(sample_artifacts, workflow_uri=Workflow(lims, id=config.post_sequencing_workflow).uri)
+
+
+def create_patient_pools(lims, process_id):
+    """Create patient pools for Dx samples based on UDF 'Dx Persoons ID'."""
+    step = Step(lims, id=process_id)
+    step_pools = step.step_pools
+    patient_pools = {}
+
+    # Create patient pools
+    for artifact in step_pools.available_inputs:
+        sample = artifact.samples[0]  # Assume one sample per artifact
+        if sample.udf['Dx Persoons ID'] not in patient_pools:
+            patient_pools[sample.udf['Dx Persoons ID']] = {
+                'name': str(sample.udf['Dx Persoons ID']),
+                'inputs': []
+            }
+        patient_pools[sample.udf['Dx Persoons ID']]['inputs'].append(artifact)
+
+    # Transform patient pools to list and put to clarity
+    step_pools.set_pools(list(patient_pools.values()))
+    step_pools.put()
+
+    # Rename pools to sequence name
+    process = Process(lims, id=process_id)
+    for artifact in process.all_outputs():
+        artifact.name = get_sequence_name(artifact)
+        artifact.put()
