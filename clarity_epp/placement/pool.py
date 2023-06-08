@@ -36,8 +36,12 @@ def unpooling(lims, process_id):
         for node in pool_artifact_demux.getiterator('artifact'):
             if node.find('samples'):
                 if len(node.find('samples').findall('sample')) == 1:
+                    # if len(node.find('samples').findall('sample')) in [1, 2]:
                     sample_artifact = Artifact(lims, uri=node.attrib['uri'])
                     sample = sample_artifact.samples[0] # 1 sample per artifact.
+
+                    # Skip non dx samples?
+                    # Check if pool with 2 samples come from same person.
 
                     # Get sample sequencing run and project from samplesheet
                     sample_artifact.udf['Dx Sequencing Run ID'] = run_id
@@ -49,5 +53,5 @@ def unpooling(lims, process_id):
 
                     if sample_artifact.samples[0].project and sample_artifact.samples[0].project.udf['Application'] == 'DX':  # Only move DX production samples to post sequencing workflow
                         sample_artifacts.append(sample_artifact)
-
+        # print(sample_artifacts)
         lims.route_artifacts(sample_artifacts, workflow_uri=Workflow(lims, id=config.post_sequencing_workflow).uri)
