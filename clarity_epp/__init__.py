@@ -8,34 +8,18 @@ import smtplib
 import mimetypes
 
 
-def get_sequence_name(sample):
+def get_sequence_name(artifact):
     """Generate sequence name."""
-    try:
-        # Set fam_status
-        if sample.udf['Dx Familie status'] == 'Kind':
-            fam_status = 'C'
-        elif sample.udf['Dx Familie status'] == 'Ouder':
-            fam_status = 'P'
+    sample_numbers = []
+    for sample in artifact.samples:
+        if 'Dx Monsternummer' in sample.udf:
+            sample_numbers.append(sample.udf['Dx Monsternummer'])
 
-        # Set sex
-        if sample.udf['Dx Geslacht'] == 'Man':
-            sex = 'M'
-        elif sample.udf['Dx Geslacht'] == 'Vrouw':
-            sex = 'F'
-        elif sample.udf['Dx Geslacht'] == 'Onbekend':
-            sex = 'O'
-    except KeyError:  # None DX sample, use sample.name as sequence name.
-        sequence_name = sample.name
-    else:
-        if not sample.name.startswith(sample.udf['Dx Familienummer']):
-            sequence_name = '{familienummer}{fam_status}{sex}{monsternummer}'.format(
-                familienummer=sample.udf['Dx Familienummer'],
-                fam_status=fam_status,
-                sex=sex,
-                monsternummer=sample.udf['Dx Monsternummer']
-            )
-        else:
-            sequence_name = sample.name
+    if sample_numbers:
+        sequence_name = '-'.join(sample_numbers)
+    else:  # non Dx sample
+        sequence_name = artifact.sample[0].name
+
     return sequence_name
 
 
