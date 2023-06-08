@@ -78,3 +78,9 @@ def create_patient_pools(lims, process_id):
     # Transform patient pools to list and put to clarity
     step_pools.set_pools(list(patient_pools.values()))
     step_pools.put()
+
+    # Rename pools to sequence name
+    process = Process(lims, id=process_id)
+    for artifact in process.all_outputs():
+        artifact.name = get_sequence_name(artifact)
+        artifact.put()
