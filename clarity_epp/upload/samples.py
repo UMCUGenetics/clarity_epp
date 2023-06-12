@@ -1,7 +1,8 @@
 """Sample upload epp functions."""
-import sys
 from datetime import datetime
+import re
 from requests.exceptions import ConnectionError
+import sys
 
 from genologics.entities import Sample, Project, Containertype, Container
 
@@ -91,7 +92,7 @@ def from_helix(lims, email_settings, input_file):
         for udf in udf_column:
             # Transform specific udf
             if udf in ['Dx Overleden', 'Dx Spoed', 'Dx NICU Spoed']:
-                udf_data[udf] = clarity_epp.upload.utils.char_to_bool(data[udf_column[udf]['index']])
+                udf_data[udf] = clarity_epp.upload.utils.txt_to_bool(data[udf_column[udf]['index']])
             elif udf in ['Dx Geslacht', 'Dx Foetus geslacht']:
                 udf_data[udf] = clarity_epp.upload.utils.transform_sex(data[udf_column[udf]['index']])
             elif udf == 'Dx Foetus':
@@ -115,6 +116,8 @@ def from_helix(lims, email_settings, input_file):
             udf_data['Dx Foetus']
             or udf_data['Dx Overleden']
             or udf_data['Dx Materiaal type'] not in ['BL', 'BLHEP', 'BM', 'BMEDTA']
+            or re.match(r'\d{4}D\d+', udf_data['Dx Monsternummer']) and int(udf_data['Dx Monsternummer'][:4]) < 2010  # Samples older then 2010
+            or udf_data['Dx Monsternummer'].startswith('D')  # Old samples names, all older then 2005
         ):
             udf_data['Dx Handmatig'] = True
         else:
@@ -128,6 +131,10 @@ def from_helix(lims, email_settings, input_file):
         elif udf_data['Dx Onderzoeksreden'] == 'Eerstegraads-verwantenond':
             udf_data['Dx Familie status'] = 'Kind'
         elif udf_data['Dx Onderzoeksreden'] == 'Partneronderzoek':
+            udf_data['Dx Familie status'] = 'Kind'
+        elif udf_data['Dx Onderzoeksreden'] == 'Dragerschapbepaling':
+            udf_data['Dx Familie status'] = 'Kind'
+        elif udf_data['Dx Onderzoeksreden'] == 'Presymptomatisch onderzoe':  # Helix export is truncated (Presymptomatisch onderzoek)
             udf_data['Dx Familie status'] = 'Kind'
         elif udf_data['Dx Onderzoeksreden'] == 'Informativiteitstest':
             udf_data['Dx Familie status'] = 'Ouder'
@@ -153,6 +160,21 @@ def from_helix(lims, email_settings, input_file):
                 udf_data['Dx Import warning']
             ])
             udf_data['Dx Familienummer'] = udf_data['Dx Familienummer'].split('/')[-1].strip(' ')
+
+        # Set NICU status for related samples using Dx Gerelateerde onderzoeken
+        if udf_data['Dx NICU Spoed']:
+            for related_research in udf_data['Dx Gerelateerde onderzoeken'].split(';'):
+                for related_sample in lims.get_samples(udf={'Dx Onderzoeknummer': related_research}):
+                    related_sample.udf['Dx NICU Spoed'] = udf_data['Dx NICU Spoed']
+                    related_sample.put()
+        # Set NICU status for sample if related sample is NICU
+        else:
+            for related_sample in lims.get_samples(udf={'Dx Familienummer': udf_data['Dx Familienummer']}):
+                if(
+                    'Dx Gerelateerde onderzoeken' in related_sample.udf and
+                    udf_data['Dx Onderzoeknummer'] in related_sample.udf['Dx Gerelateerde onderzoeken']
+                ):
+                    udf_data['Dx NICU Spoed'] = related_sample.udf['Dx NICU Spoed']
 
         # Check other samples from patient
         sample_list = lims.get_samples(udf={'Dx Persoons ID': udf_data['Dx Persoons ID']})
