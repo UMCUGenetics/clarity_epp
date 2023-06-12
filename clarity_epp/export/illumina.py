@@ -9,7 +9,7 @@ import clarity_epp.export.utils
 import config
 
 
-def update_samplesheet(lims, process_id, artifact_id, output_file, conversion_tool='bcl2fastq'):
+def update_samplesheet(lims, process_id, artifact_id, output_file, conversion_tool):
     """Update illumina samplesheet."""
     process = Process(lims, id=process_id)
     trim_last_base = True  # Used to set Read1EndWithCycle
