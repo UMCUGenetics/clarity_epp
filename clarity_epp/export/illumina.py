@@ -9,7 +9,7 @@ import clarity_epp.export.utils
 import config
 
 
-def update_samplesheet(lims, process_id, artifact_id, output_file):
+def update_samplesheet(lims, process_id, artifact_id, output_file, conversion_tool='bcl2fastq'):
     """Update illumina samplesheet."""
     process = Process(lims, id=process_id)
     trim_last_base = True  # Used to set Read1EndWithCycle
@@ -184,45 +184,55 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
 
     # Setup custom settings
     custom_settings = ''
-    # Setup OverrideCycles
-    if trim_last_base or process.udf['UMI - Trim']:
-        override_cycles = [
-            '',  # read 1
-            'I{0}'.format(process.udf['Index Read 1']),  # index 1
-            'I{0}'.format(process.udf['Index Read 2']),  # index 2
-            '',  # read 2
-        ]
 
-        if trim_last_base and process.udf['UMI - Trim']:
-            override_cycles[0] = 'U{umi}Y{read}N1'.format(
-                umi=process.udf['UMI - Read 1 Length'],
-                read=process.udf['Read 1 Cycles'] - process.udf['UMI - Read 1 Length'] - 1
-            )
-            override_cycles[3] = 'U{umi}Y{read}N1'.format(
-                umi=process.udf['UMI - Read 2 Length'],
-                read=process.udf['Read 2 Cycles'] - process.udf['UMI - Read 2 Length'] - 1
-            )
-            custom_settings = 'TrimUMI,1\n'
-
-        elif trim_last_base:
-            override_cycles[0] = 'Y{read}N1'.format(read=process.udf['Read 1 Cycles'] - 1)
-            override_cycles[3] = 'Y{read}N1'.format(read=process.udf['Read 2 Cycles'] - 1)
-
-        elif process.udf['UMI - Trim']:
-            override_cycles[0] = 'U{umi}Y{read}'.format(
-                umi=process.udf['UMI - Read 1 Length'],
-                read=process.udf['Read 1 Cycles'] - process.udf['UMI - Read 1 Length']
-            )
-            override_cycles[3] = 'U{umi}Y{read}'.format(
-                umi=process.udf['UMI - Read 2 Length'],
-                read=process.udf['Read 2 Cycles'] - process.udf['UMI - Read 2 Length']
-            )
-            custom_settings = 'TrimUMI,1\n'
-
-        custom_settings = '{settings}OverrideCycles,{override_cycles}\n'.format(
-            settings=custom_settings,
-            override_cycles=';'.join(override_cycles)
+    if conversion_tool == 'bcl2fastq':
+        custom_settings = (
+            'Read1EndWithCycle,{read_1_value}\n'
+            'Read2EndWithCycle,{read_2_value}\n'
+        ).format(
+            read_1_value=process.udf['Read 1 Cycles']-1, read_2_value=process.udf['Read 2 Cycles']-1
         )
+
+    elif conversion_tool == 'bclconvert':
+        # Setup OverrideCycles
+        if trim_last_base or process.udf['UMI - Trim']:
+            override_cycles = [
+                '',  # read 1
+                'I{0}'.format(process.udf['Index Read 1']),  # index 1
+                'I{0}'.format(process.udf['Index Read 2']),  # index 2
+                '',  # read 2
+            ]
+
+            if trim_last_base and process.udf['UMI - Trim']:
+                override_cycles[0] = 'U{umi}Y{read}N1'.format(
+                    umi=process.udf['UMI - Read 1 Length'],
+                    read=process.udf['Read 1 Cycles'] - process.udf['UMI - Read 1 Length'] - 1
+                )
+                override_cycles[3] = 'U{umi}Y{read}N1'.format(
+                    umi=process.udf['UMI - Read 2 Length'],
+                    read=process.udf['Read 2 Cycles'] - process.udf['UMI - Read 2 Length'] - 1
+                )
+                custom_settings = 'TrimUMI,1\n'
+
+            elif trim_last_base:
+                override_cycles[0] = 'Y{read}N1'.format(read=process.udf['Read 1 Cycles'] - 1)
+                override_cycles[3] = 'Y{read}N1'.format(read=process.udf['Read 2 Cycles'] - 1)
+
+            elif process.udf['UMI - Trim']:
+                override_cycles[0] = 'U{umi}Y{read}'.format(
+                    umi=process.udf['UMI - Read 1 Length'],
+                    read=process.udf['Read 1 Cycles'] - process.udf['UMI - Read 1 Length']
+                )
+                override_cycles[3] = 'U{umi}Y{read}'.format(
+                    umi=process.udf['UMI - Read 2 Length'],
+                    read=process.udf['Read 2 Cycles'] - process.udf['UMI - Read 2 Length']
+                )
+                custom_settings = 'TrimUMI,1\n'
+
+            custom_settings = '{settings}OverrideCycles,{override_cycles}\n'.format(
+                settings=custom_settings,
+                override_cycles=';'.join(override_cycles)
+            )
 
     for line in lims.get_file_contents(id=file_id).rstrip().split('\n'):
         if line.startswith('[Settings]') and custom_settings:
