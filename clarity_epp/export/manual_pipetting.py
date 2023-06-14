@@ -688,6 +688,7 @@ def samplesheet_pool_samples(lims, process_id, output_file):
 def samplesheet_pool_magnis_pools(lims, process_id, output_file):
     """Create manual pipetting samplesheet for pooling magnis pools. Correct for pools with < 8 samples"""
     process = Process(lims, id=process_id)
+    sample_ids = []
 
     # print header
     output_file.write('Pool\tContainer\tSample count\tVolume (ul)\n')
@@ -696,6 +697,13 @@ def samplesheet_pool_magnis_pools(lims, process_id, output_file):
     for input_artifact in sorted(process.all_inputs(resolve=True), key=lambda artifact: artifact.id):
         sample_count = 0
         for sample in input_artifact.samples:
+            # Check persoons ID to skip duplicate samples
+            if 'Dx Persoons ID' in sample.udf:
+                if sample.udf['Dx Persoons ID'] in sample_ids:
+                    continue  # skip to next sample
+                else:
+                    sample_ids.append(sample.udf['Dx Persoons ID'])
+
             if 'Dx Exoomequivalent' in sample.udf:
                 sample_count += sample.udf['Dx Exoomequivalent']
             else:
