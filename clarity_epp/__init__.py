@@ -7,6 +7,8 @@ from email.mime.text import MIMEText
 import smtplib
 import mimetypes
 
+from genologics.entities import Artifact
+
 
 def get_sequence_name(artifact):
     """Generate sequence name."""
@@ -21,6 +23,32 @@ def get_sequence_name(artifact):
         sequence_name = artifact.sample[0].name
 
     return sequence_name
+
+
+def get_sample_artifacts_from_pool(lims, pool_artifact):
+    """Get sample artifacts from (sequence) pool."""
+    sample_artifacts = []
+    pool_artifact_demux = lims.get(pool_artifact.uri + '/demux')
+    for node in pool_artifact_demux.getiterator('artifact'):
+        if node.find('samples'):
+            if len(node.find('samples').findall('sample')) in [1, 2]:
+                sample_artifact = Artifact(lims, uri=node.attrib['uri'])
+
+                # Check if sample_artifact with 2 samples are from the same person
+                if len(sample_artifact.samples) == 2:
+                    if (
+                        'Dx Persoons ID' in sample_artifact.samples[0].udf or
+                        'Dx Persoons ID' in sample_artifact.samples[1].udf or
+                        sample_artifact.samples[0].udf['Dx Persoons ID'] == sample_artifact.samples[1].udf['Dx Persoons ID']
+                    ):
+                        sample_artifacts.append(sample_artifact)
+                else:
+                    sample_artifacts.append(sample_artifact)
+    return sample_artifacts
+
+
+
+
 
 
 def send_email(server, sender, receivers, subject, text, attachment=None):
