@@ -11,7 +11,7 @@ def create_file(lims, process_id, output_file):
     ped_families = {}
 
     for sample_artifact in sample_artifacts:
-        sample = sample_artifact.samples[0]  # Asume all samples are identical.
+        sample = sample_artifact.samples[0]  # Asume all samples metadata is identical.
 
         if 'Dx Familienummer' in sample.udf and sample.udf['Dx Onderzoeksreden'] != 'Research':
             family = sample.udf['Dx Familienummer']
