@@ -328,6 +328,7 @@ def samplesheet_multiplex_sequence_pool(lims, process_id, output_file):
     final_volume = float(process.udf['Final volume'].split()[0])
 
     for input_pool in process.all_inputs():
+        input_pool_sample_ids = []
         input_pool_conc = float(input_pool.udf['Dx Concentratie fluorescentie (ng/ul)'])
         input_pool_size = float(input_pool.udf['Dx Fragmentlengte (bp)'])
         input_pool_nM = (input_pool_conc * 1000 * (1.0/660.0) * (1/input_pool_size)) * 1000
@@ -336,10 +337,18 @@ def samplesheet_multiplex_sequence_pool(lims, process_id, output_file):
         input_pool_sample_count = 0
 
         for sample in input_pool.samples:
+            # Check persoons ID to skip duplicate samples
+            if 'Dx Persoons ID' in sample.udf:
+                if sample.udf['Dx Persoons ID'] in input_pool_sample_ids:
+                    continue  # skip to next sample
+                else:
+                    input_pool_sample_ids.append(sample.udf['Dx Persoons ID'])
+
             if 'Dx Exoomequivalent' in sample.udf:
                 input_pool_sample_count += sample.udf['Dx Exoomequivalent']
             else:
                 input_pool_sample_count += 1
+
         total_sample_count += input_pool_sample_count
         input_pools.append({
             'name': input_pool.name,
@@ -688,7 +697,6 @@ def samplesheet_pool_samples(lims, process_id, output_file):
 def samplesheet_pool_magnis_pools(lims, process_id, output_file):
     """Create manual pipetting samplesheet for pooling magnis pools. Correct for pools with < 8 samples"""
     process = Process(lims, id=process_id)
-    sample_ids = []
 
     # print header
     output_file.write('Pool\tContainer\tSample count\tVolume (ul)\n')
@@ -696,13 +704,14 @@ def samplesheet_pool_magnis_pools(lims, process_id, output_file):
     # Get input pools, sort by name and print volume
     for input_artifact in sorted(process.all_inputs(resolve=True), key=lambda artifact: artifact.id):
         sample_count = 0
+        input_artifact_sample_ids = []
         for sample in input_artifact.samples:
             # Check persoons ID to skip duplicate samples
             if 'Dx Persoons ID' in sample.udf:
-                if sample.udf['Dx Persoons ID'] in sample_ids:
+                if sample.udf['Dx Persoons ID'] in input_artifact_sample_ids:
                     continue  # skip to next sample
                 else:
-                    sample_ids.append(sample.udf['Dx Persoons ID'])
+                    input_artifact_sample_ids.append(sample.udf['Dx Persoons ID'])
 
             if 'Dx Exoomequivalent' in sample.udf:
                 sample_count += sample.udf['Dx Exoomequivalent']
