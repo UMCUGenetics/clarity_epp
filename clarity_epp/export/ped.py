@@ -1,20 +1,21 @@
 """Export ped functions."""
 from genologics.entities import Process
 
-from .. import get_sequence_name
+from .. import get_sequence_name, get_sample_artifacts_from_pool
 
 
 def create_file(lims, process_id, output_file):
     """Create ped file."""
     process = Process(lims, id=process_id)
-    samples = process.analytes()[0][0].samples
-
+    sample_artifacts = get_sample_artifacts_from_pool(lims, process.analytes()[0][0])
     ped_families = {}
 
-    for sample in samples:
+    for sample_artifact in sample_artifacts:
+        sample = sample_artifact.samples[0]  # Asume all samples are identical.
+
         if 'Dx Familienummer' in sample.udf and sample.udf['Dx Onderzoeksreden'] != 'Research':
             family = sample.udf['Dx Familienummer']
-            sample_name = get_sequence_name(sample)
+            sample_name = get_sequence_name(sample_artifact)
             ped_sample = {'name': sample_name}
 
             if family not in ped_families:
