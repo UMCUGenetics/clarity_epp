@@ -343,7 +343,7 @@ if __name__ == "__main__":
 
     parser_export_tecan = subparser_export.add_parser('tecan', help='Create tecan samplesheets', parents=[output_parser])
     parser_export_tecan.add_argument('process_id', help='Clarity lims process id')
-    parser_export_tecan.add_argument('type', choices=['qc', 'purify_normalise'], help='Samplesheet type')
+    parser_export_tecan.add_argument('type', choices=['qc', 'purify_normalise', 'filling_out_purify'], help='Samplesheet type')
     parser_export_tecan.set_defaults(func=export_tecan)
 
     parser_export_workflow = subparser_export.add_parser(
