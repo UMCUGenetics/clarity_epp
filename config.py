@@ -23,8 +23,8 @@ stoftestcode_mip = 'NGS_027'
 stoftestcode_research = 'NGS_023'
 
 stoftestcode_workflow = {
-    stoftestcode_wes: '1654',  # DEV Dx Exoom Magnis v1.2
-    stoftestcode_mip: '1651',  # DEV Dx smMIP v1.2
+    stoftestcode_wes: '1802',  # DEV Dx Exoom Magnis v2.0
+    stoftestcode_mip: '1802',  # DEV Dx Exoom Magnis v2.0
 }
 
 # Export meetw protocol steps WES
@@ -83,12 +83,7 @@ sequence_process_types = [
 # Post sequencing workflow
 sequencing_workflow = '1701'  # DEV Dx Illumina Sequencing v1.2
 post_sequencing_workflow = '902'  # DEV Dx Bioinformatica analyses v1.0
-post_bioinf_workflow = {  # Contains workflow and workflow stage (number) for single or trio samples
-    # WES : DEV Dx NGS WES onderzoeken afronden v1.1
-    stoftestcode_wes: {'single': {'workflow': '1401', 'stage': 0}, 'trio': {'workflow': '1401', 'stage': 1}},
-    # MIP : DEV Dx NGS smMIP onderzoeken afronden v1.0
-    stoftestcode_mip: {'single': {'workflow': '1202', 'stage': 0}, 'trio': {'workflow': '1202', 'stage': 0}}
-}
+post_bioinf_workflow = '1803'  # DEV Dx NGS WES onderzoeken afronden v2.0
 
 # Research Onderzoeksindicatie
 research_onderzoeksindicatie_project = {
