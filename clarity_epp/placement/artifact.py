@@ -46,7 +46,7 @@ def route_to_workflow(lims, process_id, workflow):
         #  Remove research artifacts
         route_artifacts = [
             artifact for artifact in artifacts_completed
-            if artifact.samples[0].udf['Dx Stoftest code'] != config.research_stoftest_code  # Asume all samples metadata is identical.
+            if artifact.samples[0].udf['Dx Stoftest code'] != config.stoftestcode_research  # Asume all samples metadata is identical.
         ]
         lims.route_artifacts(route_artifacts, workflow_uri=Workflow(lims, id=config.post_bioinf_workflow).uri)
 
