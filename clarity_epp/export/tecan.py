@@ -84,3 +84,14 @@ def samplesheet(lims, process_id, type, output_file):
                     empty="",
                     message=messages[sample]
                 ))
+    
+    elif type == 'normalise':
+        output_file.write('SourceTubeID;PositionID;PositionIndex\n')
+        for well in clarity_epp.export.utils.sort_96_well_plate(well_plate.keys()):
+            artifact = well_plate[well]
+            for sample in artifact.samples:
+                output_file.write('{sample};{well};{index}\n'.format(
+                    sample=sample.udf['Dx Fractienummer'],
+                    well=well,
+                    index=clarity_epp.export.utils.get_well_index(well, one_based=True)
+                ))
