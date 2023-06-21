@@ -691,8 +691,9 @@ def samplesheet_pool_magnis_pools(lims, process_id, output_file):
 
     # set up multiplier
     multiplier = 1
-    if 'Run type' in process.udf and 'Sp/S1' in process.udf['Run type']:
-        multiplier = 2.5
+    if 'Run type' in process.udf:
+        run_type = re.search(r'\(\*.+\)' ,process.udf['Run type'])
+        multiplier = float(run_type.string[run_type.start()+2:run_type.end()-1])
 
     # print header
     output_file.write('Pool\tContainer\tSample count\tVolume (ul)\n')
