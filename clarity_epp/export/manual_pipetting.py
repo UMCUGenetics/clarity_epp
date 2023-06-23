@@ -689,6 +689,13 @@ def samplesheet_pool_magnis_pools(lims, process_id, output_file):
     """Create manual pipetting samplesheet for pooling magnis pools. Correct for pools with < 8 samples"""
     process = Process(lims, id=process_id)
 
+    # set up multiplier
+    multiplier = 1
+    if 'Run type' in process.udf:
+        run_type = re.search(r'\(\*.+\)' ,process.udf['Run type'])
+        if run_type:
+            multiplier = float(run_type.string[run_type.start()+2:run_type.end()-1])
+
     # print header
     output_file.write('Pool\tContainer\tSample count\tVolume (ul)\n')
 
@@ -706,6 +713,6 @@ def samplesheet_pool_magnis_pools(lims, process_id, output_file):
                 pool=input_artifact.name,
                 container=input_artifact.container.name,
                 sample_count=sample_count,
-                volume=sample_count * 1.25
+                volume=sample_count * 1.25 * multiplier
             )
         )
