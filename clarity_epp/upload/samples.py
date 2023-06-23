@@ -8,6 +8,7 @@ from genologics.entities import Sample, Project, Containertype, Container
 
 from .. import send_email
 import clarity_epp.upload.utils
+import config
 
 
 def from_helix(lims, email_settings, input_file):
@@ -42,7 +43,7 @@ def from_helix(lims, email_settings, input_file):
     else:
         subject = "ERROR Lims Helix Upload: {0}".format(project_name)
         message = "Duplicate project / werklijst. Samples not loaded."
-        send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
+        # send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
         sys.exit(message)
 
     container_type = Containertype(lims, id='2')  # Tube
@@ -75,6 +76,8 @@ def from_helix(lims, email_settings, input_file):
         'Dx Protocolomschrijving': {'column': 'Protocolomschrijving'},
         'Dx Einddatum': {'column': 'Einddatum'},
         'Dx Gerelateerde onderzoeken': {'column': 'Gerelateerde onderzoeken'},
+        'Dx gerelateerd aan oz': {'column': 'Gerelateerd aan'},
+        'Dx gerelateerde oz #': {'column': 'Aantal gerelateerde onderzoeken.'},
     }
     header = input_file.readline().rstrip().split(',')  # expect header on first line
     for udf in udf_column:
@@ -99,6 +102,8 @@ def from_helix(lims, email_settings, input_file):
                 udf_data[udf] = bool(data[udf_column[udf]['index']].strip())
             elif udf == 'Dx Concentratie (ng/ul)':
                 udf_data[udf] = data[udf_column[udf]['index']].replace(',', '.')
+                if udf_data[udf]:
+                    udf_data[udf] = float(udf_data[udf])
             elif udf in ['Dx Monsternummer', 'Dx Fractienummer']:
                 udf_data[udf] = clarity_epp.upload.utils.transform_sample_name(data[udf_column[udf]['index']])
             elif udf == 'Dx Gerelateerde onderzoeken':
@@ -122,6 +127,12 @@ def from_helix(lims, email_settings, input_file):
             udf_data['Dx Handmatig'] = True
         else:
             udf_data['Dx Handmatig'] = False
+
+        # Set 'Dx norm. manueel' udf
+        if udf_data['Dx Concentratie (ng/ul)'] and udf_data['Dx Concentratie (ng/ul)'] < 29.3:
+            udf_data['Dx norm. manueel'] = True
+        else:
+            udf_data['Dx norm. manueel'] = False
 
         # Set 'Dx Familie status' udf
         if udf_data['Dx Onderzoeksreden'] == 'Bevestiging diagnose':
@@ -170,17 +181,37 @@ def from_helix(lims, email_settings, input_file):
         # Set NICU status for sample if related sample is NICU
         else:
             for related_sample in lims.get_samples(udf={'Dx Familienummer': udf_data['Dx Familienummer']}):
-                if(
+                if (
                     'Dx Gerelateerde onderzoeken' in related_sample.udf and
                     udf_data['Dx Onderzoeknummer'] in related_sample.udf['Dx Gerelateerde onderzoeken']
                 ):
                     udf_data['Dx NICU Spoed'] = related_sample.udf['Dx NICU Spoed']
 
+        # Set 'Dx Mengfractie'
+        if udf_data['Dx Stoftest code'] == config.stoftestcode_wes_duplo:
+            udf_data['Dx Mengfractie'] = True
+            for duplo_sample in lims.get_samples(udf={
+                'Dx Persoons ID': udf_data['Dx Persoons ID'],
+                'Dx Onderzoeknummer': udf_data['Dx Onderzoeknummer']
+            }):
+                duplo_sample.udf['Dx Mengfractie'] = True
+                duplo_sample.put()
+
+        elif udf_data['Dx Stoftest code'] == config.stoftestcode_wes:
+            if lims.get_samples(udf={
+                'Dx Persoons ID': udf_data['Dx Persoons ID'],
+                'Dx Onderzoeknummer': udf_data['Dx Onderzoeknummer'],
+                'Dx Mengfractie': True
+            }):
+                udf_data['Dx Mengfractie'] = True
+            else:
+                udf_data['Dx Mengfractie'] = False
+
         # Check other samples from patient
         sample_list = lims.get_samples(udf={'Dx Persoons ID': udf_data['Dx Persoons ID']})
         for sample in sample_list:
             if sample.udf['Dx Monsternummer'] == udf_data['Dx Monsternummer']:
-                if(
+                if (
                     sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving']
                     and sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
                 ):
@@ -193,7 +224,7 @@ def from_helix(lims, email_settings, input_file):
                         '{sample}: Monsternummer hetzelfde, Protocolomschrijving uniek.'.format(sample=sample.name),
                         udf_data['Dx Import warning']
                     ])
-            elif(
+            elif (
                 sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving']
                 and sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
             ):
@@ -222,5 +253,7 @@ def from_helix(lims, email_settings, input_file):
                 udf_data['Dx Stoftest code']
             )
 
-    # Send final email
-    send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
+    # # Send final email
+    # send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
+    print(subject)
+    print(message)
