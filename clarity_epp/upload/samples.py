@@ -255,4 +255,3 @@ def from_helix(lims, email_settings, input_file):
 
     # Send final email
     send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
-
