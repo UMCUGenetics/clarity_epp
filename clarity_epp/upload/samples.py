@@ -43,7 +43,7 @@ def from_helix(lims, email_settings, input_file):
     else:
         subject = "ERROR Lims Helix Upload: {0}".format(project_name)
         message = "Duplicate project / werklijst. Samples not loaded."
-        # send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
+        send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
         sys.exit(message)
 
     container_type = Containertype(lims, id='2')  # Tube
@@ -253,7 +253,6 @@ def from_helix(lims, email_settings, input_file):
                 udf_data['Dx Stoftest code']
             )
 
-    # # Send final email
-    # send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
-    print(subject)
-    print(message)
+    # Send final email
+    send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
+
