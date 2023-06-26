@@ -192,7 +192,8 @@ def from_helix(lims, email_settings, input_file):
             udf_data['Dx Mengfractie'] = True
             for duplo_sample in lims.get_samples(udf={
                 'Dx Persoons ID': udf_data['Dx Persoons ID'],
-                'Dx Onderzoeknummer': udf_data['Dx Onderzoeknummer']
+                'Dx Onderzoeknummer': udf_data['Dx Onderzoeknummer'],
+                'Dx Stoftest code': config.stoftestcode_wes,
             }):
                 duplo_sample.udf['Dx Mengfractie'] = True
                 duplo_sample.put()
@@ -201,7 +202,7 @@ def from_helix(lims, email_settings, input_file):
             if lims.get_samples(udf={
                 'Dx Persoons ID': udf_data['Dx Persoons ID'],
                 'Dx Onderzoeknummer': udf_data['Dx Onderzoeknummer'],
-                'Dx Mengfractie': True
+                'Dx Stoftest code': config.stoftestcode_wes_duplo,
             }):
                 udf_data['Dx Mengfractie'] = True
             else:
@@ -254,4 +255,6 @@ def from_helix(lims, email_settings, input_file):
             )
 
     # Send final email
+    print(subject)
+    print(message)
     send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
