@@ -14,6 +14,7 @@ ${PROCESS.UDF.Read 2 Cycles}
 [Settings]
 AdapterRead1,${PROCESS.UDF.Adapter}
 AdapterRead2,${PROCESS.UDF.Adapter Read 2}
+FindAdaptersWithIndels,true
 [Data]
 </HEADER_BLOCK>
 <HEADER>
