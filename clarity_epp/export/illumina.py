@@ -185,7 +185,7 @@ def update_samplesheet(lims, process_id, artifact_id, output_file, conversion_to
     # Setup custom settings
     custom_settings = ''
 
-    if conversion_tool == 'bcl2fastq':
+    if conversion_tool == 'bcl2fastq' and trim_last_base:
         custom_settings = (
             'Read1EndWithCycle,{read_1_value}\n'
             'Read2EndWithCycle,{read_2_value}\n'
