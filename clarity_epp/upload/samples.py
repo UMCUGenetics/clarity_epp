@@ -128,11 +128,12 @@ def from_helix(lims, email_settings, input_file):
         else:
             udf_data['Dx Handmatig'] = False
 
-        # Set 'Dx norm. manueel' udf
-        if udf_data['Dx Concentratie (ng/ul)'] and udf_data['Dx Concentratie (ng/ul)'] < 29.3:
-            udf_data['Dx norm. manueel'] = True
-        else:
-            udf_data['Dx norm. manueel'] = False
+        # Set 'Dx norm. manueel' udf for samples with Dx Concentratie (ng/ul)
+        if udf_data['Dx Concentratie (ng/ul)']:
+            if udf_data['Dx Concentratie (ng/ul)'] < 29.3:
+                udf_data['Dx norm. manueel'] = True
+            else:
+                udf_data['Dx norm. manueel'] = False
 
         # Set 'Dx Familie status' udf
         if udf_data['Dx Onderzoeksreden'] == 'Bevestiging diagnose':
