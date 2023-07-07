@@ -48,7 +48,9 @@ def export_hamilton(args):
 
 def export_illumina(args):
     """Export (updated) illumina samplesheet."""
-    clarity_epp.export.illumina.update_samplesheet(lims, args.process_id, args.artifact_id, args.output_file)
+    clarity_epp.export.illumina.update_samplesheet(
+        lims, args.process_id, args.artifact_id, args.output_file, args.conversion_tool
+    )
 
 
 def export_labels(args):
@@ -271,6 +273,9 @@ if __name__ == "__main__":
     )
     parser_export_illumina.add_argument('process_id', help='Clarity lims process id')
     parser_export_illumina.add_argument('artifact_id', help='Clarity lims samplesheet artifact id')
+    parser_export_illumina.add_argument(
+        '-c', '--conversion_tool', choices=['bcl2fastq', 'bclconvert'], default='bcl2fastq', help='Illumina conversion tool'
+    )
     parser_export_illumina.set_defaults(func=export_illumina)
 
     parser_export_labels = subparser_export.add_parser('labels', help='Export container labels', parents=[output_parser])
