@@ -40,3 +40,21 @@ def storage_location(lims, process_id, output_file):
             tray=storage_location[0][2:6],  # Select 4 digits from: CB[1-9][1-9][1-9][1-9]KK
             pos=storage_location[1]
         ))
+
+
+def nunc_mix_sample(lims, process_id, output_file):
+    """Generate (mix) sample nunc label file."""
+    process = Process(lims, id=process_id)
+
+    #Write empty header
+    output_file.write('\n')
+
+    for artifact in process.analytes()[0]:
+        sample_mix = False
+        if len(artifact.samples) > 1:
+            sample_mix = True
+        
+        if sample_mix:
+            output_file.write(artifact.name)
+        else:
+            output_file.write(artifact.samples[0].udf['Dx Monsternummer'])
