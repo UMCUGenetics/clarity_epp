@@ -9,7 +9,10 @@ def container(lims, process_id, output_file, description=''):
     for index, container in enumerate(sorted(process.output_containers(), key=lambda container: container.id, reverse=True)):
         if description:
             if ',' in description:
-                output_file.write('{description}\t{container}\r\n'.format(description=description.split(',')[index], container=container.name))
+                output_file.write('{description}\t{container}\r\n'.format(
+                    description=description.split(',')[index], 
+                    container=container.name
+                ))
             else:
                 output_file.write('{description}\t{container}\r\n'.format(description=description, container=container.name))
         else:
@@ -22,7 +25,11 @@ def container_sample(lims, process_id, output_file, description=''):
     for container in process.output_containers():
         for artifact in container.placements.values():
             if description:
-                output_file.write('{description}\t{sample}\t{container}\r\n'.format(description=description, container=container.name, sample=artifact.name))
+                output_file.write('{description}\t{sample}\t{container}\r\n'.format(
+                    description=description, 
+                    container=container.name, 
+                    sample=artifact.name
+                ))
             else:
                 output_file.write('{sample}\t{container}\r\n'.format(container=container.name, sample=artifact.name))
 
