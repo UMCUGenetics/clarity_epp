@@ -810,4 +810,4 @@ def samplesheet_normalization_mix(lims, process_id, output_file):
     # Write output file per sample sorted for well
     for well in clarity_epp.export.utils.sort_96_well_plate(output.keys()):
         for sample in output[well]:
-            output_file.write('{output}\n').format(output=output[well][sample])
+            output_file.write(output[well][sample])
