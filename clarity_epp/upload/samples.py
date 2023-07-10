@@ -86,6 +86,7 @@ def from_helix(lims, email_settings, input_file):
     # Setup email
     subject = "Lims Helix Upload: {0}".format(project_name)
     message = "Project: {0}\n\nSamples:\n".format(project_name)
+    sample_messages = {}
 
     # Parse samples
     for line in input_file:
@@ -191,21 +192,49 @@ def from_helix(lims, email_settings, input_file):
         # Set 'Dx Mengfractie'
         if udf_data['Dx Stoftest code'] == config.stoftestcode_wes_duplo:
             udf_data['Dx Mengfractie'] = True
-            for duplo_sample in lims.get_samples(udf={
+
+            # Find WES sample(s)
+            duplo_samples = lims.get_samples(udf={
                 'Dx Persoons ID': udf_data['Dx Persoons ID'],
                 'Dx Onderzoeknummer': udf_data['Dx Onderzoeknummer'],
                 'Dx Stoftest code': config.stoftestcode_wes,
-            }):
-                duplo_sample.udf['Dx Mengfractie'] = True
-                duplo_sample.put()
+            })
+            if duplo_samples:  # Set duplo status for WES samples
+                for duplo_sample in duplo_samples:
+                    duplo_sample.udf['Dx Mengfractie'] = True
+                    duplo_sample.put()
+                    # Check Dx Monsternummer
+                    if duplo_sample.udf['Dx Monsternummer'] == udf_data['Dx Monsternummer']:
+                        udf_data['Dx Import warning'] = '; '.join([
+                            'WES en WES_duplo zelfde monster ({sample}).'.format(sample=duplo_sample.name),
+                            udf_data['Dx Import warning']
+                        ])
+            else:  # Set import warning if no WES samples found
+                udf_data['Dx Import warning'] = '; '.join(['Alleen WES_duplo', udf_data['Dx Import warning']])
 
         elif udf_data['Dx Stoftest code'] == config.stoftestcode_wes:
-            if lims.get_samples(udf={
+            # Find WES_duplo sample(s)
+            duplo_samples = lims.get_samples(udf={
                 'Dx Persoons ID': udf_data['Dx Persoons ID'],
                 'Dx Onderzoeknummer': udf_data['Dx Onderzoeknummer'],
                 'Dx Stoftest code': config.stoftestcode_wes_duplo,
-            }):
+            })
+            if duplo_samples:  # Set duplo status for WES sample
                 udf_data['Dx Mengfractie'] = True
+                for duplo_sample in duplo_samples:
+                    # Remove import warning from WES_duplo samples
+                    if duplo_sample.udf['Dx Import warning'] and 'Alleen WES_duplo' in duplo_sample.udf['Dx Import warning']:
+                        import_warning = duplo_sample.udf['Dx Import warning'].split(';')
+                        import_warning.remove('Alleen WES_duplo')
+                        duplo_sample.udf['Dx Import warning'] = '; '.join(import_warning)
+                        duplo_sample.put()
+
+                    # Check Dx Monsternummer
+                    if duplo_sample.udf['Dx Monsternummer'] == udf_data['Dx Monsternummer']:
+                        udf_data['Dx Import warning'] = '; '.join([
+                            'WES en WES_duplo zelfde monster ({sample}).'.format(sample=duplo_sample.name),
+                            udf_data['Dx Import warning']
+                        ])
             else:
                 udf_data['Dx Mengfractie'] = False
 
@@ -218,12 +247,14 @@ def from_helix(lims, email_settings, input_file):
                     and sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
                 ):
                     udf_data['Dx Import warning'] = '; '.join([
-                        '{sample}: Monsternummer hetzelfde, Protocolomschrijving hetzelfde.'.format(sample=sample.name),
+                        'Let op herhaling of dubbele indicatie ({sample}).'.format(sample=sample.name),
                         udf_data['Dx Import warning']
                     ])
-                else:
+                elif not sample.udf['Dx Mengfractie']:
                     udf_data['Dx Import warning'] = '; '.join([
-                        '{sample}: Monsternummer hetzelfde, Protocolomschrijving uniek.'.format(sample=sample.name),
+                        'Eerder onderzoek met protocolomschrijving {protocol} ({sample}).'.format(
+                            protocol=sample.udf['Dx Protocolomschrijving'], sample=sample.name
+                        ),
                         udf_data['Dx Import warning']
                     ])
             elif (
@@ -231,7 +262,7 @@ def from_helix(lims, email_settings, input_file):
                 and sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
             ):
                 udf_data['Dx Import warning'] = '; '.join([
-                    '{sample}: Monsternummer uniek, Protocolomschrijving hetzelfde.'.format(sample=sample.name),
+                    'Let op herhaling of dubbele indicatie ({sample}).'.format(sample=sample.name),
                     udf_data['Dx Import warning']
                 ])
 
@@ -242,18 +273,19 @@ def from_helix(lims, email_settings, input_file):
             sample = Sample.create(lims, container=container, position='1:1', project=project, name=sample_name, udf=udf_data)
             lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
             if udf_data['Dx Import warning']:
-                message += "{0}\tCreated and added to workflow: {1}.\tImport warning: {2}\n".format(
+                sample_messages[sample.name] = "{0}\tCreated and added to workflow: {1}.\tImport warning: {2}".format(
                     sample.name,
                     workflow.name,
                     udf_data['Dx Import warning']
                 )
             else:
-                message += "{0}\tCreated and added to workflow: {1}.\n".format(sample.name, workflow.name)
+                sample_messages[sample.name] = "{0}\tCreated and added to workflow: {1}.".format(sample.name, workflow.name)
         else:
-            message += "{0}\tERROR: Stoftest code {1} is not linked to a workflow.\n".format(
+            sample_messages[sample_name] += "{0}\tERROR: Stoftest code {1} is not linked to a workflow.".format(
                 sample_name,
                 udf_data['Dx Stoftest code']
             )
 
     # Send final email
+    message += '\n'.join(sample_messages.values())
     send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
