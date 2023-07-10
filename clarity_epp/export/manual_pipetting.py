@@ -726,3 +726,88 @@ def samplesheet_pool_magnis_pools(lims, process_id, output_file):
                 volume=sample_count * 1.25
             )
         )
+
+
+def samplesheet_normalization_mix(lims, process_id, output_file):
+    """"Create manual pipetting samplesheet for normalizing mix fraction samples."""
+    process = Process(lims, id=process_id)
+    
+    output_file.write(
+        'Monsternummer\tConcentratie (ng/ul)\tVolume sample (ul)\tVolume low TE (ul)\tContainer\tWell\n'
+    )
+
+    samples = {}
+
+    # Find all QC process types
+    qc_process_types = clarity_epp.export.utils.get_process_types(lims, ['Dx Qubit QC', 'Dx Tecan'])
+
+    # Find concentration in last QC process
+    for input_artifact in process.all_inputs():
+        for input_sample in input_artifact.samples:
+            qc_processes = lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id)
+            if qc_processes:
+                qc_process = sorted(qc_processes, key=lambda process: int(process.id.split('-')[-1]))[-1]
+                for qc_artifact in qc_process.outputs_per_input(input_artifact.id):
+                    for qc_sample in qc_artifact.samples:
+                        if qc_sample.name == input_sample.name:
+                            concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+            
+            else:
+                parent_process = input_artifact.parent_process
+                for parent_artifact in parent_process.all_inputs():
+                    qc_processes = lims.get_processes(type=qc_process_types, inputartifactlimsid=parent_artifact.id)
+                    if qc_processes:
+                        qc_process = sorted(qc_processes, key=lambda process: int(process.id.split('-')[-1]))[-1]
+                        for qc_artifact in qc_process.outputs_per_input(parent_artifact.id):
+                            for qc_sample in qc_artifact.samples:
+                                if qc_sample.name == input_sample.name:
+                                    concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+            
+            samples[input_sample.udf['Dx Monsternummer']] = {'conc': concentration}
+    
+    # Calculation of pipetting volumes
+    for input_artifact in process.all_inputs():
+        dividend = 400
+        minuend = 50
+        sample_mix = False
+
+        if len(input_artifact.samples) > 1:
+            sample_mix = True
+
+        if sample_mix:
+            dividend = 200
+            minuend = 25
+
+        for input_sample in input_artifact.samples:
+            sample_volume = dividend / samples[input_sample.udf['Dx Monsternummer']]['conc']
+            low_te_volume = minuend - sample_volume
+            samples[input_sample.udf['Dx Monsternummer']]['sample_volume'] = sample_volume
+            samples[input_sample.udf['Dx Monsternummer']]['low_te_volume'] = low_te_volume
+    
+    # Compose output per sample in well
+    output = {}
+    for output_artifact in process.all_outputs():
+        if output_artifact.type == 'Analyte':
+            for output_sample in output_artifact.samples:
+                monster = output_sample.udf['Dx Monsternummer']
+                well = ''.join(output_artifact.location[1].split(':'))
+                output_data = (
+                    '{sample}\t{concentration:.2f}\t{sample_volume:.2f}\t{low_te_volume:.2f}\t'
+                    '{container}\t{well}\n'
+                ).format(
+                    sample=monster,
+                    concentration=samples[monster]['conc'],
+                    sample_volume=samples[monster]['sample_volume'],
+                    low_te_volume=samples[monster]['low_te_volume'],
+                    container=output_artifact.location[0].name,
+                    well=well
+                )
+                if well in output:
+                    output[well][monster] = output_data
+                else:
+                    output[well] = {monster: output_data}
+    
+    # Write output file per sample sorted for well
+    for well in clarity_epp.export.utils.sort_96_well_plate(output.keys()):
+        for sample in output[well]:
+            output_file.write('{output}\n').format(output=output[well][sample])
