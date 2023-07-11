@@ -41,48 +41,88 @@ def samplesheet(lims, process_id, type, output_file):
             ))
 
     elif type == 'filling_out_purify':
+        # Samplesheet Tecan Fluent 480 'Dx Uitvullen en zuiveren' (mix) samples
         output_file.write(
             'SourceTubeID;VolSample;VolWater;PositionIndex;MengID\n'
         )
+
+        # Find all QC process types
+        qc_process_types = clarity_epp.export.utils.get_process_types(lims, ['Dx Qubit QC', 'Dx Tecan Spark 10M QC'])
+
+        samples = {}
+        # Find concentration in last QC process
+        for input_artifact in process.all_inputs():
+            for input_sample in input_artifact.samples:
+                qc_processes = lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id)
+                if qc_processes:
+                    qc_process = sorted(qc_processes, key=lambda process: int(process.id.split('-')[-1]))[-1]
+                    for qc_artifact in qc_process.outputs_per_input(input_artifact.id):
+                        for qc_sample in qc_artifact.samples:
+                            if qc_sample.name == input_sample.name:
+                                concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+
+                else:
+                    parent_process = input_artifact.parent_process
+                    for parent_artifact in parent_process.all_inputs():
+                        qc_processes = lims.get_processes(type=qc_process_types, inputartifactlimsid=parent_artifact.id)
+                        if qc_processes:
+                            qc_process = sorted(qc_processes, key=lambda process: int(process.id.split('-')[-1]))[-1]
+                            for qc_artifact in qc_process.outputs_per_input(parent_artifact.id):
+                                for qc_sample in qc_artifact.samples:
+                                    if qc_sample.name == input_sample.name:
+                                        concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+                        else:
+                            # No QC process found, use Helix concentration
+                            concentration = input_sample.udf['Dx Concentratie (ng/ul)']
+
+                samples[input_sample.udf['Dx Monsternummer']] = {'conc': concentration}
+
         for well in clarity_epp.export.utils.sort_96_well_plate(well_plate.keys()):
             artifact = well_plate[well]
             sample_mix = False
             if len(artifact.samples) > 1:
                 sample_mix = True
-            sample_volumes = {}
-            water_volumes = {}
-            mix_names = {}
-            messages = {}
+            
+            if sample_mix:
+                dividend = 880
+                max_volume = 30
+            else:
+                dividend = 1760
+                max_volume = 60
+
             for sample in artifact.samples:
-                messages[sample] = ""
-                conc = sample.udf['Dx Concentratie (ng/ul)']
+                monster = sample.udf['Dx Monsternummer']
+                samples[monster]['message'] = ''
                 if sample_mix:
-                    dividend = 880
-                    max_volume = 30
-                    mix_names[sample] = artifact.name
+                    samples[monster]['mix_names'] = input_artifact.name
                 else:
-                    dividend = 1760
-                    max_volume = 60
-                    mix_names[sample] = sample.udf['Dx Monsternummer']
-                calc_sample = dividend / conc
+                    samples[monster]['mix_names'] = monster
+                
+                # Calculation of pipetting volumes
+                calc_sample = dividend / samples[monster]['conc']
                 if calc_sample < 4:
                     volume_sample = 4
                 elif calc_sample > max_volume:
                     volume_sample = max_volume
-                    messages[sample] = ("Conc. too low - volume= {calc_sample} ul".format(calc_sample=calc_sample))
+                    samples[monster]['message'] = (
+                        'Conc. too low - volume= {calc_sample} ul'.format(calc_sample=calc_sample)
+                    )
                 else:
                     volume_sample = calc_sample
-                sample_volumes[sample] = volume_sample
-                water_volumes[sample] = max_volume - volume_sample
+                samples[monster]['sample_volume'] = volume_sample
+                volume_water = max_volume - volume_sample
+                samples[monster]['water_volume'] = volume_water
+
             for sample in artifact.samples:
+                monster = sample.udf['Dx Monsternummer']
                 output_file.write('{sample};{volume_sample:.2f};{volume_water:.2f};{index};{name};{empty};{message}\n'.format(
                     sample=sample.udf['Dx Fractienummer'],
-                    volume_sample=sample_volumes[sample],
-                    volume_water=water_volumes[sample],
+                    volume_sample=samples[monster]['sample_volume'],
+                    volume_water=samples[monster]['water_volume'],
                     index=clarity_epp.export.utils.get_well_index(well, one_based=True),
-                    name=mix_names[sample],
-                    empty="",
-                    message=messages[sample]
+                    name=samples[monster]['mix_names'],
+                    empty='',
+                    message=samples[monster]['message']
                 ))
     
     elif type == 'normalise':
