@@ -739,7 +739,7 @@ def samplesheet_normalization_mix(lims, process_id, output_file):
     samples = {}
 
     # Find all QC process types
-    qc_process_types = clarity_epp.export.utils.get_process_types(lims, ['Dx Qubit QC', 'Dx Tecan'])
+    qc_process_types = clarity_epp.export.utils.get_process_types(lims, ['Dx Qubit QC', 'Dx Tecan Spark 10M QC'])
 
     # Find concentration in last QC process
     for input_artifact in process.all_inputs():
