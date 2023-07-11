@@ -792,15 +792,14 @@ def samplesheet_normalization_mix(lims, process_id, output_file):
                 monster = output_sample.udf['Dx Monsternummer']
                 well = ''.join(output_artifact.location[1].split(':'))
                 output_data = (
-                    '{sample}\t{concentration:.2f}\t{sample_volume:.2f}\t{low_te_volume:.2f}\t'
-                    '{container}\t{well}\n'
-                ).format(
-                    sample=monster,
-                    concentration=samples[monster]['conc'],
-                    sample_volume=samples[monster]['sample_volume'],
-                    low_te_volume=samples[monster]['low_te_volume'],
-                    container=output_artifact.location[0].name,
-                    well=well
+                    '{sample}\t{concentration:.2f}\t{sample_volume:.2f}\t{low_te_volume:.2f}\t{container}\t{well}\n'.format(
+                        sample=monster,
+                        concentration=samples[monster]['conc'],
+                        sample_volume=samples[monster]['sample_volume'],
+                        low_te_volume=samples[monster]['low_te_volume'],
+                        container=output_artifact.location[0].name,
+                        well=well
+                    )
                 )
                 if well in output:
                     output[well][monster] = output_data
