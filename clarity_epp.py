@@ -238,6 +238,11 @@ def placement_tecan(args):
     clarity_epp.placement.tecan.place_artifacts(lims, args.process_id)
 
 
+def placement_pipetting(args):
+    """Check pipetted input and output nuncs."""
+    clarity_epp.placement.pipetting.check_nunc_input_nunc_output(lims, args.process_id)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
@@ -449,6 +454,10 @@ if __name__ == "__main__":
     parser_placement_tecan = subparser_placement.add_parser('tecan', help='Placement of samples in tecan step')
     parser_placement_tecan.add_argument('process_id', help='Clarity lims process id')
     parser_placement_tecan.set_defaults(func=placement_tecan)
+
+    parser_placement_pipetting = subparser_placement.add_parser('pipetting', help='Check pipetting input and output')
+    parser_placement_pipetting.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_pipetting.set_defaults(func=placement_pipetting)
 
     args = parser.parse_args()
     args.func(args)
