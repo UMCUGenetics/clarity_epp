@@ -223,7 +223,7 @@ def from_helix(lims, email_settings, input_file):
                 udf_data['Dx Mengfractie'] = True
                 for duplo_sample in duplo_samples:
                     # Remove import warning from WES_duplo samples
-                    if duplo_sample.udf['Dx Import warning'] and 'Alleen WES_duplo' in duplo_sample.udf['Dx Import warning']:
+                    if 'Dx Import warning' in duplo_sample.udf and 'Alleen WES_duplo' in duplo_sample.udf['Dx Import warning']:
                         import_warning = duplo_sample.udf['Dx Import warning'].split(';')
                         import_warning.remove('Alleen WES_duplo')
                         duplo_sample.udf['Dx Import warning'] = '; '.join(import_warning)
