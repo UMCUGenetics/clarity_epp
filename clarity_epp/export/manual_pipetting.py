@@ -767,22 +767,40 @@ def samplesheet_normalization_mix(lims, process_id, output_file):
     
     # Calculation of pipetting volumes
     for input_artifact in process.all_inputs():
-        dividend = 400
-        minuend = 50
+        output_artifact = process.outputs_per_input(input_artifact.id, Analyte=True)[0]  # assume one artifact per input
+        dividend = float(output_artifact.udf['Dx Input (ng)']) / len(input_artifact.samples)
+        minuend = float(output_artifact.udf['Dx Eindvolume (ul)']) / len(input_artifact.samples)
         sample_mix = False
 
         if len(input_artifact.samples) > 1:
             sample_mix = True
 
-        if sample_mix:
-            dividend = 200
-            minuend = 25
-
-        for input_sample in input_artifact.samples:
-            sample_volume = dividend / samples[input_sample.udf['Dx Monsternummer']]['conc']
+        input_sample_1 = input_artifact.samples[0]
+        if 'Dx sample vol. #1' in output_artifact.udf:
+            dividend = (
+                samples[input_sample_1.udf['Dx Monsternummer']]['conc'] * float(output_artifact.udf['Dx sample vol. #1'])
+            )
+        sample_volume = dividend / samples[input_sample_1.udf['Dx Monsternummer']]['conc']
+        if sample_volume > minuend:
+            low_te_volume = 0
+        else:
             low_te_volume = minuend - sample_volume
-            samples[input_sample.udf['Dx Monsternummer']]['sample_volume'] = sample_volume
-            samples[input_sample.udf['Dx Monsternummer']]['low_te_volume'] = low_te_volume
+        samples[input_sample_1.udf['Dx Monsternummer']]['sample_volume'] = sample_volume
+        samples[input_sample_1.udf['Dx Monsternummer']]['low_te_volume'] = low_te_volume
+        
+        if sample_mix:
+            input_sample_2 = input_artifact.samples[1]
+            if 'Dx sample vol. #2' in output_artifact.udf:
+                dividend = (
+                    samples[input_sample_2.udf['Dx Monsternummer']]['conc'] * float(output_artifact.udf['Dx sample vol. #2'])
+                )
+            sample_volume = dividend / samples[input_sample_2.udf['Dx Monsternummer']]['conc']
+            if sample_volume > minuend:
+                low_te_volume = 0
+            else:
+                low_te_volume = minuend - sample_volume
+            samples[input_sample_2.udf['Dx Monsternummer']]['sample_volume'] = sample_volume
+            samples[input_sample_2.udf['Dx Monsternummer']]['low_te_volume'] = low_te_volume
     
     # Compose output per sample in well
     output = {}
