@@ -32,4 +32,6 @@ def check_nunc_input_nunc_output(lims, process_id):
             if input_combined and output_nunc:
                 if input_combined == output_nunc and output_nunc == fraction:
                     output_artifact.udf['Dx pipetteer check'] = True
-                    output_artifact.put()
+                else:
+                    output_artifact.udf['Dx pipetteer check'] = False
+                output_artifact.put()
