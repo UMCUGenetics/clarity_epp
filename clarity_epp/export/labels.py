@@ -62,6 +62,6 @@ def nunc_mix_sample(lims, process_id, output_file):
             sample_mix = True
         
         if sample_mix:
-            output_file.write(artifact.name)
+            output_file.write('{sample}\n'.format(sample=artifact.name))
         else:
-            output_file.write(artifact.samples[0].udf['Dx Monsternummer'])
+            output_file.write('{sample}\n'.format(sample=artifact.samples[0].udf['Dx Monsternummer']))
