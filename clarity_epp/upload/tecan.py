@@ -137,3 +137,29 @@ def results_purify_normalise(lims, process_id):
         artifact.udf['Dx Concentratie fluorescentie (ng/ul)'] = tecan_result[sample.udf['Dx Fractienummer']]['conc']
         artifact.udf['Dx QC status'] = tecan_result[sample.udf['Dx Fractienummer']]['norm']
         artifact.put()
+
+
+def results_purify_mix(lims, process_id):
+    """Upload tecan results to artifacts (mix samples)."""
+    process = Process(lims, id=process_id)
+
+    # Find and parse Tecan Fluent 480 Output
+    tecan_result = {}
+    for result_file in process.result_files():
+        if result_file.name == 'Tecan Fluent 480 Output':
+            file_data = lims.get_file_contents(result_file.files[0].id).split('\n')
+            header = file_data[0].rstrip().split(';')
+            for line in file_data[1:]:
+                if line.rstrip():
+                    data = line.rstrip().split(';')
+                    tecan_result[data[header.index('SampleID')]] = {
+                        'conc': float(data[header.index('Concentratie(ng/ul)')]),
+                        'norm': txt_to_bool(data[header.index('Normalisatie')])
+                    }
+            break  # File found exit loop
+
+    # Set concentration values on artifacts
+    for artifact in process.analytes()[0]:
+        artifact.udf['Dx Concentratie fluorescentie (ng/ul)'] = tecan_result[artifact.name]['conc']
+        artifact.udf['Dx QC status'] = tecan_result[artifact.name]['norm']
+        artifact.put()

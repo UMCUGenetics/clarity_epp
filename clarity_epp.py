@@ -155,6 +155,8 @@ def upload_tecan_results(args):
         clarity_epp.upload.tecan.results_qc(lims, args.process_id)
     elif args.type == 'purify_normalise':
         clarity_epp.upload.tecan.results_purify_normalise(lims, args.process_id)
+    elif args.type == 'purify_mix':
+        clarity_epp.upload.tecan.results_purify_mix(lims, args.process_id)
 
 
 def upload_tapestation_results(args):
@@ -385,7 +387,7 @@ if __name__ == "__main__":
 
     parser_upload_tecan = subparser_upload.add_parser('tecan', help='Upload tecan results')
     parser_upload_tecan.add_argument('process_id', help='Clarity lims process id')
-    parser_upload_tecan.add_argument('type', choices=['qc', 'purify_normalise'], help='Tecan process type')
+    parser_upload_tecan.add_argument('type', choices=['qc', 'purify_normalise', 'purify_mix'], help='Tecan process type')
     parser_upload_tecan.set_defaults(func=upload_tecan_results)
 
     parser_upload_magnis = subparser_upload.add_parser('magnis', help='Upload magnis results')
