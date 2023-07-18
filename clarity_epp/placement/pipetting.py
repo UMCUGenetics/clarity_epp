@@ -11,6 +11,14 @@ def check_nunc_input_nunc_output(lims, process_id):
             input_nunc_2 = ''
             output_nunc = ''
             input_combined = ''
+            if len(output_artifact.samples) > 1:
+                fraction = ('{fraction1}-{fraction2}'.format(
+                    fraction1=(output_artifact.samples[0].udf['Dx Fractienummer']), 
+                    fraction2=(output_artifact.samples[1].udf['Dx Fractienummer'])
+                    )
+                )
+            else:
+                fraction = output_artifact.samples[0].udf['Dx Fractienummer']
             if 'Dx Sample 1 norm' in output_artifact.udf:
                 input_nunc_1 = output_artifact.udf['Dx Sample 1 norm']
             if 'Dx Sample 2 norm' in output_artifact.udf:
@@ -22,6 +30,6 @@ def check_nunc_input_nunc_output(lims, process_id):
             elif input_nunc_1:
                 input_combined = input_nunc_1
             if input_combined and output_nunc:
-                if input_combined == output_nunc:
+                if input_combined == output_nunc and output_nunc == fraction:
                     output_artifact.udf['Dx pipetteer check'] = True
                     output_artifact.put()
