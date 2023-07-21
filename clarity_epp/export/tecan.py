@@ -57,9 +57,10 @@ def samplesheet(lims, process_id, type, output_file):
                 if qc_processes:
                     qc_process = sorted(qc_processes, key=lambda process: int(process.id.split('-')[-1]))[-1]
                     for qc_artifact in qc_process.outputs_per_input(input_artifact.id):
-                        for qc_sample in qc_artifact.samples:
-                            if qc_sample.name == input_sample.name:
-                                concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+                        if input_sample.name in qc_artifact.name:
+                            for qc_sample in qc_artifact.samples:
+                                if qc_sample.name == input_sample.name:
+                                    concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
 
                 else:
                     parent_process = input_artifact.parent_process
@@ -68,9 +69,10 @@ def samplesheet(lims, process_id, type, output_file):
                         if qc_processes:
                             qc_process = sorted(qc_processes, key=lambda process: int(process.id.split('-')[-1]))[-1]
                             for qc_artifact in qc_process.outputs_per_input(parent_artifact.id):
-                                for qc_sample in qc_artifact.samples:
-                                    if qc_sample.name == input_sample.name:
-                                        concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+                                if input_sample.name in qc_artifact.name:
+                                    for qc_sample in qc_artifact.samples:
+                                        if qc_sample.name == input_sample.name:
+                                            concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
                         else:
                             # No QC process found, use Helix concentration
                             concentration = input_sample.udf['Dx Concentratie (ng/ul)']
