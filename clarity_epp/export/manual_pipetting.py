@@ -756,14 +756,18 @@ def samplesheet_normalization_mix(lims, process_id, output_file):
             else:
                 parent_process = input_artifact.parent_process
                 for parent_artifact in parent_process.all_inputs():
-                    qc_processes = lims.get_processes(type=qc_process_types, inputartifactlimsid=parent_artifact.id)
-                    if qc_processes:
-                        qc_process = sorted(qc_processes, key=lambda process: int(process.id.split('-')[-1]))[-1]
-                        for qc_artifact in qc_process.outputs_per_input(parent_artifact.id):
-                            if input_sample.name in qc_artifact.name:
-                                for qc_sample in qc_artifact.samples:
-                                    if qc_sample.name == input_sample.name:
-                                        concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+                    if parent_artifact.name == input_sample.name:
+                        qc_processes = lims.get_processes(type=qc_process_types, inputartifactlimsid=parent_artifact.id)
+                        if qc_processes:
+                            qc_process = sorted(qc_processes, key=lambda process: int(process.id.split('-')[-1]))[-1]
+                            for qc_artifact in qc_process.outputs_per_input(parent_artifact.id):
+                                if input_sample.name in qc_artifact.name:
+                                    for qc_sample in qc_artifact.samples:
+                                        if qc_sample.name == input_sample.name:
+                                            concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+                        else:
+                            # No QC process found, use Helix concentration
+                            concentration = input_sample.udf['Dx Concentratie (ng/ul)']
             
             samples[input_sample.udf['Dx Monsternummer']] = {'conc': concentration}
     
@@ -779,10 +783,12 @@ def samplesheet_normalization_mix(lims, process_id, output_file):
 
         input_sample_1 = input_artifact.samples[0]
         if 'Dx sample vol. #1' in output_artifact.udf:
-            dividend = (
+            dividend_sample_1 = (
                 samples[input_sample_1.udf['Dx Monsternummer']]['conc'] * float(output_artifact.udf['Dx sample vol. #1'])
             )
-        sample_volume = dividend / samples[input_sample_1.udf['Dx Monsternummer']]['conc']
+        else:
+            dividend_sample_1 = dividend
+        sample_volume = dividend_sample_1 / samples[input_sample_1.udf['Dx Monsternummer']]['conc']
         if sample_volume > minuend:
             low_te_volume = 0
         else:
@@ -793,10 +799,12 @@ def samplesheet_normalization_mix(lims, process_id, output_file):
         if sample_mix:
             input_sample_2 = input_artifact.samples[1]
             if 'Dx sample vol. #2' in output_artifact.udf:
-                dividend = (
+                dividend_sample_2 = (
                     samples[input_sample_2.udf['Dx Monsternummer']]['conc'] * float(output_artifact.udf['Dx sample vol. #2'])
                 )
-            sample_volume = dividend / samples[input_sample_2.udf['Dx Monsternummer']]['conc']
+            else:
+                dividend_sample_2 = dividend
+            sample_volume = dividend_sample_2 / samples[input_sample_2.udf['Dx Monsternummer']]['conc']
             if sample_volume > minuend:
                 low_te_volume = 0
             else:

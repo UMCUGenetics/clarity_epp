@@ -65,17 +65,18 @@ def samplesheet(lims, process_id, type, output_file):
                 else:
                     parent_process = input_artifact.parent_process
                     for parent_artifact in parent_process.all_inputs():
-                        qc_processes = lims.get_processes(type=qc_process_types, inputartifactlimsid=parent_artifact.id)
-                        if qc_processes:
-                            qc_process = sorted(qc_processes, key=lambda process: int(process.id.split('-')[-1]))[-1]
-                            for qc_artifact in qc_process.outputs_per_input(parent_artifact.id):
-                                if input_sample.name in qc_artifact.name:
-                                    for qc_sample in qc_artifact.samples:
-                                        if qc_sample.name == input_sample.name:
-                                            concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
-                        else:
-                            # No QC process found, use Helix concentration
-                            concentration = input_sample.udf['Dx Concentratie (ng/ul)']
+                        if parent_artifact.name == input_sample.name:
+                            qc_processes = lims.get_processes(type=qc_process_types, inputartifactlimsid=parent_artifact.id)
+                            if qc_processes:
+                                qc_process = sorted(qc_processes, key=lambda process: int(process.id.split('-')[-1]))[-1]
+                                for qc_artifact in qc_process.outputs_per_input(parent_artifact.id):
+                                    if input_sample.name in qc_artifact.name:
+                                        for qc_sample in qc_artifact.samples:
+                                            if qc_sample.name == input_sample.name:
+                                                concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+                            else:
+                                # No QC process found, use Helix concentration
+                                concentration = input_sample.udf['Dx Concentratie (ng/ul)']
 
                 samples[input_sample.udf['Dx Monsternummer']] = {'conc': concentration}
 
@@ -96,7 +97,7 @@ def samplesheet(lims, process_id, type, output_file):
                 monster = sample.udf['Dx Monsternummer']
                 samples[monster]['message'] = ''
                 if sample_mix:
-                    samples[monster]['mix_names'] = input_artifact.name
+                    samples[monster]['mix_names'] = artifact.name
                 else:
                     samples[monster]['mix_names'] = monster
                 
