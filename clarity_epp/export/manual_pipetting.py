@@ -709,7 +709,7 @@ def samplesheet_pool_magnis_pools(lims, process_id, output_file):
                 sample_count += 1
 
         output_file.write(
-            '{pool}\t{container}\t{sample_count}\t{volume}\n'.format(
+            '{pool}\t{container}\t{sample_count}\t{volume:.2f}\n'.format(
                 pool=input_artifact.name,
                 container=input_artifact.container.name,
                 sample_count=sample_count,
