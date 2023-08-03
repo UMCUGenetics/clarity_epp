@@ -19,12 +19,14 @@ email = {
 
 # Import samples: stoftestcode to workflow
 stoftestcode_wes = 'NGS_025'
+stoftestcode_wes_duplo = 'NGS_028'
 stoftestcode_mip = 'NGS_027'
 stoftestcode_research = 'NGS_023'
 
 stoftestcode_workflow = {
-    stoftestcode_wes: '1802',  # DEV Dx Exoom Magnis v2.0
-    stoftestcode_mip: '1802',  # DEV Dx Exoom Magnis v2.0
+    stoftestcode_wes: '1852',  # DEV Dx Exoom Magnis v2.1
+    stoftestcode_wes_duplo: '1852',  # DEV Dx Exoom Magnis v2.1
+    stoftestcode_mip: '1651',  # DEV Dx smMIP v1.2
 }
 
 # Export meetw protocol steps WES
