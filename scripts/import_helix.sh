@@ -4,7 +4,7 @@ clarity_epp=
 . $clarity_epp/venv/bin/activate
 for file in $helix_folder/*.csv ; do
     if [ -f $file ] ; then
-        python -W ignore $clarity_epp/clarity_epp.py upload sample $file
+        python -W ignore $clarity_epp/clarity_epp.py upload sample helix $file
         mv $file $helix_folder/processed
     fi
 done

@@ -11,12 +11,8 @@ import clarity_epp.upload.utils
 import config
 
 
-def from_helix(lims, email_settings, input_file):
-    """Upload samples from helix export file."""
-    project_name = 'Dx {filename}'.format(filename=input_file.name.rstrip('.csv').split('/')[-1])
-    helix_initials = project_name.split('_')[-1]
-
-    # Try lims connection
+def test_lims_connection(lims, email_settings, project_name):
+    """Test lims connection using check_version."""
     try:
         lims.check_version()
     except ConnectionError:
@@ -25,17 +21,31 @@ def from_helix(lims, email_settings, input_file):
         send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
         sys.exit(message)
 
-    # Get researcher using helix initials
+
+def get_researcher(lims, email_settings, helix_initials, project_name):
+    """Get researcher using helix initials."""
     for researcher in lims.get_researchers():
         # Use FAX as intials field as the lims initials field can't be edited via the 5.0 web interface.
         if researcher.fax == helix_initials:
-            email_settings['to_import_helix'].append(researcher.email)
-            break
+            return researcher
+
     else:   # No researcher found
         subject = "ERROR Lims Helix Upload: {0}".format(project_name)
         message = "Can't find researcher with initials: {0}.".format(helix_initials)
         send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
         sys.exit(message)
+
+
+def from_helix(lims, email_settings, input_file):
+    """Upload samples from helix export file."""
+    # Set project name and test connection
+    project_name = 'Dx {filename}'.format(filename=input_file.name.rstrip('.csv').split('/')[-1])
+    test_lims_connection(lims, email_settings, project_name)
+
+    # Get researcher based on helix initials in file name
+    helix_initials = project_name.split('_')[-1]
+    researcher = get_researcher(lims, email_settings, helix_initials, project_name)
+    email_settings['to_import_helix'].append(researcher.email)
 
     # Create project
     if not lims.get_projects(name=project_name):
@@ -289,3 +299,102 @@ def from_helix(lims, email_settings, input_file):
     # Send final email
     message += '\n'.join(sample_messages.values())
     send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
+
+
+def from_helix_pg(lims, email_settings, input_file):
+    """Upload samples from helix export file, using pharmacogenetics format."""
+    # Test connection
+    test_lims_connection(lims, email_settings, 'PG Import')
+
+    # Set udf columns
+    # TODO: Add all columns
+    udf_column = {
+        'Dx GLIMS ID': {'column': 'Achternaam'},
+        'Dx Geboortejaar': {'column': 'Geboortedatum'},  # geboortedatum of jaar?
+        # 'Dx ?': {'column': 'Datum aanmelding'},
+        'Dx Monsternummer': {'column': 'Monsternummers'},
+        'Dx Fractienummer': {'column': 'Fractienummers'},
+        # 'Dx ?': {'column': 'Status'},
+        # 'Dx ?': {'column': 'Datum'},
+        'Dx Concentratie (ng/ul)': {'column': 'Conc'},
+        # 'Dx ?': {'column': 'Eenheid'},
+        # 'Dx ?': {'column': '260/280'},
+        # 'Dx ?': {'column': '260/230'},
+        # 'Dx ?': {'column': 'Elutie volume'},
+        # 'Dx ?': {'column': 'Concentratie meting type'},
+        # 'Dx ?': {'column': 'Datum verstuur'},
+        # 'Dx ?': {'column': 'Commentaar'},
+    }
+
+    # Parse input file header
+    header = input_file.readline().rstrip().split(';')  # expect header on first line
+    for udf in udf_column:
+        udf_column[udf]['index'] = header.index(udf_column[udf]['column'])
+
+    # Parse input file data
+    for line in input_file:
+        data = line.rstrip().split(';')
+        udf_data = {}
+
+        for udf in udf_column:
+            # Transform specific udf
+            if udf == 'Dx Geboortejaar':
+                date = datetime.strptime(data[udf_column[udf]['index']], '%d-%m-%Y')  # Helix format (14-01-2021)
+                udf_data[udf] = date.year
+            elif udf == 'Dx Concentratie (ng/ul)':
+                udf_data[udf] = data[udf_column[udf]['index']].replace(',', '.')
+                if udf_data[udf]:
+                    udf_data[udf] = float(udf_data[udf])
+            else:
+                udf_data[udf] = data[udf_column[udf]['index']]
+
+        # Get sample and update UDF
+        # TODO: Can we assume one?
+        # TODO: Does update work on udf type?
+        # sample = lims.get_samples(name=udf_data['Dx GLIMS ID'])[0]
+        # sample.udf.update(udf_data)
+
+        # Route sample to workflow
+        # TODO: How do we configure workflow type? Hardcoded in config?
+        # workflow = clarity_epp.upload.utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])
+        # lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
+
+        # TODO: Send email?
+
+
+def from_glims(lims, email_settings, input_file):
+    """Upload samples from glims export file"""
+    # Test connection
+    test_lims_connection(lims, email_settings, 'PG Import')
+
+    # Get researcher
+    # TODO: Should we always use the same researcher?
+    # researcher = get_researcher(lims, email_settings, helix_initials, project_name)
+
+    # Set UDF columns
+    udf_column = {
+        'Dx GLIMS ID': {'column': 'GLIMS_id'},
+        'Dx Geboortejaar': {'column': 'Geboortejaar'},  # geboortedatum of jaar?
+        'Dx Onderzoeksindicatie': {'column': 'Projectcode'},
+    }
+
+    # Place holder -> file format to be determined.
+    # Parse input file header
+    header = input_file.readline().rstrip().split(';')  # expect header on first line
+    for udf in udf_column:
+        udf_column[udf]['index'] = header.index(udf_column[udf]['column'])
+
+    for line in input_file:
+        data = line.rstrip().split(';')
+        udf_data = {'Sample Type': 'DNA isolated', 'Dx Import warning': ''}  # required lims input
+
+        for udf in udf_column:
+            udf_data[udf] = data[udf_column[udf]['index']]
+
+        # Upload sample
+        container_type = Containertype(lims, id='2')  # Tube
+    #     container = Container.create(lims, type=container_type, name=udf_data['Dx GLIMS ID'])
+    #     project = 'tbd'  # TODO: Set correct project name -> per month/week?
+    #     sample = Sample.create(lims, container=container, position='1:1', project=project, name=udf_data['Dx GLIMS ID'], udf=udf_data)
+
+    # TODO: Send email?

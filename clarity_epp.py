@@ -144,7 +144,12 @@ def export_workflow(args):
 # Upload Functions
 def upload_samples(args):
     """Upload samples from helix output file."""
-    clarity_epp.upload.samples.from_helix(lims, config.email, args.input_file)
+    if args.type == 'helix':
+        clarity_epp.upload.samples.from_helix(lims, config.email, args.input_file)
+    elif args.type == 'helix_pg':
+        clarity_epp.upload.samples.from_helix_pg(lims, config.email, args.input_file)
+    elif args.type == 'glims':
+        clarity_epp.upload.samples.from_glims(lims, config.email, args.input_file)
 
 
 def upload_tecan_results(args):
@@ -362,7 +367,8 @@ if __name__ == "__main__":
     parser_upload_bioanalyzer.set_defaults(func=upload_bioanalyzer_results)
 
     parser_upload_sample = subparser_upload.add_parser('sample', help='Upload samples from helix export')
-    parser_upload_sample.add_argument('input_file', type=argparse.FileType('r'), help='Input file path')
+    parser_upload_sample.add_argument('type', choices=['helix', 'helix_pg', 'glims'], help='Sample file type')
+    parser_upload_sample.add_argument('input_file', type=argparse.FileType('r', encoding='latin-1'), help='Input file path')
     parser_upload_sample.set_defaults(func=upload_samples)
 
     parser_upload_tapestation = subparser_upload.add_parser('tapestation', help='Upload tapestation results')
