@@ -168,6 +168,11 @@ def results_purify_mix(lims, process_id):
 
     # Set concentration values on artifacts
     for artifact in process.analytes()[0]:
-        artifact.udf['Dx Concentratie fluorescentie (ng/ul)'] = tecan_result[artifact.name]['conc']
-        artifact.udf['Dx QC status'] = tecan_result[artifact.name]['norm']
+        if len(artifact.samples) > 1:
+            artifact.udf['Dx Concentratie fluorescentie (ng/ul)'] = tecan_result[artifact.name]['conc']
+            artifact.udf['Dx QC status'] = tecan_result[artifact.name]['norm']
+        else:
+            sample = artifact.samples[0]
+            artifact.udf['Dx Concentratie fluorescentie (ng/ul)'] = tecan_result[sample.udf['Dx Monsternummer']]['conc']
+            artifact.udf['Dx QC status'] = tecan_result[sample.udf['Dx Monsternummer']]['norm']
         artifact.put()
