@@ -2,6 +2,8 @@
 
 from genologics.entities import Process
 
+from .. import get_mix_sample_barcode
+
 
 def container(lims, process_id, output_file, description=''):
     """Generate container label file."""
@@ -57,11 +59,21 @@ def nunc_mix_sample(lims, process_id, output_file):
     output_file.write('\n')
 
     for artifact in process.analytes()[0]:
+        well = ''.join(artifact.location[1].split(':'))
         sample_mix = False
         if len(artifact.samples) > 1:
             sample_mix = True
         
         if sample_mix:
-            output_file.write('{sample}\n'.format(sample=artifact.name))
+            barcode_name = get_mix_sample_barcode(artifact)
+            output_file.write('{sample};;;;;{container}:{well};;1\n'.format(
+                sample=barcode_name,
+                container=artifact.container.name,
+                well=well
+            ))
         else:
-            output_file.write('{sample}\n'.format(sample=artifact.samples[0].udf['Dx Monsternummer']))
+            output_file.write('{sample};;;;;{container}:{well};;1\n'.format(
+                sample=artifact.samples[0].udf['Dx Fractienummer'],
+                container=artifact.container.name,
+                well=well
+            ))

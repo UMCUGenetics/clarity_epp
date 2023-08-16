@@ -4,6 +4,7 @@ from email import encoders
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
+import re
 import smtplib
 import mimetypes
 
@@ -47,8 +48,23 @@ def get_sample_artifacts_from_pool(lims, pool_artifact):
     return sample_artifacts
 
 
+def get_mix_sample_barcode(artifact):
+    """Generate mix sample shortened barcode name."""
+    sample_names = {}
+    for sample in artifact.samples:
+        if 'Dx Monsternummer' in sample.udf:
+            monster = sample.udf['Dx Monsternummer']
+            if re.match(r'\d{4}D\d+', monster):
+                sample_names[sample] = monster[2:4], monster[5:]
+            elif monster.startswith('D'):
+                sample_names[sample] = monster
 
-
+    barcode_name = ''
+    if sample_names:
+        for sample in artifact.samples:
+            barcode_name += ''.join(sample_names[sample])
+    
+    return barcode_name
 
 
 def send_email(server, sender, receivers, subject, text, attachment=None):

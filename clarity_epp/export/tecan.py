@@ -2,6 +2,7 @@
 
 from genologics.entities import Process
 
+from .. import get_mix_sample_barcode
 import clarity_epp.export.utils
 
 
@@ -132,9 +133,12 @@ def samplesheet(lims, process_id, type, output_file):
         output_file.write('SourceTubeID;PositionID;PositionIndex\n')
         for well in clarity_epp.export.utils.sort_96_well_plate(well_plate.keys()):
             artifact = well_plate[well]
-            for sample in artifact.samples:
-                output_file.write('{sample};{well};{index}\n'.format(
-                    sample=sample.udf['Dx Fractienummer'],
-                    well=well,
-                    index=clarity_epp.export.utils.get_well_index(well, one_based=True)
-                ))
+            if len(artifact.samples) > 1:
+                source_tube = get_mix_sample_barcode(artifact)
+            else:
+                source_tube = sample.udf['Dx Fractienummer']
+            output_file.write('{sample};{well};{index}\n'.format(
+                sample=source_tube,
+                well=well,
+                index=clarity_epp.export.utils.get_well_index(well, one_based=True)
+            ))
