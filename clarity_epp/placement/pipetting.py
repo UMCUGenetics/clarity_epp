@@ -2,6 +2,9 @@
 
 from genologics.entities import Process
 
+from .. import get_mix_sample_barcode
+
+
 def check_nunc_input_nunc_output(lims, process_id):
     """Check nuncs."""
     process = Process(lims, id=process_id)
@@ -10,13 +13,12 @@ def check_nunc_input_nunc_output(lims, process_id):
             input_nunc_1 = ''
             input_nunc_2 = ''
             output_nunc = ''
-            input_combined = ''
+            sample_mix = False
             if len(output_artifact.samples) > 1:
-                fraction = ('{fraction1}-{fraction2}'.format(
-                    fraction1=(output_artifact.samples[0].udf['Dx Fractienummer']), 
-                    fraction2=(output_artifact.samples[1].udf['Dx Fractienummer'])
-                    )
-                )
+                sample_mix = True
+                mix_name = get_mix_sample_barcode(output_artifact)
+                fraction1 = output_artifact.samples[0].udf['Dx Fractienummer']
+                fraction2 = output_artifact.samples[1].udf['Dx Fractienummer']
             else:
                 fraction = output_artifact.samples[0].udf['Dx Fractienummer']
             if 'Dx Sample 1 norm' in output_artifact.udf:
@@ -25,13 +27,14 @@ def check_nunc_input_nunc_output(lims, process_id):
                 input_nunc_2 = output_artifact.udf['Dx Sample 2 norm']
             if 'Dx Sample (output)' in output_artifact.udf:
                 output_nunc = output_artifact.udf['Dx Sample (output)']
-            if input_nunc_1 and input_nunc_2:
-                input_combined = '{input_nunc_1}-{input_nunc_2}'.format(input_nunc_1=input_nunc_1, input_nunc_2=input_nunc_2)
-            elif input_nunc_1:
-                input_combined = input_nunc_1
-            if input_combined and output_nunc:
-                if input_combined == output_nunc and output_nunc == fraction:
+            if sample_mix:
+                if input_nunc_1 == fraction1 and input_nunc_2 == fraction2 and output_nunc == mix_name:
                     output_artifact.udf['Dx pipetteer check'] = True
                 else:
                     output_artifact.udf['Dx pipetteer check'] = False
-                output_artifact.put()
+            else:
+                if input_nunc_1 == fraction and input_nunc_2 == '' and output_nunc == fraction:
+                    output_artifact.udf['Dx pipetteer check'] = True
+                else:
+                    output_artifact.udf['Dx pipetteer check'] = False
+            output_artifact.put()
