@@ -3,6 +3,7 @@ import re
 
 from genologics.entities import Process
 
+from .. import get_mix_sample_barcode
 import clarity_epp.export.utils
 
 
@@ -740,7 +741,7 @@ def samplesheet_normalization_mix(lims, process_id, output_file):
     process = Process(lims, id=process_id)
     
     output_file.write(
-        'Monsternummer\tConcentratie (ng/ul)\tVolume sample (ul)\tVolume low TE (ul)\tContainer\tWell\n'
+        'Fractienummer\tConcentratie (ng/ul)\tVolume sample (ul)\tVolume low TE (ul)\tContainer_tube\n'
     )
 
     samples = {}
@@ -825,15 +826,18 @@ def samplesheet_normalization_mix(lims, process_id, output_file):
         if output_artifact.type == 'Analyte':
             for output_sample in output_artifact.samples:
                 monster = output_sample.udf['Dx Monsternummer']
+                if len(output_artifact.samples) > 1:
+                    container = get_mix_sample_barcode(output_artifact)
+                else:
+                    container = output_sample.udf['Dx Fractienummer']
                 well = ''.join(output_artifact.location[1].split(':'))
                 output_data = (
-                    '{sample}\t{concentration:.2f}\t{sample_volume:.2f}\t{low_te_volume:.2f}\t{container}\t{well}\n'.format(
-                        sample=monster,
+                    '{sample}\t{concentration:.2f}\t{sample_volume:.2f}\t{low_te_volume:.2f}\t{container}\n'.format(
+                        sample=output_sample.udf['Dx Fractienummer'],
                         concentration=samples[monster]['conc'],
                         sample_volume=samples[monster]['sample_volume'],
                         low_te_volume=samples[monster]['low_te_volume'],
-                        container=output_artifact.location[0].name,
-                        well=well
+                        container=container
                     )
                 )
                 if well in output:
