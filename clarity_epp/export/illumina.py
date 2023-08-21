@@ -83,6 +83,10 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
                         project_type = 'SSv7'
                         families[family]['project_type'] = project_type
                         families[family]['split_project_type'] = True
+                    elif 'elidS34226467' in newest_protocol and not families[family]['NICU']:
+                        project_type = 'CREv4'
+                        families[family]['project_type'] = project_type
+                        families[family]['split_project_type'] = True
 
                     # Set urgent status
                     if 'Dx Spoed' in list(sample.udf) and sample.udf['Dx Spoed']:
