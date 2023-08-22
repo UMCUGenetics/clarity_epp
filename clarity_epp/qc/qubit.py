@@ -28,12 +28,14 @@ def set_qc_flag(lims, process_id, cutoff=10):
         artifact.udf['Dx Concentratie fluorescentie (ng/ul)'] = sample_measurements_average
 
         # Reset 'Dx norm. manueel' udf
-        if 'Dx Sample registratie zuivering' in process.all_inputs()[0].parent_process.type.name:
-            if sample_measurements_average <= 29.3:
-                artifact.samples[0].udf['Dx norm. manueel'] = True
-            else:
-                artifact.samples[0].udf['Dx norm. manueel'] = False
-            artifact.samples[0].put()
+        for analyte in process.analytes()[0]:
+            if analyte.name == artifact.name:
+                if 'Dx Sample registratie zuivering' in analyte.parent_process.type.name:
+                    if sample_measurements_average <= 29.3:
+                        artifact.samples[0].udf['Dx norm. manueel'] = True
+                    else:
+                        artifact.samples[0].udf['Dx norm. manueel'] = False
+                    artifact.samples[0].put()
 
         if concentration_range[0] <= sample_measurements_average <= concentration_range[1]:
             if len(sample_measurements) == 1:

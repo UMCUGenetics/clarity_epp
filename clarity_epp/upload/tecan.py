@@ -78,12 +78,15 @@ def results_qc(lims, process_id):
             artifact.udf['Dx Concentratie fluorescentie (ng/ul)'] = sample_concentration
 
             # Reset 'Dx norm. manueel' udf
-            if 'Dx Sample registratie zuivering' in process.all_inputs()[0].parent_process.type.name:
-                if sample_concentration <= 29.3:
-                    artifact.samples[0].udf['Dx norm. manueel'] = True
-                else:
-                    artifact.samples[0].udf['Dx norm. manueel'] = False
-                artifact.samples[0].put()
+            if 'Dx Tecan std' not in artifact.name:
+                for analyte in process.analytes()[0]:
+                    if analyte.name == artifact.name:
+                        if 'Dx Sample registratie zuivering' in analyte.parent_process.type.name:
+                            if sample_concentration <= 29.3:
+                                artifact.samples[0].udf['Dx norm. manueel'] = True
+                            else:
+                                artifact.samples[0].udf['Dx norm. manueel'] = False
+                            artifact.samples[0].put()
 
             # Set artifact Concentratie fluorescentie
             # Get artifact index == count
