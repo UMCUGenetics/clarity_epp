@@ -63,7 +63,7 @@ def get_mix_sample_barcode(artifact):
     if sample_names:
         for sample in artifact.samples:
             barcode_name += ''.join(sample_names[sample])
-    
+
     return barcode_name
 
 

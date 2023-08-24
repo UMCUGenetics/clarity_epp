@@ -86,7 +86,7 @@ def samplesheet(lims, process_id, type, output_file):
             sample_mix = False
             if len(artifact.samples) > 1:
                 sample_mix = True
-            
+
             if sample_mix:
                 dividend = 880
                 max_volume = 30
@@ -101,7 +101,7 @@ def samplesheet(lims, process_id, type, output_file):
                     samples[monster]['mix_names'] = artifact.name
                 else:
                     samples[monster]['mix_names'] = monster
-                
+
                 # Calculation of pipetting volumes
                 calc_sample = dividend / samples[monster]['conc']
                 if calc_sample < 4:
@@ -128,7 +128,7 @@ def samplesheet(lims, process_id, type, output_file):
                     empty='',
                     message=samples[monster]['message']
                 ))
-    
+
     elif type == 'normalise':
         output_file.write('SourceTubeID;PositionID;PositionIndex\n')
         for well in clarity_epp.export.utils.sort_96_well_plate(well_plate.keys()):

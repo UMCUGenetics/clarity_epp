@@ -739,7 +739,7 @@ def samplesheet_pool_magnis_pools(lims, process_id, output_file):
 def samplesheet_normalization_mix(lims, process_id, output_file):
     """"Create manual pipetting samplesheet for normalizing mix fraction samples."""
     process = Process(lims, id=process_id)
-    
+
     output_file.write(
         'Fractienummer\tConcentratie (ng/ul)\tVolume sample (ul)\tVolume low TE (ul)\tContainer_tube\n'
     )
@@ -760,7 +760,7 @@ def samplesheet_normalization_mix(lims, process_id, output_file):
                         for qc_sample in qc_artifact.samples:
                             if qc_sample.name == input_sample.name:
                                 concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
-            
+
             else:
                 parent_process = input_artifact.parent_process
                 for parent_artifact in parent_process.all_inputs():
@@ -776,9 +776,9 @@ def samplesheet_normalization_mix(lims, process_id, output_file):
                         else:
                             # No QC process found, use Helix concentration
                             concentration = input_sample.udf['Dx Concentratie (ng/ul)']
-            
+
             samples[input_sample.udf['Dx Monsternummer']] = {'conc': concentration}
-    
+
     # Calculation of pipetting volumes
     for input_artifact in process.all_inputs():
         output_artifact = process.outputs_per_input(input_artifact.id, Analyte=True)[0]  # assume one artifact per input
@@ -803,7 +803,7 @@ def samplesheet_normalization_mix(lims, process_id, output_file):
             low_te_volume = minuend - sample_volume
         samples[input_sample_1.udf['Dx Monsternummer']]['sample_volume'] = sample_volume
         samples[input_sample_1.udf['Dx Monsternummer']]['low_te_volume'] = low_te_volume
-        
+
         if sample_mix:
             input_sample_2 = input_artifact.samples[1]
             if 'Dx sample vol. #2' in output_artifact.udf:
@@ -819,7 +819,7 @@ def samplesheet_normalization_mix(lims, process_id, output_file):
                 low_te_volume = minuend - sample_volume
             samples[input_sample_2.udf['Dx Monsternummer']]['sample_volume'] = sample_volume
             samples[input_sample_2.udf['Dx Monsternummer']]['low_te_volume'] = low_te_volume
-    
+
     # Compose output per sample in well
     output = {}
     for output_artifact in process.all_outputs():
@@ -844,7 +844,7 @@ def samplesheet_normalization_mix(lims, process_id, output_file):
                     output[well][monster] = output_data
                 else:
                     output[well] = {monster: output_data}
-    
+
     # Write output file per sample sorted for well
     for well in clarity_epp.export.utils.sort_96_well_plate(output.keys()):
         for sample in output[well]:

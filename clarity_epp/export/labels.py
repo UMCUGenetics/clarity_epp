@@ -63,7 +63,7 @@ def nunc_mix_sample(lims, process_id, output_file):
         sample_mix = False
         if len(artifact.samples) > 1:
             sample_mix = True
-        
+
         if sample_mix:
             barcode_name = get_mix_sample_barcode(artifact)
             output_file.write('{sample};;;;;{container}:{well};;1\n'.format(
