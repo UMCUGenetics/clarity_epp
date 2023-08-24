@@ -3,6 +3,7 @@
 import clarity_epp.export.bioanalyzer
 import clarity_epp.export.caliper
 import clarity_epp.export.email
+import clarity_epp.export.fueco
 import clarity_epp.export.hamilton
 import clarity_epp.export.illumina
 import clarity_epp.export.labels
