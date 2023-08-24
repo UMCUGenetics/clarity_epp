@@ -131,15 +131,20 @@ def samplesheet(lims, process_id, type, output_file):
 
     elif type == 'normalise':
         output_file.write('SourceTubeID;PositionID;PositionIndex\n')
+        outputs = []
+        for output in process.all_outputs():
+            if output.name not in ['Dx labels nunc', 'Dx pipetteerschema manueel normaliseren', 'Dx Fluent480 samplesheet manueel normaliseren']:
+                outputs.append(output.name)
         for well in clarity_epp.export.utils.sort_96_well_plate(well_plate.keys()):
             artifact = well_plate[well]
-            if len(artifact.samples) > 1:
-                source_tube = get_mix_sample_barcode(artifact)
-            else:
-                sample = artifact.samples[0]
-                source_tube = sample.udf['Dx Fractienummer']
-            output_file.write('{sample};{well};{index}\n'.format(
-                sample=source_tube,
-                well=well,
-                index=clarity_epp.export.utils.get_well_index(well, one_based=True)
-            ))
+            if artifact.name in outputs:
+                if len(artifact.samples) > 1:
+                    source_tube = get_mix_sample_barcode(artifact)
+                else:
+                    sample = artifact.samples[0]
+                    source_tube = sample.udf['Dx Fractienummer']
+                output_file.write('{sample};{well};{index}\n'.format(
+                    sample=source_tube,
+                    well=well,
+                    index=clarity_epp.export.utils.get_well_index(well, one_based=True)
+                ))
