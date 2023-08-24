@@ -1,5 +1,5 @@
 """Sample upload epp functions."""
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
 from requests.exceptions import ConnectionError
 import sys
@@ -384,43 +384,43 @@ def from_helix_pg(lims, email_settings, input_file):
     # TODO: Add all columns
     udf_column = {
         'Dx GLIMS ID': {'column': 'Achternaam'},
-        'Dx Geboortejaar': {'column': 'Geboortedatum'},  # geboortedatum of jaar?
-        # 'Dx ?': {'column': 'Datum aanmelding'},
+        'Dx Geboortejaar': {'column': 'Geboortedatum'},
+        'Dx Einddatum': {'column': 'Datum aanmelding'},  # Add two weeks
         'Dx Monsternummer': {'column': 'Monsternummers'},
         'Dx Fractienummer': {'column': 'Fractienummers'},
-        # 'Dx ?': {'column': 'Status'},
-        # 'Dx ?': {'column': 'Datum'},
         'Dx Concentratie (ng/ul)': {'column': 'Conc'},
-        # 'Dx ?': {'column': 'Eenheid'},
-        # 'Dx ?': {'column': '260/280'},
-        # 'Dx ?': {'column': '260/230'},
-        # 'Dx ?': {'column': 'Elutie volume'},
-        # 'Dx ?': {'column': 'Concentratie meting type'},
-        # 'Dx ?': {'column': 'Datum verstuur'},
-        # 'Dx ?': {'column': 'Commentaar'},
+        # 'Dx ?': {'column': 'Eenheid'}, # Warning if eenheid != ng?
     }
 
-    # Parse input file header
-    header = input_file.readline().rstrip().split(';')  # expect header on first line
-    for udf in udf_column:
-        udf_column[udf]['index'] = header.index(udf_column[udf]['column'])
-
     # Parse input file data
+    header = None
     for line in input_file:
-        data = line.rstrip().split(';')
-        udf_data = {}
+        if line.startswith('Achternaam'):  # Parse input file header
+            header = line.rstrip().split(';')
+            for udf in udf_column:
+                [udf]['index'] = header.index(udf_column[udf]['column'])
 
-        for udf in udf_column:
-            # Transform specific udf
-            if udf == 'Dx Geboortejaar':
-                date = datetime.strptime(data[udf_column[udf]['index']], '%d-%m-%Y')  # Helix format (14-01-2021)
-                udf_data[udf] = date.year
-            elif udf == 'Dx Concentratie (ng/ul)':
-                udf_data[udf] = data[udf_column[udf]['index']].replace(',', '.')
-                if udf_data[udf]:
-                    udf_data[udf] = float(udf_data[udf])
-            else:
-                udf_data[udf] = data[udf_column[udf]['index']]
+        elif line.startswith('Controle:'):
+            break
+
+        elif header:
+            data = line.rstrip().split(';')
+            udf_data = {}  # Add Protocolomschrijving 'PD-FARMACO' to get correct sequencing project?
+
+            for udf in udf_column:
+                # Transform specific udf
+                if udf == 'Dx Geboortejaar':
+                    date = datetime.strptime(data[udf_column[udf]['index']], '%d-%m-%Y')  # Helix format (14-01-2021)
+                    udf_data[udf] = date.year
+                elif udf == 'Dx Concentratie (ng/ul)':
+                    udf_data[udf] = data[udf_column[udf]['index']].replace(',', '.')
+                    if udf_data[udf]:
+                        udf_data[udf] = float(udf_data[udf])
+                elif udf == 'Dx Einddatum':  # Add two weeks to 'Datum aanmelding'
+                    date = datetime.strptime(data[udf_column[udf]['index']], '%d-%m-%Y')  # Helix format (14-01-2021)
+                    udf_data[udf] = date + timedelta(weeks=2)
+                else:
+                    udf_data[udf] = data[udf_column[udf]['index']]
 
         # Get sample and update UDF
         # TODO: Can we assume one?
@@ -448,6 +448,7 @@ def from_glims(lims, email_settings, input_file):
     # Set UDF columns
     udf_column = {
         'Dx GLIMS ID': {'column': 'GLIMS_id'},
+        'Dx Persoons ID': {'column': 'GLIMS_patient_id'},
         'Dx Geboortejaar': {'column': 'Geboortejaar'},  # geboortedatum of jaar?
         'Dx Onderzoeksindicatie': {'column': 'Projectcode'},
     }
