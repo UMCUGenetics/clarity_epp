@@ -136,6 +136,7 @@ def samplesheet(lims, process_id, type, output_file):
             if len(artifact.samples) > 1:
                 source_tube = get_mix_sample_barcode(artifact)
             else:
+                sample = artifact.samples[0]
                 source_tube = sample.udf['Dx Fractienummer']
             output_file.write('{sample};{well};{index}\n'.format(
                 sample=source_tube,
