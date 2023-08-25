@@ -203,12 +203,14 @@ def placement_automatic(args):
     clarity_epp.placement.plate.copy_layout(lims, args.process_id)
 
 
-def placement_artifact_set_name(args):
-    """Change artifact name to sequence name."""
+def placement_artifact_set(args):
+    """Change artifact name or udf."""
     if args.type == 'sequence_name':
         clarity_epp.placement.artifact.set_sequence_name(lims, args.process_id)
     elif args.type == 'run_id':
         clarity_epp.placement.artifact.set_runid_name(lims, args.process_id)
+    elif args.type == 'norm_udf':
+        clarity_epp.placement.artifact.set_norm_manual_udf(lims, args.process_id)
 
 
 def placement_route_artifact(args):
@@ -430,9 +432,9 @@ if __name__ == "__main__":
     parser_placement_automatic.set_defaults(func=placement_automatic)
 
     parser_placement_artifact = subparser_placement.add_parser('artifact', help='Change artifact name to sequence name')
-    parser_placement_artifact.add_argument('type', choices=['sequence_name', 'run_id'], help='Check type')
+    parser_placement_artifact.add_argument('type', choices=['sequence_name', 'run_id', 'norm_udf'], help='Check type')
     parser_placement_artifact.add_argument('process_id', help='Clarity lims process id')
-    parser_placement_artifact.set_defaults(func=placement_artifact_set_name)
+    parser_placement_artifact.set_defaults(func=placement_artifact_set)
 
     parser_placement_route_artifact = subparser_placement.add_parser('route_artifact', help='Route artifact to a workflow')
     parser_placement_route_artifact.add_argument('process_id', help='Clarity lims process id')

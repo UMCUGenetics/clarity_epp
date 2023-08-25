@@ -52,3 +52,15 @@ def route_to_workflow(lims, process_id, workflow):
 
     elif workflow == 'sequencing':
         lims.route_artifacts(artifacts_completed, workflow_uri=Workflow(lims, id=config.sequencing_workflow).uri)
+
+
+def set_norm_manual_udf(lims, process_id):
+    """Combine mix sample udfs 'Dx norm. manueel'."""
+    process = Process(lims, id=process_id)
+
+    for artifact in process.all_outputs():
+        artifact.udf['Dx norm. manueel'] = False
+        for sample in artifact.samples:
+            if sample.udf['Dx norm. manueel'] == True:
+                artifact.udf['Dx norm. manueel'] = True
+        artifact.put()
