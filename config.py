@@ -32,20 +32,24 @@ stoftestcode_workflow = {
 # Export meetw protocol steps WES
 meetw_zui_wes_processes = [
     'Dx Sample registratie zuivering v1.1',
+    'Dx Sample registratie zuivering v1.2',
     'Dx Hamilton uitvullen v1.1',
     'Dx Hamilton zuiveren v1.1',
     'Dx Zuiveren gDNA manueel v1.1',
     'Dx manueel gezuiverd placement v1.2',
     'Dx gDNA Normalisatie Caliper v1.1',
     'Dx Uitvullen en zuiveren (Fluent 480) v1.0',
+    'Dx Uitvullen en zuiveren (Fluent 480) v1.1',
     'Dx Normaliseren (Fluent 480) v1.0',
-    'Dx gDNA handmatige normalisatie WES v1.0'
+    'Dx gDNA handmatige normalisatie WES v1.0',
+    'Dx gDNA handmatige normalisatie WES v1.1'
 ]
 
 meetw_sampleprep_wes_processes = [
     'Dx Fragmenteren v1.0',
-    'Dx Library Prep & Target Enrichment Magnis v1.0'
-    ]
+    'Dx Library Prep & Target Enrichment Magnis v1.0',
+    'Dx Library Prep & Target Enrichment Magnis v1.1',
+]
 
 meetw_seq_wes_processes = [
     'Dx Multiplexen Enrichment pools Magnis v1.0',
