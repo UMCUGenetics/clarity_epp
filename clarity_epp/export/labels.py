@@ -12,7 +12,7 @@ def container(lims, process_id, output_file, description=''):
         if description:
             if ',' in description:
                 output_file.write('{description}\t{container}\r\n'.format(
-                    description=description.split(',')[index], 
+                    description=description.split(',')[index],
                     container=container.name
                 ))
             else:
@@ -28,8 +28,8 @@ def container_sample(lims, process_id, output_file, description=''):
         for artifact in container.placements.values():
             if description:
                 output_file.write('{description}\t{sample}\t{container}\r\n'.format(
-                    description=description, 
-                    container=container.name, 
+                    description=description,
+                    container=container.name,
                     sample=artifact.name
                 ))
             else:
@@ -44,11 +44,12 @@ def storage_location(lims, process_id, output_file):
     output_file.write('Bakje\tpos\n')
 
     for artifact in process.analytes()[0]:
-        storage_location = artifact.samples[0].udf['Dx Opslaglocatie'].split()
-        output_file.write('{tray}\t{pos}\n'.format(
-            tray=storage_location[0][2:6],  # Select 4 digits from: CB[1-9][1-9][1-9][1-9]KK
-            pos=storage_location[1]
-        ))
+        for sample in artifact.samples:
+            storage_location = sample.udf['Dx Opslaglocatie'].split()
+            output_file.write('{tray}\t{pos}\n'.format(
+                tray=storage_location[0][2:6],  # Select 4 digits from: CB[1-9][1-9][1-9][1-9]KK
+                pos=storage_location[1]
+            ))
 
 
 def nunc_mix_sample(lims, process_id, output_file):
