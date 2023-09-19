@@ -19,7 +19,7 @@ def get_sequence_name(artifact):
             sample_numbers.append(sample.udf['Dx Monsternummer'])
 
     if sample_numbers:
-        sequence_name = '-'.join(sample_numbers)
+        sequence_name = '-'.join(sorted(sample_numbers))
     else:  # non Dx sample
         sequence_name = artifact.samples[0].name
 
