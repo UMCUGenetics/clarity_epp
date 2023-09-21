@@ -42,7 +42,7 @@ meetw_zui_wes_processes = [
     'Dx Uitvullen en zuiveren (Fluent 480) v1.1',
     'Dx Normaliseren (Fluent 480) v1.0',
     'Dx gDNA handmatige normalisatie WES v1.0',
-    'Dx gDNA handmatige normalisatie WES v1.1'
+    'Dx gDNA handmatige normalisatie WES v1.1',
 ]
 
 meetw_sampleprep_wes_processes = [
@@ -57,7 +57,7 @@ meetw_seq_wes_processes = [
     'Dx Library pool denatureren en laden (NovaSeq) v1.3',
     'AUTOMATED - NovaSeq Run (NovaSeq 6000 v3.1)',
     'Dx QC controle Lab sequencen v1.1',
-    'Dx NovaSeq QC controle Lab sequencen v1.3'
+    'Dx NovaSeq QC controle Lab sequencen v1.3',
 ]
 
 # Export meetw protocol steps MIP
@@ -69,7 +69,7 @@ meetw_libprep_mip_processes = [
     'Dx Capture v1.0',
     'Dx Exonuclease behandeling v1.0',
     'Dx PCR na exonuclease behandeling v1.0',
-    'Dx smMIP multiplexen & BBSS sequence pool v1.0'
+    'Dx smMIP multiplexen & BBSS sequence pool v1.0',
 ]
 
 meetw_seq_mip_processes = [
