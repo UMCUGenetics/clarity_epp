@@ -41,12 +41,12 @@ def storage_location(lims, process_id, output_file):
     process = Process(lims, id=process_id)
 
     # Write header
-    output_file.write('Bakje\tpos\n')
+    output_file.write('Bakje\tpos\r\n')
 
     for artifact in process.analytes()[0]:
         for sample in artifact.samples:
             storage_location = sample.udf['Dx Opslaglocatie'].split()
-            output_file.write('{tray}\t{pos}\n'.format(
+            output_file.write('{tray}\t{pos}\r\n'.format(
                 tray=storage_location[0][2:6],  # Select 4 digits from: CB[1-9][1-9][1-9][1-9]KK
                 pos=storage_location[1]
             ))
@@ -56,8 +56,8 @@ def nunc_mix_sample(lims, process_id, output_file):
     """Generate (mix) sample nunc label file."""
     process = Process(lims, id=process_id)
 
-    #Write empty header
-    output_file.write('\n')
+    # Write empty header
+    output_file.write('\r\n')
 
     for artifact in process.analytes()[0]:
         well = ''.join(artifact.location[1].split(':'))
@@ -67,13 +67,13 @@ def nunc_mix_sample(lims, process_id, output_file):
 
         if sample_mix:
             barcode_name = get_mix_sample_barcode(artifact)
-            output_file.write('{sample};;;;;{container}:{well};;1\n'.format(
+            output_file.write('{sample};;;;;{container}:{well};;1\r\n'.format(
                 sample=barcode_name,
                 container=artifact.container.name,
                 well=well
             ))
         else:
-            output_file.write('{sample};;;;;{container}:{well};;1\n'.format(
+            output_file.write('{sample};;;;;{container}:{well};;1\r\n'.format(
                 sample=artifact.samples[0].udf['Dx Fractienummer'],
                 container=artifact.container.name,
                 well=well
