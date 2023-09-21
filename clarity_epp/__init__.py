@@ -12,15 +12,15 @@ from genologics.entities import Artifact
 
 
 def get_sequence_name(artifact):
-    """Generate sequence name."""
+    """Generate sequence name, for combined or single samples."""
     sample_numbers = []
     for sample in artifact.samples:
-        if 'Dx Monsternummer' in sample.udf:
+        if 'Dx Monsternummer' in sample.udf:  # Use monsternummer for Dx samples
             sample_numbers.append(sample.udf['Dx Monsternummer'])
 
-    if sample_numbers:
+    if sample_numbers:  # Merge monsternummer for Dx samples
         sequence_name = '-'.join(sorted(sample_numbers))
-    else:  # non Dx sample
+    else:  # Use sample name for non Dx samples
         sequence_name = artifact.samples[0].name
 
     return sequence_name
