@@ -100,7 +100,7 @@ def helix_magnis(lims, process_id, output_file):
                         meetw_sampleprep=meetw_sampleprep, meetw_sampleprep_herh=meetw_sampleprep_herh,
                         meetw_seq=meetw_seq, meetw_seq_herh=meetw_seq_herh,
                         meetw_bfx='J',
-                        sample_name=get_sequence_name(sample),
+                        sample_name=get_sequence_name(artifact),
                         vcf_file=gatk_vcf,
                         cnv_vcf_file=exomedepth_vcf,
                     )

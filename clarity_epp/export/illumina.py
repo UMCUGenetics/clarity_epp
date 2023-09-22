@@ -1,10 +1,11 @@
 """Illumina export functions."""
 import operator
 import re
+import csv
 
 from genologics.entities import Process, Artifact
 
-from .. import get_sequence_name
+from .. import get_sequence_name, get_sample_artifacts_from_pool
 import clarity_epp.export.utils
 import config
 
@@ -28,8 +29,10 @@ def update_samplesheet(lims, process_id, artifact_id, output_file, conversion_to
 
     # Parse families
     families = {}
-    for artifact in process.all_inputs():
-        for sample in artifact.samples:
+    sample_artifacts = get_sample_artifacts_from_pool(lims, process.analytes()[0][0])
+
+    for sample_artifact in sample_artifacts:
+        for sample in sample_artifact.samples:
             if (
                 'Dx Familienummer' in list(sample.udf) and
                 'Dx NICU Spoed' in list(sample.udf) and
@@ -117,8 +120,9 @@ def update_samplesheet(lims, process_id, artifact_id, output_file, conversion_to
                         'deviating': False
                     }
 
-            # Add sample to family
-            families[family]['samples'].append(sample)
+            # Add sample_artifact to family
+            if sample_artifact not in families[family]['samples']:
+                families[family]['samples'].append(sample_artifact)
 
     # Get all project types and count samples
     project_types = {}
@@ -148,18 +152,20 @@ def update_samplesheet(lims, process_id, artifact_id, output_file, conversion_to
     # Urgent families / samples, skip deviating
     for family in [family for family in families.values() if family['urgent'] and not family['deviating']]:
         family_project = get_project(project_types[family['project_type']]['projects'], urgent=True)
-        for sample in family['samples']:
-            sample_sequence_name = get_sequence_name(sample)
-            sample_sequence_names[sample.name] = sample_sequence_name
+        for sample_artifact in family['samples']:
+            sample_sequence_name = get_sequence_name(sample_artifact)
+            for sample in sample_artifact.samples:
+                sample_sequence_names[sample.name] = sample_sequence_name
             sample_projects[sample_sequence_name] = family_project
             project_types[family['project_type']]['projects'][family_project] += 1
 
     # Deviating families / samples
     for family in [family for family in families.values() if family['deviating']]:
         family_project = get_project(project_types[family['project_type']]['projects'])
-        for sample in family['samples']:
-            sample_sequence_name = get_sequence_name(sample)
-            sample_sequence_names[sample.name] = sample_sequence_name
+        for sample_artifact in family['samples']:
+            sample_sequence_name = get_sequence_name(sample_artifact)
+            for sample in sample_artifact.samples:
+                sample_sequence_names[sample.name] = sample_sequence_name
             sample_projects[sample_sequence_name] = family_project
             project_types[family['project_type']]['projects'][family_project] += 1
 
@@ -167,9 +173,10 @@ def update_samplesheet(lims, process_id, artifact_id, output_file, conversion_to
     normal_families = [family for family in families.values() if not family['urgent'] and not family['deviating']]
     for family in sorted(normal_families, key=lambda fam: (len(fam['samples'])), reverse=True):
         family_project = get_project(project_types[family['project_type']]['projects'])
-        for sample in family['samples']:
-            sample_sequence_name = get_sequence_name(sample)
-            sample_sequence_names[sample.name] = sample_sequence_name
+        for sample_artifact in family['samples']:
+            sample_sequence_name = get_sequence_name(sample_artifact)
+            for sample in sample_artifact.samples:
+                sample_sequence_names[sample.name] = sample_sequence_name
             sample_projects[sample_sequence_name] = family_project
             project_types[family['project_type']]['projects'][family_project] += 1
 
@@ -238,19 +245,22 @@ def update_samplesheet(lims, process_id, artifact_id, output_file, conversion_to
                 override_cycles=';'.join(override_cycles)
             )
 
-    for line in lims.get_file_contents(id=file_id).rstrip().split('\n'):
-        if line.startswith('[Settings]') and custom_settings:
-            output_file.write('{line}\n'.format(line=line))
+    for data in csv.reader(
+        lims.get_file_contents(id=file_id).rstrip().split('\n'),
+        quotechar='"', delimiter=',', quoting=csv.QUOTE_ALL, skipinitialspace=True
+    ):
+        if data[0] == '[Settings]' and custom_settings:
+            output_file.write('{line}\n'.format(line=','.join(data)))
             output_file.write(custom_settings)
             settings_section = True
 
-        elif line.startswith('[Data]') and custom_settings and not settings_section:
+        elif data[0] == '[Data]' and custom_settings and not settings_section:
             output_file.write('[Settings]\n')
             output_file.write(custom_settings)
-            output_file.write('{line}\n'.format(line=line))
+            output_file.write('{line}\n'.format(line=','.join(data)))
 
-        elif line.startswith('Sample_ID'):  # Samples header line
-            sample_header = line.rstrip().split(',')
+        elif data[0] == 'Sample_ID':  # Samples header line
+            sample_header = data
             sample_id_index = sample_header.index('Sample_ID')
             sample_name_index = sample_header.index('Sample_Name')
             sample_project_index = sample_header.index('Sample_Project')
@@ -260,14 +270,12 @@ def update_samplesheet(lims, process_id, artifact_id, output_file, conversion_to
             else:
                 index_index = sample_header.index('index')
 
-            output_file.write('{line}\n'.format(line=line))
+            output_file.write('{line}\n'.format(line=','.join(data)))
 
         elif sample_header:  # Samples header seen, so continue with samples.
-            data = line.rstrip().split(',')
-
-            # Fix sample name -> use sequence name
-            if data[sample_name_index] in sample_sequence_names:
-                data[sample_name_index] = sample_sequence_names[data[sample_name_index]]
+            sample_name = data[sample_name_index].split(',')[0]
+            if sample_name in sample_sequence_names:
+                data[sample_name_index] = sample_sequence_names[sample_name]
 
             # Set Sample_Project
             if data[sample_name_index] in sample_projects:
@@ -282,4 +290,4 @@ def update_samplesheet(lims, process_id, artifact_id, output_file, conversion_to
 
             output_file.write('{line}\n'.format(line=','.join(data)))
         else:  # Leave other lines untouched.
-            output_file.write('{line}\n'.format(line=line))
+            output_file.write('{line}\n'.format(line=','.join(data)))
