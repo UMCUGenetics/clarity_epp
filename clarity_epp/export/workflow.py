@@ -41,7 +41,9 @@ def helix_magnis(lims, process_id, output_file):
                 if sample.udf['Dx Stoftest code'] == config.stoftestcode_wes:
                     sample_artifacts = lims.get_artifacts(samplelimsid=sample.id, type='Analyte')
                     # Filter artifacts without parent_process
-                    sample_artifacts = [sample_artifact for sample_artifact in sample_artifacts if sample_artifact.parent_process]
+                    sample_artifacts = [
+                        sample_artifact for sample_artifact in sample_artifacts if sample_artifact.parent_process
+                    ]
                     # Sort artifact by parent process id
                     sample_artifacts = sorted(
                         sample_artifacts,
