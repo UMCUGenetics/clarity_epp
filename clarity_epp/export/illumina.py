@@ -1,15 +1,16 @@
 """Illumina export functions."""
 import operator
 import re
+import csv
 
 from genologics.entities import Process, Artifact
 
-from .. import get_sequence_name
+from .. import get_sequence_name, get_sample_artifacts_from_pool
 import clarity_epp.export.utils
 import config
 
 
-def update_samplesheet(lims, process_id, artifact_id, output_file):
+def update_samplesheet(lims, process_id, artifact_id, output_file, conversion_tool):
     """Update illumina samplesheet."""
     process = Process(lims, id=process_id)
     trim_last_base = True  # Used to set Read1EndWithCycle
@@ -28,8 +29,10 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
 
     # Parse families
     families = {}
-    for artifact in process.all_inputs():
-        for sample in artifact.samples:
+    sample_artifacts = get_sample_artifacts_from_pool(lims, process.analytes()[0][0])
+
+    for sample_artifact in sample_artifacts:
+        for sample in sample_artifact.samples:
             if (
                 'Dx Familienummer' in list(sample.udf) and
                 'Dx NICU Spoed' in list(sample.udf) and
@@ -117,8 +120,9 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
                         'deviating': False
                     }
 
-            # Add sample to family
-            families[family]['samples'].append(sample)
+            # Add sample_artifact to family
+            if sample_artifact not in families[family]['samples']:
+                families[family]['samples'].append(sample_artifact)
 
     # Get all project types and count samples
     project_types = {}
@@ -148,18 +152,20 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
     # Urgent families / samples, skip deviating
     for family in [family for family in families.values() if family['urgent'] and not family['deviating']]:
         family_project = get_project(project_types[family['project_type']]['projects'], urgent=True)
-        for sample in family['samples']:
-            sample_sequence_name = get_sequence_name(sample)
-            sample_sequence_names[sample.name] = sample_sequence_name
+        for sample_artifact in family['samples']:
+            sample_sequence_name = get_sequence_name(sample_artifact)
+            for sample in sample_artifact.samples:
+                sample_sequence_names[sample.name] = sample_sequence_name
             sample_projects[sample_sequence_name] = family_project
             project_types[family['project_type']]['projects'][family_project] += 1
 
     # Deviating families / samples
     for family in [family for family in families.values() if family['deviating']]:
         family_project = get_project(project_types[family['project_type']]['projects'])
-        for sample in family['samples']:
-            sample_sequence_name = get_sequence_name(sample)
-            sample_sequence_names[sample.name] = sample_sequence_name
+        for sample_artifact in family['samples']:
+            sample_sequence_name = get_sequence_name(sample_artifact)
+            for sample in sample_artifact.samples:
+                sample_sequence_names[sample.name] = sample_sequence_name
             sample_projects[sample_sequence_name] = family_project
             project_types[family['project_type']]['projects'][family_project] += 1
 
@@ -167,9 +173,10 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
     normal_families = [family for family in families.values() if not family['urgent'] and not family['deviating']]
     for family in sorted(normal_families, key=lambda fam: (len(fam['samples'])), reverse=True):
         family_project = get_project(project_types[family['project_type']]['projects'])
-        for sample in family['samples']:
-            sample_sequence_name = get_sequence_name(sample)
-            sample_sequence_names[sample.name] = sample_sequence_name
+        for sample_artifact in family['samples']:
+            sample_sequence_name = get_sequence_name(sample_artifact)
+            for sample in sample_artifact.samples:
+                sample_sequence_names[sample.name] = sample_sequence_name
             sample_projects[sample_sequence_name] = family_project
             project_types[family['project_type']]['projects'][family_project] += 1
 
@@ -186,21 +193,74 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
     samplesheet_artifact = Artifact(lims, id=artifact_id)
     file_id = samplesheet_artifact.files[0].id
 
-    for line in lims.get_file_contents(id=file_id).rstrip().split('\n'):
-        if line.startswith('[Settings]') and trim_last_base:
-            output_file.write('{line}\n'.format(line=line))
-            output_file.write('Read1EndWithCycle,{value}\n'.format(value=process.udf['Read 1 Cycles']-1))
-            output_file.write('Read2EndWithCycle,{value}\n'.format(value=process.udf['Read 2 Cycles']-1))
+    # Setup custom settings
+    custom_settings = ''
+
+    if conversion_tool == 'bcl2fastq' and trim_last_base:
+        custom_settings = (
+            'Read1EndWithCycle,{read_1_value}\n'
+            'Read2EndWithCycle,{read_2_value}\n'
+        ).format(
+            read_1_value=process.udf['Read 1 Cycles']-1, read_2_value=process.udf['Read 2 Cycles']-1
+        )
+
+    elif conversion_tool == 'bclconvert':
+        # Setup OverrideCycles
+        if trim_last_base or process.udf['UMI - Trim']:
+            override_cycles = [
+                '',  # read 1
+                'I{0}'.format(process.udf['Index Read 1']),  # index 1
+                'I{0}'.format(process.udf['Index Read 2']),  # index 2
+                '',  # read 2
+            ]
+
+            if trim_last_base and process.udf['UMI - Trim']:
+                override_cycles[0] = 'U{umi}Y{read}N1'.format(
+                    umi=process.udf['UMI - Read 1 Length'],
+                    read=process.udf['Read 1 Cycles'] - process.udf['UMI - Read 1 Length'] - 1
+                )
+                override_cycles[3] = 'U{umi}Y{read}N1'.format(
+                    umi=process.udf['UMI - Read 2 Length'],
+                    read=process.udf['Read 2 Cycles'] - process.udf['UMI - Read 2 Length'] - 1
+                )
+                custom_settings = 'TrimUMI,1\n'
+
+            elif trim_last_base:
+                override_cycles[0] = 'Y{read}N1'.format(read=process.udf['Read 1 Cycles'] - 1)
+                override_cycles[3] = 'Y{read}N1'.format(read=process.udf['Read 2 Cycles'] - 1)
+
+            elif process.udf['UMI - Trim']:
+                override_cycles[0] = 'U{umi}Y{read}'.format(
+                    umi=process.udf['UMI - Read 1 Length'],
+                    read=process.udf['Read 1 Cycles'] - process.udf['UMI - Read 1 Length']
+                )
+                override_cycles[3] = 'U{umi}Y{read}'.format(
+                    umi=process.udf['UMI - Read 2 Length'],
+                    read=process.udf['Read 2 Cycles'] - process.udf['UMI - Read 2 Length']
+                )
+                custom_settings = 'TrimUMI,1\n'
+
+            custom_settings = '{settings}OverrideCycles,{override_cycles}\n'.format(
+                settings=custom_settings,
+                override_cycles=';'.join(override_cycles)
+            )
+
+    for data in csv.reader(
+        lims.get_file_contents(id=file_id).rstrip().split('\n'),
+        quotechar='"', delimiter=',', quoting=csv.QUOTE_ALL, skipinitialspace=True
+    ):
+        if data[0] == '[Settings]' and custom_settings:
+            output_file.write('{line}\n'.format(line=','.join(data)))
+            output_file.write(custom_settings)
             settings_section = True
 
-        elif line.startswith('[Data]') and trim_last_base and not settings_section:
+        elif data[0] == '[Data]' and custom_settings and not settings_section:
             output_file.write('[Settings]\n')
-            output_file.write('Read1EndWithCycle,{value}\n'.format(value=process.udf['Read 1 Cycles']-1))
-            output_file.write('Read2EndWithCycle,{value}\n'.format(value=process.udf['Read 2 Cycles']-1))
-            output_file.write('{line}\n'.format(line=line))
+            output_file.write(custom_settings)
+            output_file.write('{line}\n'.format(line=','.join(data)))
 
-        elif line.startswith('Sample_ID'):  # Samples header line
-            sample_header = line.rstrip().split(',')
+        elif data[0] == 'Sample_ID':  # Samples header line
+            sample_header = data
             sample_id_index = sample_header.index('Sample_ID')
             sample_name_index = sample_header.index('Sample_Name')
             sample_project_index = sample_header.index('Sample_Project')
@@ -210,14 +270,12 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
             else:
                 index_index = sample_header.index('index')
 
-            output_file.write('{line}\n'.format(line=line))
+            output_file.write('{line}\n'.format(line=','.join(data)))
 
         elif sample_header:  # Samples header seen, so continue with samples.
-            data = line.rstrip().split(',')
-
-            # Fix sample name -> use sequence name
-            if data[sample_name_index] in sample_sequence_names:
-                data[sample_name_index] = sample_sequence_names[data[sample_name_index]]
+            sample_name = data[sample_name_index].split(',')[0]
+            if sample_name in sample_sequence_names:
+                data[sample_name_index] = sample_sequence_names[sample_name]
 
             # Set Sample_Project
             if data[sample_name_index] in sample_projects:
@@ -232,4 +290,4 @@ def update_samplesheet(lims, process_id, artifact_id, output_file):
 
             output_file.write('{line}\n'.format(line=','.join(data)))
         else:  # Leave other lines untouched.
-            output_file.write('{line}\n'.format(line=line))
+            output_file.write('{line}\n'.format(line=','.join(data)))

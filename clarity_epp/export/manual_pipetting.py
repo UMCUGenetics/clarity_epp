@@ -3,6 +3,7 @@ import re
 
 from genologics.entities import Process
 
+from .. import get_mix_sample_barcode
 import clarity_epp.export.utils
 
 
@@ -328,6 +329,7 @@ def samplesheet_multiplex_sequence_pool(lims, process_id, output_file):
     final_volume = float(process.udf['Final volume'].split()[0])
 
     for input_pool in process.all_inputs():
+        input_pool_sample_ids = []
         input_pool_conc = float(input_pool.udf['Dx Concentratie fluorescentie (ng/ul)'])
         input_pool_size = float(input_pool.udf['Dx Fragmentlengte (bp)'])
         input_pool_nM = (input_pool_conc * 1000 * (1.0/660.0) * (1/input_pool_size)) * 1000
@@ -336,10 +338,18 @@ def samplesheet_multiplex_sequence_pool(lims, process_id, output_file):
         input_pool_sample_count = 0
 
         for sample in input_pool.samples:
+            # Check persoons ID to skip duplicate samples
+            if 'Dx Persoons ID' in sample.udf:
+                if sample.udf['Dx Persoons ID'] in input_pool_sample_ids:
+                    continue  # skip to next sample
+                else:
+                    input_pool_sample_ids.append(sample.udf['Dx Persoons ID'])
+
             if 'Dx Exoomequivalent' in sample.udf:
                 input_pool_sample_count += sample.udf['Dx Exoomequivalent']
             else:
                 input_pool_sample_count += 1
+
         total_sample_count += input_pool_sample_count
         input_pools.append({
             'name': input_pool.name,
@@ -689,23 +699,153 @@ def samplesheet_pool_magnis_pools(lims, process_id, output_file):
     """Create manual pipetting samplesheet for pooling magnis pools. Correct for pools with < 8 samples"""
     process = Process(lims, id=process_id)
 
+    # set up multiplier
+    multiplier = 1
+    if 'Run type' in process.udf:
+        run_type = re.search(r'\(\*.+\)' ,process.udf['Run type'])
+        if run_type:
+            multiplier = float(run_type.string[run_type.start()+2:run_type.end()-1])
+
     # print header
     output_file.write('Pool\tContainer\tSample count\tVolume (ul)\n')
 
     # Get input pools, sort by name and print volume
     for input_artifact in sorted(process.all_inputs(resolve=True), key=lambda artifact: artifact.id):
         sample_count = 0
+        input_artifact_sample_ids = []
         for sample in input_artifact.samples:
+            # Check persoons ID to skip duplicate samples
+            if 'Dx Persoons ID' in sample.udf:
+                if sample.udf['Dx Persoons ID'] in input_artifact_sample_ids:
+                    continue  # skip to next sample
+                else:
+                    input_artifact_sample_ids.append(sample.udf['Dx Persoons ID'])
+
             if 'Dx Exoomequivalent' in sample.udf:
                 sample_count += sample.udf['Dx Exoomequivalent']
             else:
                 sample_count += 1
 
         output_file.write(
-            '{pool}\t{container}\t{sample_count}\t{volume}\n'.format(
+            '{pool}\t{container}\t{sample_count}\t{volume:.2f}\n'.format(
                 pool=input_artifact.name,
                 container=input_artifact.container.name,
                 sample_count=sample_count,
-                volume=sample_count * 1.25
+                volume=sample_count * 1.25 * multiplier
             )
         )
+
+
+def samplesheet_normalization_mix(lims, process_id, output_file):
+    """"Create manual pipetting samplesheet for normalizing mix fraction samples."""
+    process = Process(lims, id=process_id)
+
+    output_file.write(
+        'Fractienummer\tConcentratie (ng/ul)\tVolume sample (ul)\tVolume low TE (ul)\tContainer_tube\n'
+    )
+
+    samples = {}
+
+    # Find all QC process types
+    qc_process_types = clarity_epp.export.utils.get_process_types(lims, ['Dx Qubit QC', 'Dx Tecan Spark 10M QC'])
+
+    # Find concentration in last QC process
+    for input_artifact in process.all_inputs():
+        for input_sample in input_artifact.samples:
+            qc_processes = lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id)
+            if qc_processes:
+                qc_process = sorted(qc_processes, key=lambda process: int(process.id.split('-')[-1]))[-1]
+                for qc_artifact in qc_process.outputs_per_input(input_artifact.id):
+                    if input_sample.name in qc_artifact.name:
+                        for qc_sample in qc_artifact.samples:
+                            if qc_sample.name == input_sample.name:
+                                concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+
+            else:
+                parent_process = input_artifact.parent_process
+                for parent_artifact in parent_process.all_inputs():
+                    if parent_artifact.name == input_sample.name:
+                        qc_processes = lims.get_processes(type=qc_process_types, inputartifactlimsid=parent_artifact.id)
+                        if qc_processes:
+                            qc_process = sorted(qc_processes, key=lambda process: int(process.id.split('-')[-1]))[-1]
+                            for qc_artifact in qc_process.outputs_per_input(parent_artifact.id):
+                                if input_sample.name in qc_artifact.name:
+                                    for qc_sample in qc_artifact.samples:
+                                        if qc_sample.name == input_sample.name:
+                                            concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+                        else:
+                            # No QC process found, use Helix concentration
+                            concentration = input_sample.udf['Dx Concentratie (ng/ul)']
+
+            samples[input_sample.udf['Dx Monsternummer']] = {'conc': concentration}
+
+    # Calculation of pipetting volumes
+    for input_artifact in process.all_inputs():
+        output_artifact = process.outputs_per_input(input_artifact.id, Analyte=True)[0]  # assume one artifact per input
+        dividend = float(output_artifact.udf['Dx Input (ng)']) / len(input_artifact.samples)
+        minuend = float(output_artifact.udf['Dx Eindvolume (ul)']) / len(input_artifact.samples)
+        sample_mix = False
+
+        if len(input_artifact.samples) > 1:
+            sample_mix = True
+
+        input_sample_1 = input_artifact.samples[0]
+        if 'Dx sample vol. #1' in output_artifact.udf:
+            dividend_sample_1 = (
+                samples[input_sample_1.udf['Dx Monsternummer']]['conc'] * float(output_artifact.udf['Dx sample vol. #1'])
+            )
+        else:
+            dividend_sample_1 = dividend
+        sample_volume = dividend_sample_1 / samples[input_sample_1.udf['Dx Monsternummer']]['conc']
+        if sample_volume > minuend:
+            low_te_volume = 0
+        else:
+            low_te_volume = minuend - sample_volume
+        samples[input_sample_1.udf['Dx Monsternummer']]['sample_volume'] = sample_volume
+        samples[input_sample_1.udf['Dx Monsternummer']]['low_te_volume'] = low_te_volume
+
+        if sample_mix:
+            input_sample_2 = input_artifact.samples[1]
+            if 'Dx sample vol. #2' in output_artifact.udf:
+                dividend_sample_2 = (
+                    samples[input_sample_2.udf['Dx Monsternummer']]['conc'] * float(output_artifact.udf['Dx sample vol. #2'])
+                )
+            else:
+                dividend_sample_2 = dividend
+            sample_volume = dividend_sample_2 / samples[input_sample_2.udf['Dx Monsternummer']]['conc']
+            if sample_volume > minuend:
+                low_te_volume = 0
+            else:
+                low_te_volume = minuend - sample_volume
+            samples[input_sample_2.udf['Dx Monsternummer']]['sample_volume'] = sample_volume
+            samples[input_sample_2.udf['Dx Monsternummer']]['low_te_volume'] = low_te_volume
+
+    # Compose output per sample in well
+    output = {}
+    for output_artifact in process.all_outputs():
+        if output_artifact.type == 'Analyte':
+            for output_sample in output_artifact.samples:
+                monster = output_sample.udf['Dx Monsternummer']
+                if len(output_artifact.samples) > 1:
+                    container = get_mix_sample_barcode(output_artifact)
+                else:
+                    container = output_sample.udf['Dx Fractienummer']
+                well = ''.join(output_artifact.location[1].split(':'))
+                output_data = (
+                    '{sample}\t{concentration:.2f}\t{sample_volume:.2f}\t{low_te_volume:.2f}\t{container}\n'.format(
+                        sample=output_sample.udf['Dx Fractienummer'],
+                        concentration=samples[monster]['conc'],
+                        sample_volume=samples[monster]['sample_volume'],
+                        low_te_volume=samples[monster]['low_te_volume'],
+                        container=container
+                    )
+                )
+                if well in output:
+                    output[well][monster] = output_data
+                else:
+                    output[well] = {monster: output_data}
+
+    # Write output file per sample sorted for well
+    for well in clarity_epp.export.utils.sort_96_well_plate(output.keys()):
+        for sample in output[well]:
+            output_file.write(output[well][sample])

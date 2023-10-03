@@ -4,7 +4,6 @@ import datetime
 from genologics.entities import Process
 
 import clarity_epp.export.utils
-from .. import get_sequence_name
 
 
 def removed_samples(lims, output_file):

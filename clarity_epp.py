@@ -48,7 +48,9 @@ def export_hamilton(args):
 
 def export_illumina(args):
     """Export (updated) illumina samplesheet."""
-    clarity_epp.export.illumina.update_samplesheet(lims, args.process_id, args.artifact_id, args.output_file)
+    clarity_epp.export.illumina.update_samplesheet(
+        lims, args.process_id, args.artifact_id, args.output_file, args.conversion_tool
+    )
 
 
 def export_labels(args):
@@ -59,6 +61,8 @@ def export_labels(args):
         clarity_epp.export.labels.container_sample(lims, args.process_id, args.output_file, args.description)
     elif args.type == 'storage_location':
         clarity_epp.export.labels.storage_location(lims, args.process_id, args.output_file)
+    elif args.type == 'nunc_mix_sample':
+        clarity_epp.export.labels.nunc_mix_sample(lims, args.process_id, args.output_file)
 
 
 def export_magnis(args):
@@ -92,6 +96,8 @@ def export_manual_pipetting(args):
         clarity_epp.export.manual_pipetting.samplesheet_pool_samples(lims, args.process_id, args.output_file)
     elif args.type == 'pool_magnis_pools':
         clarity_epp.export.manual_pipetting.samplesheet_pool_magnis_pools(lims, args.process_id, args.output_file)
+    elif args.type == 'normalization_mix':
+        clarity_epp.export.manual_pipetting.samplesheet_normalization_mix(lims, args.process_id, args.output_file)
 
 
 def export_ped_file(args):
@@ -151,6 +157,8 @@ def upload_tecan_results(args):
         clarity_epp.upload.tecan.results_qc(lims, args.process_id)
     elif args.type == 'purify_normalise':
         clarity_epp.upload.tecan.results_purify_normalise(lims, args.process_id)
+    elif args.type == 'purify_mix':
+        clarity_epp.upload.tecan.results_purify_mix(lims, args.process_id)
 
 
 def upload_tapestation_results(args):
@@ -195,12 +203,14 @@ def placement_automatic(args):
     clarity_epp.placement.plate.copy_layout(lims, args.process_id)
 
 
-def placement_artifact_set_name(args):
-    """Change artifact name to sequence name."""
+def placement_artifact_set(args):
+    """Change artifact name or udf."""
     if args.type == 'sequence_name':
         clarity_epp.placement.artifact.set_sequence_name(lims, args.process_id)
     elif args.type == 'run_id':
         clarity_epp.placement.artifact.set_runid_name(lims, args.process_id)
+    elif args.type == 'norm_udf':
+        clarity_epp.placement.artifact.set_norm_manual_udf(lims, args.process_id)
 
 
 def placement_route_artifact(args):
@@ -219,6 +229,11 @@ def placement_unpooling(args):
     clarity_epp.placement.pool.unpooling(lims, args.process_id)
 
 
+def placement_patient_pools(args):
+    """Create  patient pools for Dx samples."""
+    clarity_epp.placement.pool.create_patient_pools(lims, args.process_id)
+
+
 def placement_complete_step(args):
     """Complete protocol step (Dx Mark protocol complete)."""
     clarity_epp.placement.step.finish_protocol_complete(lims, args.process_id)
@@ -227,6 +242,11 @@ def placement_complete_step(args):
 def placement_tecan(args):
     """Placement tecan process, distribute artifacts over two containers"""
     clarity_epp.placement.tecan.place_artifacts(lims, args.process_id)
+
+
+def placement_pipetting(args):
+    """Check pipetted input and output nuncs."""
+    clarity_epp.placement.pipetting.check_nunc_input_nunc_output(lims, args.process_id)
 
 
 if __name__ == "__main__":
@@ -271,10 +291,16 @@ if __name__ == "__main__":
     )
     parser_export_illumina.add_argument('process_id', help='Clarity lims process id')
     parser_export_illumina.add_argument('artifact_id', help='Clarity lims samplesheet artifact id')
+    parser_export_illumina.add_argument(
+        '-c', '--conversion_tool', choices=['bcl2fastq', 'bclconvert'], default='bcl2fastq', help='Illumina conversion tool'
+    )
     parser_export_illumina.set_defaults(func=export_illumina)
 
     parser_export_labels = subparser_export.add_parser('labels', help='Export container labels', parents=[output_parser])
-    parser_export_labels.add_argument('type', choices=['container', 'container_sample', 'storage_location'], help='Label type')
+    parser_export_labels.add_argument(
+        'type', 
+        choices=['container', 'container_sample', 'storage_location', 'nunc_mix_sample'], 
+        help='Label type')
     parser_export_labels.add_argument('process_id', help='Clarity lims process id')
     parser_export_labels.add_argument('-d', '--description',  nargs='?', help='Container name description')
     parser_export_labels.set_defaults(func=export_labels)
@@ -293,7 +319,7 @@ if __name__ == "__main__":
         choices=[
             'purify', 'dilute_library_pool', 'multiplex_library_pool', 'multiplex_sequence_pool', 'normalization',
             'capture', 'exonuclease', 'pcr_exonuclease', 'mip_multiplex_pool', 'mip_dilute_pool', 'pool_samples',
-            'pool_magnis_pools'
+            'pool_magnis_pools', 'normalization_mix'
         ],
         help='Samplesheet type'
     )
@@ -338,7 +364,9 @@ if __name__ == "__main__":
 
     parser_export_tecan = subparser_export.add_parser('tecan', help='Create tecan samplesheets', parents=[output_parser])
     parser_export_tecan.add_argument('process_id', help='Clarity lims process id')
-    parser_export_tecan.add_argument('type', choices=['qc', 'purify_normalise'], help='Samplesheet type')
+    parser_export_tecan.add_argument(
+        'type', choices=['qc', 'purify_normalise', 'filling_out_purify', 'normalise'], help='Samplesheet type'
+    )
     parser_export_tecan.set_defaults(func=export_tecan)
 
     parser_export_workflow = subparser_export.add_parser(
@@ -366,7 +394,7 @@ if __name__ == "__main__":
 
     parser_upload_tecan = subparser_upload.add_parser('tecan', help='Upload tecan results')
     parser_upload_tecan.add_argument('process_id', help='Clarity lims process id')
-    parser_upload_tecan.add_argument('type', choices=['qc', 'purify_normalise'], help='Tecan process type')
+    parser_upload_tecan.add_argument('type', choices=['qc', 'purify_normalise', 'purify_mix'], help='Tecan process type')
     parser_upload_tecan.set_defaults(func=upload_tecan_results)
 
     parser_upload_magnis = subparser_upload.add_parser('magnis', help='Upload magnis results')
@@ -404,9 +432,9 @@ if __name__ == "__main__":
     parser_placement_automatic.set_defaults(func=placement_automatic)
 
     parser_placement_artifact = subparser_placement.add_parser('artifact', help='Change artifact name to sequence name')
-    parser_placement_artifact.add_argument('type', choices=['sequence_name', 'run_id'], help='Check type')
+    parser_placement_artifact.add_argument('type', choices=['sequence_name', 'run_id', 'norm_udf'], help='Check type')
     parser_placement_artifact.add_argument('process_id', help='Clarity lims process id')
-    parser_placement_artifact.set_defaults(func=placement_artifact_set_name)
+    parser_placement_artifact.set_defaults(func=placement_artifact_set)
 
     parser_placement_route_artifact = subparser_placement.add_parser('route_artifact', help='Route artifact to a workflow')
     parser_placement_route_artifact.add_argument('process_id', help='Clarity lims process id')
@@ -428,9 +456,17 @@ if __name__ == "__main__":
     parser_placement_unpooling.add_argument('process_id', help='Clarity lims process id')
     parser_placement_unpooling.set_defaults(func=placement_unpooling)
 
+    parser_placement_patient_pools = subparser_placement.add_parser('patient_pools', help='Create patient pools for Dx samples')
+    parser_placement_patient_pools.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_patient_pools.set_defaults(func=placement_patient_pools)
+
     parser_placement_tecan = subparser_placement.add_parser('tecan', help='Placement of samples in tecan step')
     parser_placement_tecan.add_argument('process_id', help='Clarity lims process id')
     parser_placement_tecan.set_defaults(func=placement_tecan)
+
+    parser_placement_pipetting = subparser_placement.add_parser('pipetting', help='Check pipetting input and output')
+    parser_placement_pipetting.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_pipetting.set_defaults(func=placement_pipetting)
 
     args = parser.parse_args()
     args.func(args)
