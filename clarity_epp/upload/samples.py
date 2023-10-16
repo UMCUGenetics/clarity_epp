@@ -304,14 +304,18 @@ def from_helix(lims, email_settings, input_file):
 def from_helix_pg(lims, email_settings, input_file):
     """Upload samples from helix export file, using pharmacogenetics format."""
     # Test connection
-    test_lims_connection(lims, email_settings, 'PG Import')
+    test_lims_connection(lims, email_settings, 'FG Helix Import')
+
+    # Setup email
+    subject = "Lims Helix FG Upload"
+    message = "Samples:\n"
 
     # Set udf columns
     # TODO: Add all columns
     udf_column = {
         'Dx GLIMS ID': {'column': 'Achternaam'},
         'Dx Geboortejaar': {'column': 'Geboortedatum'},
-        'Dx Einddatum': {'column': 'Datum aanmelding'},  # Add two weeks
+        'Dx Einddatum': {'column': 'Datum aanmelding'},
         'Dx Monsternummer': {'column': 'Monsternummers'},
         'Dx Fractienummer': {'column': 'Fractienummers'},
         'Dx Concentratie (ng/ul)': {'column': 'Conc'},
@@ -324,62 +328,84 @@ def from_helix_pg(lims, email_settings, input_file):
         if line.startswith('Achternaam'):  # Parse input file header
             header = line.rstrip().split(';')
             for udf in udf_column:
-                [udf]['index'] = header.index(udf_column[udf]['column'])
+                udf_column[udf]['index'] = header.index(udf_column[udf]['column'])
 
         elif line.startswith('Controle:'):
             break
 
         elif header:
-            data = line.rstrip().split(';')
-            udf_data = {}  # Add Protocolomschrijving 'PD-FARMACO' to get correct sequencing project?
+            if not line.startswith('.'):  # Lines containg only a '.', skip for now -> not sure if this is necessary in prod
+                data = line.rstrip().split(';')
+                udf_data = {}  # Add Protocolomschrijving 'PD-FARMACO' to get correct sequencing project?
+                for udf in udf_column:
+                    # Transform specific udf
+                    if udf == 'Dx Geboortejaar':
+                        date = datetime.strptime(data[udf_column[udf]['index']], '%d-%m-%Y')  # Helix format (14-01-2021)
+                        udf_data[udf] = date.year
+                    elif udf == 'Dx Concentratie (ng/ul)':
+                        udf_data[udf] = data[udf_column[udf]['index']].replace(',', '.')
+                        if udf_data[udf]:
+                            udf_data[udf] = float(udf_data[udf])
+                    elif udf == 'Dx Einddatum':  # Add two weeks to 'Datum aanmelding'
+                        date = datetime.strptime(data[udf_column[udf]['index']], '%d-%m-%Y')  # Helix format (14-01-2021)
+                        udf_data[udf] = (date + timedelta(weeks=2)).strftime('%Y-%m-%d')
+                    elif udf == 'Dx GLIMS ID':
+                        udf_data[udf] = int(data[udf_column[udf]['index']])
+                    else:
+                        udf_data[udf] = data[udf_column[udf]['index']].strip()
 
-            for udf in udf_column:
-                # Transform specific udf
-                if udf == 'Dx Geboortejaar':
-                    date = datetime.strptime(data[udf_column[udf]['index']], '%d-%m-%Y')  # Helix format (14-01-2021)
-                    udf_data[udf] = date.year
-                elif udf == 'Dx Concentratie (ng/ul)':
-                    udf_data[udf] = data[udf_column[udf]['index']].replace(',', '.')
-                    if udf_data[udf]:
-                        udf_data[udf] = float(udf_data[udf])
-                elif udf == 'Dx Einddatum':  # Add two weeks to 'Datum aanmelding'
-                    date = datetime.strptime(data[udf_column[udf]['index']], '%d-%m-%Y')  # Helix format (14-01-2021)
-                    udf_data[udf] = date + timedelta(weeks=2)
-                else:
-                    udf_data[udf] = data[udf_column[udf]['index']]
+                # Get sample
+                # TODO: Can we assume one?
+                sample = lims.get_samples(name=udf_data['Dx GLIMS ID'])[0]
 
-        # Get sample and update UDF
-        # TODO: Can we assume one?
-        # TODO: Does update work on udf type?
-        # sample = lims.get_samples(name=udf_data['Dx GLIMS ID'])[0]
-        # sample.udf.update(udf_data)
+                # Update sample udf fields with helix data
+                for udf in udf_data:
+                    sample.udf[udf] = udf_data[udf]
+                sample.put()
 
-        # Route sample to workflow
-        # TODO: How do we configure workflow type? Hardcoded in config?
-        # workflow = clarity_epp.upload.utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])
-        # lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
+                # Route sample to workflow
+                # TODO: How do we configure workflow type? Hardcoded in config?
+                # workflow = clarity_epp.upload.utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])
+                # lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
 
-        # TODO: Send email?
+                message += "{sample}\t{project}\tAdded to workflow {workflow}\n".format(
+                    sample=sample.name,
+                    project=sample.project.name,
+                    workflow="workflow.name"
+                )
+
+    # Send email
+    send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
 
 
 def from_glims(lims, email_settings, input_file):
     """Upload samples from glims export file"""
     # Test connection
-    test_lims_connection(lims, email_settings, 'PG Import')
+    test_lims_connection(lims, email_settings, 'GLIMS Import')
 
     # Get researcher
     # TODO: Should we always use the same researcher?
-    # researcher = get_researcher(lims, email_settings, helix_initials, project_name)
+    researcher = get_researcher(lims, email_settings, 'DX', input_file.name.split('/')[-1])
+
+    # Get project
+    project_name = 'Dx FG {date}'.format(date=datetime.now().strftime("%m-%Y"))
+    try:
+        project = lims.get_projects(name=project_name)[0]
+    except IndexError:  # Project not found
+        project = Project.create(lims, name=project_name, researcher=researcher, udf={'Application': 'DX'})
+
+    # Setup email
+    subject = "Lims GLIMS Upload: {0}".format(project_name)
+    message = "Project: {0}\n\nSamples:\n".format(project_name)
 
     # Set UDF columns
     udf_column = {
-        'Dx GLIMS ID': {'column': 'GLIMS_id'},
-        'Dx Persoons ID': {'column': 'GLIMS_patient_id'},
-        'Dx Geboortejaar': {'column': 'Geboortejaar'},  # geboortedatum of jaar?
-        'Dx Onderzoeksindicatie': {'column': 'Projectcode'},
+        'Dx GLIMS ID': {'column': 'Glims monster id'},
+        'Dx Persoons ID': {'column': 'Glims patient id'},
+        'Dx Geboortejaar': {'column': 'geboortejaar'},
+        'Dx Onderzoeksindicatie': {'column': 'projectcode'},
     }
 
-    # Place holder -> file format to be determined.
     # Parse input file header
     header = input_file.readline().rstrip().split(';')  # expect header on first line
     for udf in udf_column:
@@ -387,15 +413,23 @@ def from_glims(lims, email_settings, input_file):
 
     for line in input_file:
         data = line.rstrip().split(';')
-        udf_data = {'Sample Type': 'DNA isolated', 'Dx Import warning': ''}  # required lims input
 
-        for udf in udf_column:
-            udf_data[udf] = data[udf_column[udf]['index']]
+        if len(data) == len(header):
+            udf_data = {'Sample Type': 'DNA isolated', 'Dx Import warning': ''}  # required lims input
 
-        # Upload sample
-        container_type = Containertype(lims, id='2')  # Tube
-    #     container = Container.create(lims, type=container_type, name=udf_data['Dx GLIMS ID'])
-    #     project = 'tbd'  # TODO: Set correct project name -> per month/week?
-    #     sample = Sample.create(lims, container=container, position='1:1', project=project, name=udf_data['Dx GLIMS ID'], udf=udf_data)
+            for udf in udf_column:
+                if udf == 'Dx Geboortejaar':
+                    udf_data[udf] = data[udf_column[udf]['index']].rstrip('|')  # clean date, remove |
+                else:
+                    udf_data[udf] = data[udf_column[udf]['index']]
 
-    # TODO: Send email?
+            # Upload sample
+            container_type = Containertype(lims, id='2')  # Tube
+            container = Container.create(lims, type=container_type, name=udf_data['Dx GLIMS ID'])
+            sample = Sample.create(lims, container=container, position='1:1', project=project, name=udf_data['Dx GLIMS ID'], udf=udf_data)
+
+            # Update email
+            message += "{sample}\n".format(sample=sample.name)
+
+    # Send email
+    send_email(email_settings['server'], email_settings['from'], email_settings['to_import_glims'], subject, message)
