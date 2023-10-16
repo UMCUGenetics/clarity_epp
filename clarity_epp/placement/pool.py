@@ -2,7 +2,7 @@
 
 from genologics.entities import Process, Workflow, Step
 
-from .. import get_sequence_name, get_sample_artifacts_from_pool
+from .. import get_sequence_name, get_sample_artifacts_from_pool, get_unique_sample_id
 import config
 
 
@@ -63,12 +63,13 @@ def create_patient_pools(lims, process_id):
     # Create patient pools
     for artifact in step_pools.available_inputs:
         sample = artifact.samples[0]  # Assume one sample per artifact
-        if sample.udf['Dx Persoons ID'] not in patient_pools:
-            patient_pools[sample.udf['Dx Persoons ID']] = {
-                'name': str(sample.udf['Dx Persoons ID']),
+        sample_id = get_unique_sample_id(sample)
+        if sample_id not in patient_pools:
+            patient_pools[sample_id] = {
+                'name': str(sample_id),
                 'inputs': []
             }
-        patient_pools[sample.udf['Dx Persoons ID']]['inputs'].append(artifact)
+        patient_pools[sample_id]['inputs'].append(artifact)
 
     # Transform patient pools to list and put to clarity
     step_pools.set_pools(list(patient_pools.values()))
