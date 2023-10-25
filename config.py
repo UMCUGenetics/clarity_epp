@@ -4,6 +4,7 @@
 baseuri = 'https://change_this_lims.uri'
 username = 'change_this'
 password = 'change_this'
+api_timeout = 60
 
 # Email settings
 email = {
