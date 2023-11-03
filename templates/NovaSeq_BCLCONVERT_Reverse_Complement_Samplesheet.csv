@@ -20,7 +20,7 @@ FindAdaptersWithIndels,true
 Sample_ID,Sample_Name,Sample_Plate,Sample_Well,index,index2,Sample_Project,Description
 </HEADER>
 <DATA>
-${INPUT.LIMSID},${SAMPLE.NAME##NoSpecialCharacters},${INPUT.CONTAINER.NAME},${INPUT.CONTAINER.PLACEMENT},${INPUT.REAGENT.SEQUENCE##Single},${INPUT.REAGENT.SEQUENCE##Index2RC},${SAMPLE.PROJECT.NAME##NoSpecialCharacters},
+${INPUT.LIMSID},${SAMPLE.NAME},${INPUT.CONTAINER.NAME},${INPUT.CONTAINER.PLACEMENT},${INPUT.REAGENT.SEQUENCE##Single},${INPUT.REAGENT.SEQUENCE##Index2RC},${SAMPLE.PROJECT.NAME##NoSpecialCharacters},
 </DATA>
 <TOKEN_FORMAT>
 ${INPUT.REAGENT.SEQUENCE##Single}
@@ -46,9 +46,6 @@ if (index > 0) {
 } else {
     return ''
 }
-
-${SAMPLE.NAME##NoSpecialCharacters}
-return token.replaceAll(\"[^a-zA-Z0-9-]\", \"-\")
 
 ${SAMPLE.PROJECT.NAME##NoSpecialCharacters}
 return token.replaceAll(\"[^a-zA-Z0-9_]\", \"_\")

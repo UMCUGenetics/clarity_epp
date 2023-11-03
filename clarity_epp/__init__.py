@@ -67,6 +67,15 @@ def get_mix_sample_barcode(artifact):
     return barcode_name
 
 
+def get_unique_sample_id(sample):
+    if 'Dx Foetus ID' in sample.udf and sample.udf['Dx Foetus ID']:
+        return sample.udf['Dx Foetus ID']
+    elif 'Dx Persoons ID' in sample.udf and sample.udf['Dx Persoons ID']:
+        return sample.udf['Dx Persoons ID']
+    else:
+        return None
+
+
 def send_email(server, sender, receivers, subject, text, attachment=None):
     """Send emails."""
     mail = MIMEMultipart()

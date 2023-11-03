@@ -4,8 +4,7 @@
 import sys
 import argparse
 
-from genologics.lims import Lims
-
+import genologics.lims
 
 import clarity_epp.upload
 import clarity_epp.export
@@ -15,7 +14,8 @@ import clarity_epp.placement
 import config
 
 # Setup lims connection
-lims = Lims(config.baseuri, config.username, config.password)
+lims = genologics.lims.Lims(config.baseuri, config.username, config.password)
+genologics.lims.TIMEOUT = config.api_timeout
 
 
 # Export Functions
@@ -315,8 +315,8 @@ if __name__ == "__main__":
 
     parser_export_labels = subparser_export.add_parser('labels', help='Export container labels', parents=[output_parser])
     parser_export_labels.add_argument(
-        'type', 
-        choices=['container', 'container_sample', 'storage_location', 'nunc_mix_sample'], 
+        'type',
+        choices=['container', 'container_sample', 'storage_location', 'nunc_mix_sample'],
         help='Label type')
     parser_export_labels.add_argument('process_id', help='Clarity lims process id')
     parser_export_labels.add_argument('-d', '--description',  nargs='?', help='Container name description')

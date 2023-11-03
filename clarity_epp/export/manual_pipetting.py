@@ -3,7 +3,7 @@ import re
 
 from genologics.entities import Process
 
-from .. import get_mix_sample_barcode
+from .. import get_mix_sample_barcode, get_unique_sample_id
 import clarity_epp.export.utils
 
 
@@ -338,12 +338,13 @@ def samplesheet_multiplex_sequence_pool(lims, process_id, output_file):
         input_pool_sample_count = 0
 
         for sample in input_pool.samples:
-            # Check persoons ID to skip duplicate samples
-            if 'Dx Persoons ID' in sample.udf:
-                if sample.udf['Dx Persoons ID'] in input_pool_sample_ids:
+            sample_id = get_unique_sample_id(sample)
+            # Check unique sample ID to skip duplicate samples
+            if sample_id:
+                if sample_id in input_pool_sample_ids:
                     continue  # skip to next sample
                 else:
-                    input_pool_sample_ids.append(sample.udf['Dx Persoons ID'])
+                    input_pool_sample_ids.append(sample_id)
 
             if 'Dx Exoomequivalent' in sample.udf:
                 input_pool_sample_count += sample.udf['Dx Exoomequivalent']
@@ -714,12 +715,13 @@ def samplesheet_pool_magnis_pools(lims, process_id, output_file):
         sample_count = 0
         input_artifact_sample_ids = []
         for sample in input_artifact.samples:
+            sample_id = get_unique_sample_id(sample)
             # Check persoons ID to skip duplicate samples
-            if 'Dx Persoons ID' in sample.udf:
-                if sample.udf['Dx Persoons ID'] in input_artifact_sample_ids:
+            if sample_id:
+                if sample_id in input_artifact_sample_ids:
                     continue  # skip to next sample
                 else:
-                    input_artifact_sample_ids.append(sample.udf['Dx Persoons ID'])
+                    input_artifact_sample_ids.append(sample_id)
 
             if 'Dx Exoomequivalent' in sample.udf:
                 sample_count += sample.udf['Dx Exoomequivalent']
