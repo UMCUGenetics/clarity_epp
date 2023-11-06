@@ -103,6 +103,8 @@ def export_manual_pipetting(args):
         clarity_epp.export.manual_pipetting.samplesheet_pool_magnis_pools(lims, args.process_id, args.output_file)
     elif args.type == 'normalization_mix':
         clarity_epp.export.manual_pipetting.samplesheet_normalization_mix(lims, args.process_id, args.output_file)
+    elif args.type == 'dilution_library_prep_input':
+        clarity_epp.export.manual_pipetting.samplesheet_dilution_library_prep_input(lims, args.process_id, args.output_file)
 
 
 def export_ped_file(args):
@@ -336,7 +338,7 @@ if __name__ == "__main__":
         choices=[
             'purify', 'dilute_library_pool', 'multiplex_library_pool', 'multiplex_sequence_pool', 'normalization',
             'capture', 'exonuclease', 'pcr_exonuclease', 'mip_multiplex_pool', 'mip_dilute_pool', 'pool_samples',
-            'pool_magnis_pools', 'normalization_mix'
+            'pool_magnis_pools', 'normalization_mix', 'dilution_library_prep_input'
         ],
         help='Samplesheet type'
     )

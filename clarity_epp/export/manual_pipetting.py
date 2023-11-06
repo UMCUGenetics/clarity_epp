@@ -851,3 +851,68 @@ def samplesheet_normalization_mix(lims, process_id, output_file):
     for well in clarity_epp.export.utils.sort_96_well_plate(output.keys()):
         for sample in output[well]:
             output_file.write(output[well][sample])
+
+
+def samplesheet_dilution_library_prep_input(lims, process_id, output_file):
+    """"Create manual pipetting samplesheet for dilution library prep input samples."""
+    process = Process(lims, id=process_id)
+
+    output_file.write(
+        'Samplenaam\tContainer_id\tul sample\tul water\n'
+    )
+
+    samples = {}
+
+    # Find all QC process types
+    qc_process_types = clarity_epp.export.utils.get_process_types(lims, ['Dx Qubit QC', 'Dx Tecan Spark 10M QC'])
+
+    # Find concentration in last QC process
+    for input_artifact in process.all_inputs():
+        for input_sample in input_artifact.samples:
+            qc_processes = lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id)
+            if qc_processes:
+                qc_process = sorted(qc_processes, key=lambda process: int(process.id.split('-')[-1]))[-1]
+                for qc_artifact in qc_process.outputs_per_input(input_artifact.id):
+                    if input_sample.udf["Dx Monsternummer"] in qc_artifact.name:
+                        for qc_sample in qc_artifact.samples:
+                            if qc_sample.name == input_sample.name:
+                                concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+            else:
+                parent_process = input_artifact.parent_process
+                for parent_artifact in parent_process.all_inputs():
+                    if parent_artifact.name == input_sample.name:
+                        qc_processes = lims.get_processes(type=qc_process_types, inputartifactlimsid=parent_artifact.id)
+                        if qc_processes:
+                            qc_process = sorted(qc_processes, key=lambda process: int(process.id.split('-')[-1]))[-1]
+                            for qc_artifact in qc_process.outputs_per_input(parent_artifact.id):
+                                if input_sample.udf["Dx Monsternummer"] in qc_artifact.name:
+                                    for qc_sample in qc_artifact.samples:
+                                        if qc_sample.name == input_sample.name:
+                                            concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+                        else:
+                            # No QC process found, use Helix concentration
+                            concentration = input_sample.udf['Dx Concentratie (ng/ul)']
+
+            samples[input_sample.udf['Dx Monsternummer']] = {'conc': concentration}
+
+    end_volume = process.udf['Dx Eindvolume (ul)']
+    ng_input = process.udf['Dx Input (ng)']
+
+    to_sort = []
+    for input_artifact in process.all_inputs():
+        to_sort.append(input_artifact.name)
+    sorted_artifacts = sorted(to_sort)
+
+    for sorted_artifact in sorted_artifacts:
+        for input_artifact in process.all_inputs():
+            if input_artifact.name == sorted_artifact:
+                sample_volume = ng_input / samples[input_artifact.name]["conc"]
+                water_volume = end_volume - sample_volume
+                output_file.write(
+                    '{samplename}\t{container}\t{sample_volume:.2f}\t{water_volume:.2f}\n'.format(
+                        samplename=input_artifact.name,
+                        container=input_artifact.container.id,
+                        sample_volume=sample_volume,
+                        water_volume=water_volume
+                    )
+                )
