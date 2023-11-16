@@ -37,7 +37,6 @@ def set_qc_flag(lims, process_id, cutoff=10):
                         artifact.samples[0].udf['Dx norm. manueel'] = False
                     artifact.samples[0].put()
 
-        print(concentration_range, sample_measurements_average)
         if concentration_range[0] <= sample_measurements_average <= concentration_range[1]:
             if len(sample_measurements) == 1:
                 artifact.qc_flag = 'PASSED'
