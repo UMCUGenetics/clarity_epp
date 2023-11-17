@@ -703,7 +703,7 @@ def samplesheet_pool_magnis_pools(lims, process_id, output_file):
     # set up multiplier
     multiplier = 1
     if 'Run type' in process.udf:
-        run_type = re.search(r'\(\*.+\)' ,process.udf['Run type'])
+        run_type = re.search(r'\(\*.+\)', process.udf['Run type'])
         if run_type:
             multiplier = float(run_type.string[run_type.start()+2:run_type.end()-1])
 
@@ -912,6 +912,30 @@ def samplesheet_dilution_library_prep_input(lims, process_id, output_file):
                     '{samplename}\t{container}\t{sample_volume:.2f}\t{water_volume:.2f}\n'.format(
                         samplename=input_artifact.name,
                         container=input_artifact.container.id,
+                        sample_volume=sample_volume,
+                        water_volume=water_volume
+                    )
+                )
+
+
+def samplesheet_3nm_dilution_mirocanvas(lims, process_id, output_file):
+    """"Create manual pipetting samplesheet for 3 nM dilution Mirocanvas."""
+    process = Process(lims, id=process_id)
+
+    output_file.write(
+        'Samplenaam\tVolume sample (ul)\tVolume water (ul)\n'
+    )
+
+    for output_artifact in process.all_outputs():
+        if output_artifact.type == 'Analyte':
+            if "Dx volume sample (ul)" in output_artifact.udf and "Dx nM sample" in output_artifact.udf:
+                sample_volume = output_artifact.udf["Dx volume sample (ul)"]
+                sample_nm = output_artifact.udf["Dx nM sample"]
+                total_sample_volume = sample_nm * sample_volume / 3
+                water_volume = total_sample_volume - sample_volume
+                output_file.write(
+                    '{samplename}\t{sample_volume:.2f}\t{water_volume:.2f}\n'.format(
+                        samplename=output_artifact.name,
                         sample_volume=sample_volume,
                         water_volume=water_volume
                     )

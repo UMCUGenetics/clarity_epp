@@ -105,6 +105,8 @@ def export_manual_pipetting(args):
         clarity_epp.export.manual_pipetting.samplesheet_normalization_mix(lims, args.process_id, args.output_file)
     elif args.type == 'dilution_library_prep_input':
         clarity_epp.export.manual_pipetting.samplesheet_dilution_library_prep_input(lims, args.process_id, args.output_file)
+    elif args.type == '3nm_dilution_mirocanvas':
+        clarity_epp.export.manual_pipetting.samplesheet_3nm_dilution_mirocanvas(lims, args.process_id, args.output_file)
 
 
 def export_ped_file(args):
@@ -297,7 +299,6 @@ if __name__ == "__main__":
     parser_export_fueco.add_argument('process_id', help='Clarity lims process id')
     parser_export_fueco.set_defaults(func=export_fueco)
 
-
     parser_export_hamilton = subparser_export.add_parser(
         'hamilton', help='Create hamilton samplesheets', parents=[output_parser]
     )
@@ -338,7 +339,7 @@ if __name__ == "__main__":
         choices=[
             'purify', 'dilute_library_pool', 'multiplex_library_pool', 'multiplex_sequence_pool', 'normalization',
             'capture', 'exonuclease', 'pcr_exonuclease', 'mip_multiplex_pool', 'mip_dilute_pool', 'pool_samples',
-            'pool_magnis_pools', 'normalization_mix', 'dilution_library_prep_input'
+            'pool_magnis_pools', 'normalization_mix', 'dilution_library_prep_input', '3nm_dilution_mirocanvas'
         ],
         help='Samplesheet type'
     )
@@ -476,7 +477,9 @@ if __name__ == "__main__":
     parser_placement_unpooling.add_argument('process_id', help='Clarity lims process id')
     parser_placement_unpooling.set_defaults(func=placement_unpooling)
 
-    parser_placement_patient_pools = subparser_placement.add_parser('patient_pools', help='Create patient pools for Dx samples')
+    parser_placement_patient_pools = subparser_placement.add_parser(
+        'patient_pools', help='Create patient pools for Dx samples'
+    )
     parser_placement_patient_pools.add_argument('process_id', help='Clarity lims process id')
     parser_placement_patient_pools.set_defaults(func=placement_patient_pools)
 
