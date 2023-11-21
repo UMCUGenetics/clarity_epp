@@ -13,6 +13,9 @@ email = {
     'to_import_helix': [
         'to_1@mail.nl',
     ],
+    'to_import_glims': [
+        'to_1@mail.nl',
+    ],
     'to_sequencing_run_complete': [
         'to_1@mail.nl',
     ]
