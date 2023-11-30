@@ -37,6 +37,9 @@ stoftestcode_workflow = {
     stoftestcode_srwgs_duplo: '2352',  # DEV Dx srWGS Callisto v1.0
 }
 
+# Import samples: fixed workflows
+pg_workflow = '1901'  # Dx Library Prep Mirocanvas test1
+
 # Update exome equivalent for certain indications
 indications_exome_equivalent = {'UBA1': 5, 'PID09': 5}
 
