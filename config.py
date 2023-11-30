@@ -33,6 +33,9 @@ stoftestcode_workflow = {
     stoftestcode_mip: '1651',  # DEV Dx smMIP v1.2
 }
 
+# Import samples: fixed workflows
+pg_workflow = '1901'  # Dx Library Prep Mirocanvas test1
+
 # Export meetw protocol steps WES
 meetw_zui_wes_processes = [
     'Dx Sample registratie zuivering v1.1',
