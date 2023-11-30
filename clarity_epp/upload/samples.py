@@ -4,7 +4,7 @@ import re
 from requests.exceptions import ConnectionError
 import sys
 
-from genologics.entities import Sample, Project, Containertype, Container
+from genologics.entities import Sample, Project, Containertype, Container, Workflow
 
 from .. import send_email
 import clarity_epp.upload.utils
@@ -385,7 +385,6 @@ def from_helix_pg(lims, email_settings, input_file):
     message = "Samples:\n"
 
     # Set udf columns
-    # TODO: Add all columns
     udf_column = {
         'Dx GLIMS ID': {'column': 'Achternaam'},
         'Dx Geboortejaar': {'column': 'Geboortedatum'},
@@ -393,22 +392,24 @@ def from_helix_pg(lims, email_settings, input_file):
         'Dx Monsternummer': {'column': 'Monsternummers'},
         'Dx Fractienummer': {'column': 'Fractienummers'},
         'Dx Concentratie (ng/ul)': {'column': 'Conc'},
-        # 'Dx ?': {'column': 'Eenheid'}, # Warning if eenheid != ng?
     }
 
     # Parse input file data
     header = None
     for line in input_file:
-        if line.startswith('Achternaam'):  # Parse input file header
+        # Parse input file header
+        if line.startswith('Achternaam'):
             header = line.rstrip().split(';')
             for udf in udf_column:
                 udf_column[udf]['index'] = header.index(udf_column[udf]['column'])
 
+        # Break on Controle line
         elif line.startswith('Controle:'):
             break
 
+        # Sample line
         elif header:
-            if not line.startswith('.'):  # Lines containg only a '.', skip for now -> not sure if this is necessary in prod
+            if not line.startswith('.'):  # Skip lines containing only a '.'
                 data = line.rstrip().split(';')
                 udf_data = {}  # Add Protocolomschrijving 'PD-FARMACO' to get correct sequencing project?
                 for udf in udf_column:
@@ -438,9 +439,8 @@ def from_helix_pg(lims, email_settings, input_file):
                 sample.put()
 
                 # Route sample to workflow
-                # TODO: How do we configure workflow type? Hardcoded in config?
-                # workflow = clarity_epp.upload.utils.stoftestcode_to_workflow(lims, udf_data['Dx Stoftest code'])
-                # lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
+                workflow = Workflow(lims, id=config.pg_workflow)
+                lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
 
                 message += "{sample}\t{project}\tAdded to workflow {workflow}\n".format(
                     sample=sample.name,
@@ -458,7 +458,6 @@ def from_glims(lims, email_settings, input_file):
     test_lims_connection(lims, email_settings, 'GLIMS Import')
 
     # Get researcher
-    # TODO: Should we always use the same researcher?
     researcher = get_researcher(lims, email_settings, 'DX', input_file.name.split('/')[-1])
 
     # Get project
