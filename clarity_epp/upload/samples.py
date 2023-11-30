@@ -371,7 +371,7 @@ def from_helix_pg(lims, email_settings, input_file):
                 message += "{sample}\t{project}\tAdded to workflow {workflow}\n".format(
                     sample=sample.name,
                     project=sample.project.name,
-                    workflow="workflow.name"
+                    workflow=workflow.name
                 )
 
     # Send email
