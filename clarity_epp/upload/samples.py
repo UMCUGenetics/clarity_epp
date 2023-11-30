@@ -351,7 +351,7 @@ def from_helix_pg(lims, email_settings, input_file):
                         date = datetime.strptime(data[udf_column[udf]['index']], '%d-%m-%Y')  # Helix format (14-01-2021)
                         udf_data[udf] = (date + timedelta(weeks=2)).strftime('%Y-%m-%d')
                     elif udf == 'Dx GLIMS ID':
-                        udf_data[udf] = int(data[udf_column[udf]['index']])
+                        udf_data[udf] = int(data[udf_column[udf]['index']].replace('.', ''))  # Number contains dots
                     else:
                         udf_data[udf] = data[udf_column[udf]['index']].strip()
 
