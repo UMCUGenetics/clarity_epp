@@ -38,6 +38,9 @@ def samplesheet(lims, process_id, output_file):
                         concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
                         break
 
+            if not concentration:
+                concentration = input_artifact.samples[0].udf['Dx Concentratie (ng/ul)']
+
             # Calculate volumes
             volume_dna = (artifact.udf['Dx input hoeveelheid (ng)']/len(input_artifacts)) / concentration
             well_plate[placement]['samples'].append(input_artifact.samples[0].udf['Dx Monsternummer'])
