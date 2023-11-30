@@ -423,7 +423,7 @@ def from_helix_pg(lims, email_settings, input_file):
                             udf_data[udf] = float(udf_data[udf])
                     elif udf == 'Dx Einddatum':  # Add two weeks to 'Datum aanmelding'
                         date = datetime.strptime(data[udf_column[udf]['index']], '%d-%m-%Y')  # Helix format (14-01-2021)
-                        udf_data[udf] = (date + timedelta(weeks=2)).strftime('%Y-%m-%d')
+                        udf_data[udf] = (date + timedelta(weeks=2)).strftime('%Y-%m-%d').date()
                     elif udf == 'Dx GLIMS ID':
                         udf_data[udf] = int(data[udf_column[udf]['index']].replace('.', ''))  # Number contains dots
                     else:
