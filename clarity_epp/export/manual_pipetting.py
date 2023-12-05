@@ -906,7 +906,7 @@ def samplesheet_dilution_library_prep_input(lims, process_id, output_file):
     for sorted_artifact in sorted_artifacts:
         for input_artifact in process.all_inputs():
             if input_artifact.name == sorted_artifact:
-                sample_volume = ng_input / samples[input_artifact.name]["conc"]
+                sample_volume = ng_input / samples[input_artifact.samples[0].udf['Dx Monsternummer']]["conc"]
                 water_volume = end_volume - sample_volume
                 output_file.write(
                     '{samplename}\t{container}\t{sample_volume:.2f}\t{water_volume:.2f}\n'.format(
