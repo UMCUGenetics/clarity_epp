@@ -929,14 +929,26 @@ def samplesheet_3nm_dilution_mirocanvas(lims, process_id, output_file):
     for output_artifact in process.all_outputs():
         if output_artifact.type == 'Analyte':
             if "Dx volume sample (ul)" in output_artifact.udf and "Dx nM sample" in output_artifact.udf:
+                for input in process.all_inputs():
+                    if input.name == output_artifact.name:
+                        input_artifact = input
+                conc = float(input_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+                size = float(input_artifact.udf['Dx Fragmentlengte (bp)'])
+                nm_dna = (conc * 10**6)/(660 * size)
                 sample_volume = output_artifact.udf["Dx volume sample (ul)"]
                 sample_nm = output_artifact.udf["Dx nM sample"]
-                total_sample_volume = sample_nm * sample_volume / 3
+                total_sample_volume = nm_dna * sample_volume / sample_nm
                 water_volume = total_sample_volume - sample_volume
                 output_file.write(
                     '{samplename}\t{sample_volume:.2f}\t{water_volume:.2f}\n'.format(
                         samplename=output_artifact.name,
                         sample_volume=sample_volume,
                         water_volume=water_volume
+                    )
+                )
+            else:
+                output_file.write(
+                    '{samplename}\t"Dx volume sample (ul)" en/of "Dx nM sample" niet ingevuld.\n'.format(
+                        samplename=output_artifact.name
                     )
                 )
