@@ -21,7 +21,7 @@ def results_qc(lims, process_id):
 
             measurements = {}
             sample_measurements = {}
-            for line in lims.get_file_contents(tecan_result_file.id).data.split('\n'):
+            for line in str(lims.get_file_contents(tecan_result_file.id).data, encoding='utf-8').split('\n'):
                 if not line.startswith('<>'):
                     data = line.rstrip().split('\t')
                     for index, value in enumerate(data[1:]):
