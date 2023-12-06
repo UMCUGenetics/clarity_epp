@@ -49,6 +49,9 @@ def samplesheet(lims, process_id, output_file):
 
     for well in clarity_epp.export.utils.sort_96_well_plate(well_plate.keys()):
         volume_h2o = 40 - sum(well_plate[well]['volume_dna'])
+        if volume_h2o < 0:  # Set volume_h2o to 0 if negative
+            volume_h2o = 0
+
         for index, sample in enumerate(well_plate[well]['samples']):
             output_file.write('{name},{well},{plate_id_output},{volume_dna:.2f},{volume_h2o:.2f},{plate_id_input}\n'.format(
                 name=sample,
