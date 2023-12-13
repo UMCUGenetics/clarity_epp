@@ -164,6 +164,45 @@ def sample_indications(lims, output_file, artifact_name=None, sequencing_run=Non
         print("no_sample_found")
 
 
+def sample_gender(lims, output_file, artifact_name=None, sequencing_run=None, sequencing_run_project=None):
+    """Export table with sample gender. Lookup samples by sample name or sequencing run (project)."""
+    samples = []
+
+    # Get samples by artifact_name
+    if artifact_name:
+        artifacts = lims.get_artifacts(name=artifact_name)
+        samples = {artifact_name: artifact.samples[0] for artifact in artifacts}
+
+    # Get samples by sequencing run
+    elif sequencing_run:
+        udf_query = {'Dx Sequencing Run ID': sequencing_run}
+        if sequencing_run_project:
+            udf_query['Dx Sequencing Run Project'] = sequencing_run_project
+
+        artifacts = lims.get_artifacts(type='Analyte', udf=udf_query)
+        samples = {artifact.name: artifact.samples[0] for artifact in artifacts}
+
+    # Write result
+    if samples:
+        output_file.write('Sample\tGender\n')
+        for sample_name, sample in samples.items():
+            if 'Dx Geslacht' in sample.udf:
+                output_file.write(
+                    '{sample}\t{gender}\n'.format(
+                        sample=sample_name,
+                        gender=sample.udf['Dx Geslacht'].split(';')[0]  # select newest gender
+                    )
+                )
+            else:
+                output_file.write(
+                    '{sample}\t{gender}\n'.format(
+                        sample=sample_name,
+                        gender='unkown'
+                    )
+                )
+    else:
+        print("no_sample_found")
+
 def sample_related_mip(lims, process_id, output_file):
     """Export related mip samples for all samples in process."""
     process = Process(lims, id=process_id)
