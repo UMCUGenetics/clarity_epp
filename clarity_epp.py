@@ -121,11 +121,13 @@ def export_sample_indications(args):
         lims, args.output_file, args.artifact_name, args.sequencing_run, args.sequencing_run_project
     )
 
+
 def export_sample_gender(args):
     """Export sample gender table."""
     clarity_epp.export.sample.sample_gender(
         lims, args.output_file, args.artifact_name, args.sequencing_run, args.sequencing_run_project
     )
+
 
 def export_sample_related_mip(args):
     """Export related MIP samples"""
@@ -365,7 +367,6 @@ if __name__ == "__main__":
         '-p', '--sequencing_run_project',  nargs='?', help='Sequencing run project name'
     )
     parser_export_sample_gender.set_defaults(func=export_sample_gender)
-
 
     parser_export_sample_related_mip = subparser_export.add_parser(
         'sample_related_mip', help='Export related mip samples.', parents=[output_parser]
