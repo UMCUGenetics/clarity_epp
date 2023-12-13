@@ -203,6 +203,7 @@ def sample_gender(lims, output_file, artifact_name=None, sequencing_run=None, se
     else:
         print("no_sample_found")
 
+
 def sample_related_mip(lims, process_id, output_file):
     """Export related mip samples for all samples in process."""
     process = Process(lims, id=process_id)
