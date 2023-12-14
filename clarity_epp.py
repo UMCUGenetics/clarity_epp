@@ -115,19 +115,11 @@ def export_removed_samples(args):
     clarity_epp.export.sample.removed_samples(lims, args.output_file)
 
 
-def export_sample_indications(args):
-    """Export sample indication table."""
-    clarity_epp.export.sample.sample_indications(
-        lims, args.output_file, args.artifact_name, args.sequencing_run, args.sequencing_run_project
+def export_sample_udf(args):
+    "Export sample udf table."""
+    clarity_epp.export.sample.sample_udf(
+        lims, args.output_file, args.artifact_name, args.sequencing_run, args.sequencing_run_project, args.udf, args.column_name
     )
-
-
-def export_sample_gender(args):
-    """Export sample gender table."""
-    clarity_epp.export.sample.sample_gender(
-        lims, args.output_file, args.artifact_name, args.sequencing_run, args.sequencing_run_project
-    )
-
 
 def export_sample_related_mip(args):
     """Export related MIP samples"""
@@ -346,27 +338,18 @@ if __name__ == "__main__":
     )
     parser_export_removed_samples.set_defaults(func=export_removed_samples)
 
-    parser_export_sample_indications = subparser_export.add_parser(
-        'sample_indications', help='Export sample indication table.', parents=[output_parser]
+    parser_export_sample_udf = subparser_export.add_parser(
+        'sample_udf', help='Export sample udf table.', parents=[output_parser]
     )
-    parser_export_sample_indications_group = parser_export_sample_indications.add_mutually_exclusive_group(required=True)
-    parser_export_sample_indications_group.add_argument('-a', '--artifact_name', help='Artifact name')
-    parser_export_sample_indications_group.add_argument('-r', '--sequencing_run', help='Sequencing run name')
-    parser_export_sample_indications.add_argument(
+    parser_export_sample_udf_group = parser_export_sample_udf.add_mutually_exclusive_group(required=True)
+    parser_export_sample_udf_group.add_argument('-a', '--artifact_name', help='Artifact name')
+    parser_export_sample_udf_group.add_argument('-r', '--sequencing_run', help='Sequencing run name')
+    parser_export_sample_udf.add_argument(
         '-p', '--sequencing_run_project',  nargs='?', help='Sequencing run project name'
     )
-    parser_export_sample_indications.set_defaults(func=export_sample_indications)
-
-    parser_export_sample_gender = subparser_export.add_parser(
-        'sample_gender', help='Export sample gender.', parents=[output_parser]
-    )
-    parser_export_sample_gender_group = parser_export_sample_gender.add_mutually_exclusive_group(required=True)
-    parser_export_sample_gender_group.add_argument('-a', '--artifact_name', help='Artifact name')
-    parser_export_sample_gender_group.add_argument('-r', '--sequencing_run', help='Sequencing run name')
-    parser_export_sample_gender.add_argument(
-        '-p', '--sequencing_run_project',  nargs='?', help='Sequencing run project name'
-    )
-    parser_export_sample_gender.set_defaults(func=export_sample_gender)
+    parser_export_sample_udf.add_argument('-u', '--udf', help='udf to query')
+    parser_export_sample_udf.add_argument('-c', '--column_name', help='naming of column')
+    parser_export_sample_udf.set_defaults(func=export_sample_udf)
 
     parser_export_sample_related_mip = subparser_export.add_parser(
         'sample_related_mip', help='Export related mip samples.', parents=[output_parser]
