@@ -124,8 +124,8 @@ def removed_samples(lims, output_file):
                 ))
 
 
-def sample_indications(lims, output_file, artifact_name=None, sequencing_run=None, sequencing_run_project=None):
-    """Export table with sample indications. Lookup samples by sample name or sequencing run (project)."""
+def sample_udf(lims, output_file, artifact_name=None, sequencing_run=None, sequencing_run_project=None, udf=None, column_name=None):
+    """Export table with sample udf. Lookup samples by sample name or sequencing run (project)."""
     samples = []
 
     # Get samples by artifact_name
@@ -144,60 +144,20 @@ def sample_indications(lims, output_file, artifact_name=None, sequencing_run=Non
 
     # Write result
     if samples:
-        output_file.write('Sample\tIndication\n')
+        output_file.write(f'Sample\t{column_name}\n')
         for sample_name, sample in samples.items():
-            if 'Dx Onderzoeksindicatie' in sample.udf:
+            if udf in sample.udf:
                 output_file.write(
-                    '{sample}\t{indication}\n'.format(
+                    '{sample}\t{udf_value}\n'.format(
                         sample=sample_name,
-                        indication=sample.udf['Dx Onderzoeksindicatie'].split(';')[0]  # select newest indication
+                        udf_value=sample.udf[udf].split(';')[0]  # select newest udf value
                     )
                 )
             else:
                 output_file.write(
-                    '{sample}\t{indication}\n'.format(
+                    '{sample}\t{column}\n'.format(
                         sample=sample_name,
-                        indication='unkown_indication'
-                    )
-                )
-    else:
-        print("no_sample_found")
-
-
-def sample_gender(lims, output_file, artifact_name=None, sequencing_run=None, sequencing_run_project=None):
-    """Export table with sample gender. Lookup samples by sample name or sequencing run (project)."""
-    samples = []
-
-    # Get samples by artifact_name
-    if artifact_name:
-        artifacts = lims.get_artifacts(name=artifact_name)
-        samples = {artifact_name: artifact.samples[0] for artifact in artifacts}
-
-    # Get samples by sequencing run
-    elif sequencing_run:
-        udf_query = {'Dx Sequencing Run ID': sequencing_run}
-        if sequencing_run_project:
-            udf_query['Dx Sequencing Run Project'] = sequencing_run_project
-
-        artifacts = lims.get_artifacts(type='Analyte', udf=udf_query)
-        samples = {artifact.name: artifact.samples[0] for artifact in artifacts}
-
-    # Write result
-    if samples:
-        output_file.write('Sample\tGender\n')
-        for sample_name, sample in samples.items():
-            if 'Dx Geslacht' in sample.udf:
-                output_file.write(
-                    '{sample}\t{gender}\n'.format(
-                        sample=sample_name,
-                        gender=sample.udf['Dx Geslacht'].split(';')[0]  # select newest gender
-                    )
-                )
-            else:
-                output_file.write(
-                    '{sample}\t{gender}\n'.format(
-                        sample=sample_name,
-                        gender='unkown'
+                        column='unkown'
                     )
                 )
     else:
