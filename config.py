@@ -87,6 +87,25 @@ sequence_process_types = [
     'AUTOMATED - NovaSeq Run (NovaSeq 6000 v3.1)',
 ]
 
+# BCLConvert conversion settings
+conversion_settings = {
+    'default': {
+        'project': 'unknown',
+        'split_project': False,
+        'umi_len': [0, 0],
+    },
+    'elidS34226467': {
+        'project': 'CREv4',
+        'split_project': True,
+        'umi_len': [5, 5],
+    },
+    'elidS31285117': {
+        'project': 'SSv7',
+        'split_project': True,
+        'umi_len': [5, 5],
+    },
+}
+
 # Post sequencing workflow
 sequencing_workflow = '1701'  # DEV Dx Illumina Sequencing v1.2
 post_sequencing_workflow = '1204'  # DEV Dx Bioinformatica analyses v1.1
