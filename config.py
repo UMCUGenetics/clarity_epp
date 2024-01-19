@@ -88,6 +88,12 @@ sequence_process_types = [
 ]
 
 # BCLConvert conversion settings
+index_2_orientation = {
+    # Orientation options: F=forward or RC=reverse complement
+    # https://knowledge.illumina.com/software/general/software-general-reference_material-list/000001800
+    'Dx Library pool denatureren en laden (NovaSeq) v1.3': 'RC',
+    'Dx Library pool denatureren en laden (NovaSeqXPlus) v1.0': 'F',
+}
 conversion_settings = {
     'default': {
         'project': 'unknown',
