@@ -23,9 +23,8 @@ def get_project(projects, urgent=False):
     return projects_sorted[0][0]  # return project with least amount of samples.
 
 
-def get_override_cycles(read_len, umi_len, index_len, max_index_len):
+def get_override_cycles(read_len, umi_len, index_len, max_index_len, index_2_orientation):
     """Get override cycles per sample."""
-    # TODO: Adjust for ortientation on index 2
 
     # Read cycles, Trim last base from read cycles
     read_1_cycle = f'Y{read_len[0]-1}N1'
@@ -48,7 +47,10 @@ def get_override_cycles(read_len, umi_len, index_len, max_index_len):
 
     if index_len[1] < max_index_len[1]:
         n_bases = max_index_len[1] - index_len[1]
-        index_2_cycle = f'I{index_len[1]}N{n_bases}'
+        if index_2_orientation == 'RC':
+            index_2_cycle = f'I{index_len[1]}N{n_bases}'
+        else:  # index_2_orientation == 'F
+            index_2_cycle = f'N{n_bases}I{index_len[1]}'
 
     override_cycles = ';'.join([
         read_1_cycle,  # read 1
@@ -60,7 +62,7 @@ def get_override_cycles(read_len, umi_len, index_len, max_index_len):
     return override_cycles
 
 
-def parse_sample_artifacts(sample_artifacts, process):
+def get_samplesheet_samples(sample_artifacts, process, index_2_orientation):
     families = {}
     samplesheet_samples = {}
 
@@ -93,9 +95,9 @@ def parse_sample_artifacts(sample_artifacts, process):
                 sample_override_cycles = get_override_cycles(
                     read_len=[process.udf['Read 1 Cycles'], process.udf['Read 2 Cycles']],
                     umi_len=sample_conversion_setting['umi_len'],
-                    trim_last_base=True,
                     index_len=[len(sample_index.group(1)), len(sample_index.group(2))],
-                    max_index_len=[process.udf['Index Read 1'], process.udf['Index Read 2']]
+                    max_index_len=[process.udf['Index Read 1'], process.udf['Index Read 2']],
+                    index_2_orientation=index_2_orientation
                 )
 
                 # Set family and create if not exist
@@ -157,9 +159,9 @@ def parse_sample_artifacts(sample_artifacts, process):
                     sample_override_cycles = get_override_cycles(
                         read_len=[process.udf['Read 1 Cycles'], process.udf['Read 2 Cycles']],
                         umi_len=config.conversion_settings['default']['umi_len'],
-                        trim_last_base=config.conversion_settings['default']['trim_last_base'],
                         index_len=[len(sample_index.group(1)), len(sample_index.group(2))],
-                        max_index_len=[process.udf['Index Read 1'], process.udf['Index Read 2']]
+                        max_index_len=[process.udf['Index Read 1'], process.udf['Index Read 2']],
+                        index_2_orientation=index_2_orientation
                     )
 
             # Add sample to samplesheet_samples
@@ -168,6 +170,10 @@ def parse_sample_artifacts(sample_artifacts, process):
                 'index_2': sample_index.group(2),
                 'override_cycles': sample_override_cycles,
             }
+            if index_2_orientation == 'RC':  # Reverse complement index 2
+                samplesheet_samples[sample_sequence_name]['index_2'] = clarity_epp.export.utils.reverse_complement(
+                    samplesheet_samples[sample_sequence_name]['index_2']
+                )
 
             # Add sample to family
             if sample_sequence_name not in families[family]['samples']:
@@ -222,15 +228,16 @@ def parse_sample_artifacts(sample_artifacts, process):
 
 def create_samplesheet(lims, process_id, output_file):
     """Create illumina samplesheet v2."""
-    # Default trim last base
-
     process = Process(lims, id=process_id)
-    sample_artifacts = get_sample_artifacts_from_pool(lims, process.analytes()[0][0])
-    samplesheet_samples = parse_sample_artifacts(sample_artifacts, process)
+    index_2_orientation = config.index_2_orientation[process.type.name]
+
+    # Get samples samples per lane
+    samplesheet_samples = []
+    for lane in process.analytes()[0]:
+        sample_artifacts = get_sample_artifacts_from_pool(lims, process.analytes()[0][0])
+        samplesheet_samples.append(get_samplesheet_samples(sample_artifacts, process, index_2_orientation))
 
     # Create SampleSheet
-    # TODO: Add orientation support for index 2
-    # TODO: Compare with novaseq 6000 samplesheets
     sample_sheet = []
 
     # Header
@@ -250,18 +257,33 @@ def create_samplesheet(lims, process_id, output_file):
 
     # BCLConvert_Data
     sample_sheet.append('[BCLConvert_Data]')
-    sample_sheet.append('Sample_ID,index,index2,OverrideCycles,Sample_Project')
-
-    for sample in samplesheet_samples:
-        sample_sheet.append(
-            '{sample_name},{index_1},{index_2},{override_cycles},{project}'.format(
-                sample_name=sample,
-                index_1=samplesheet_samples[sample]['index_1'],
-                index_2=samplesheet_samples[sample]['index_2'],
-                override_cycles=samplesheet_samples[sample]['override_cycles'],
-                project=samplesheet_samples[sample]['project']
+    if len(samplesheet_samples) == 1:  # All samples on all lanes
+        lane = 0
+        sample_sheet.append('Sample_ID,index,index2,OverrideCycles,Sample_Project')
+        for sample in samplesheet_samples[lane]:
+            sample_sheet.append(
+                '{sample_name},{index_1},{index_2},{override_cycles},{project}'.format(
+                    sample_name=sample,
+                    index_1=samplesheet_samples[lane][sample]['index_1'],
+                    index_2=samplesheet_samples[lane][sample]['index_2'],
+                    override_cycles=samplesheet_samples[lane][sample]['override_cycles'],
+                    project=samplesheet_samples[lane][sample]['project']
+                )
             )
-        )
+    else:  # Samples divided over lanes
+        sample_sheet.append('Lane,Sample_ID,index,index2,OverrideCycles,Sample_Project')
+        for lane, lane_samples in enumerate(samplesheet_samples):
+            for sample in lane_samples:
+                sample_sheet.append(
+                    '{lane},{sample_name},{index_1},{index_2},{override_cycles},{project}'.format(
+                        lane=lane+1,
+                        sample_name=sample,
+                        index_1=samplesheet_samples[lane][sample]['index_1'],
+                        index_2=samplesheet_samples[lane][sample]['index_2'],
+                        override_cycles=samplesheet_samples[lane][sample]['override_cycles'],
+                        project=samplesheet_samples[lane][sample]['project']
+                    )
+                )
 
     output_file.write('\n'.join(sample_sheet))
 
