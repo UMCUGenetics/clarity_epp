@@ -113,7 +113,7 @@ conversion_settings = {
 }
 
 # Post sequencing workflow
-sequencing_workflow = '1701'  # DEV Dx Illumina Sequencing v1.2
+sequencing_workflow = '2052'  # DEV Dx Illumina Sequencing v1.3
 post_sequencing_workflow = '1204'  # DEV Dx Bioinformatica analyses v1.1
 post_bioinf_workflow = '1803'  # DEV Dx NGS WES onderzoeken afronden v2.0
 
