@@ -5,7 +5,7 @@ import re
 from genologics.entities import Process
 
 from .. import get_sequence_name, get_sample_artifacts_from_pool
-import clarity_epp.export.utils
+from clarity_epp.export.utils import get_sample_sequence_index, reverse_complement
 import config
 
 
@@ -67,7 +67,7 @@ def get_samplesheet_samples(sample_artifacts, process, index_2_orientation):
 
     for sample_artifact in sample_artifacts:
         # Find sample artifact index, expected pattern = "<index name> (index1-index2)"
-        sample_index = re.search(r".*\(([ACTGN]+)-([ACTGN]+)\)$", sample_artifact.reagent_labels[0])
+        sample_index = get_sample_sequence_index(sample_artifact.reagent_labels[0])
         sample_sequence_name = get_sequence_name(sample_artifact)
 
         for sample in sample_artifact.samples:
@@ -94,7 +94,7 @@ def get_samplesheet_samples(sample_artifacts, process, index_2_orientation):
                 sample_override_cycles = get_override_cycles(
                     read_len=[process.udf['Read 1 Cycles'], process.udf['Read 2 Cycles']],
                     umi_len=sample_conversion_setting['umi_len'],
-                    index_len=[len(sample_index.group(1)), len(sample_index.group(2))],
+                    index_len=[len(sample_index[0]), len(sample_index[1])],
                     max_index_len=[process.udf['Index Read 1'], process.udf['Index Read 2']],
                     index_2_orientation=index_2_orientation
                 )
@@ -158,19 +158,19 @@ def get_samplesheet_samples(sample_artifacts, process, index_2_orientation):
                     sample_override_cycles = get_override_cycles(
                         read_len=[process.udf['Read 1 Cycles'], process.udf['Read 2 Cycles']],
                         umi_len=config.conversion_settings['default']['umi_len'],
-                        index_len=[len(sample_index.group(1)), len(sample_index.group(2))],
+                        index_len=[len(sample_index[0]), len(sample_index[1])],
                         max_index_len=[process.udf['Index Read 1'], process.udf['Index Read 2']],
                         index_2_orientation=index_2_orientation
                     )
 
             # Add sample to samplesheet_samples
             samplesheet_samples[sample_sequence_name] = {
-                'index_1': sample_index.group(1),
-                'index_2': sample_index.group(2),
+                'index_1': sample_index[0],
+                'index_2': sample_index[1],
                 'override_cycles': sample_override_cycles,
             }
             if index_2_orientation == 'RC':  # Reverse complement index 2
-                samplesheet_samples[sample_sequence_name]['index_2'] = clarity_epp.export.utils.reverse_complement(
+                samplesheet_samples[sample_sequence_name]['index_2'] = reverse_complement(
                     samplesheet_samples[sample_sequence_name]['index_2']
                 )
 

@@ -21,3 +21,10 @@ def test_sort_artifact_list():
 def test_get_well_index():
     assert utils.get_well_index('A1') == 0
     assert utils.get_well_index('A1', one_based=True) == 1
+
+
+def test_get_sample_sequence_index():
+    assert utils.get_sample_sequence_index('Dx 12D NEXTflex UDI 48 (TTAGAGTC-TGTGACGA)') == ['TTAGAGTC', 'TGTGACGA']
+    assert utils.get_sample_sequence_index('Dx 10G NEXTflex custom UDI 79 (TGAGGCGC-GGAGACCA)') == ['TGAGGCGC', 'GGAGACCA']
+    assert utils.get_sample_sequence_index('Dx 01G Agilent SureSelect XT HS2 UDI_v2 007 (GCAGGTTC-AGAAGCAA)') == ['GCAGGTTC', 'AGAAGCAA']
+    assert utils.get_sample_sequence_index('Dx 02B Agilent SureSelect XT HS2 UDI_v1 010 (TAGAGCTC-CTACCGAA)') == ['TAGAGCTC', 'CTACCGAA']

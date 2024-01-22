@@ -1,4 +1,5 @@
 """Utility functions used for creating samplesheets."""
+import re
 
 
 def sort_96_well_plate(wells):
@@ -84,3 +85,13 @@ def get_well_index(well, one_based=False):
         return wells.index(well) + 1
     else:
         return wells.index(well)
+
+
+def get_sample_sequence_index(reagent_label):
+    """Return sample sequence indices [index1, index2] from reagent label.
+    expected reagent label pattern = "<index name> (index1-index2)
+    """
+    sample_index_search = re.search(r".*\(([ACTGN]+)-([ACTGN]+)\)$", reagent_label)
+    sample_index = [sample_index_search.group(1), sample_index_search.group(2)]
+
+    return sample_index
