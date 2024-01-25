@@ -24,7 +24,14 @@ def test_get_well_index():
 
 
 def test_get_sample_sequence_index():
+    # Dual Index
     assert utils.get_sample_sequence_index('Dx 12D NEXTflex UDI 48 (TTAGAGTC-TGTGACGA)') == ['TTAGAGTC', 'TGTGACGA']
     assert utils.get_sample_sequence_index('Dx 10G NEXTflex custom UDI 79 (TGAGGCGC-GGAGACCA)') == ['TGAGGCGC', 'GGAGACCA']
     assert utils.get_sample_sequence_index('Dx 01G Agilent SureSelect XT HS2 UDI_v2 007 (GCAGGTTC-AGAAGCAA)') == ['GCAGGTTC', 'AGAAGCAA']
     assert utils.get_sample_sequence_index('Dx 02B Agilent SureSelect XT HS2 UDI_v1 010 (TAGAGCTC-CTACCGAA)') == ['TAGAGCTC', 'CTACCGAA']
+
+    # Single Index
+    assert utils.get_sample_sequence_index('Dx 12D NEXTflex UDI 48 (TTAGAGTC)') == ['TTAGAGTC']
+    assert utils.get_sample_sequence_index('Dx 10G NEXTflex custom UDI 79 (TGAGGCGC)') == ['TGAGGCGC']
+    assert utils.get_sample_sequence_index('Dx 01G Agilent SureSelect XT HS2 UDI_v2 007 (GCAGGTTC)') == ['GCAGGTTC']
+    assert utils.get_sample_sequence_index('Dx 02B Agilent SureSelect XT HS2 UDI_v1 010 (TAGAGCTC)') == ['TAGAGCTC']

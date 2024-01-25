@@ -24,38 +24,35 @@ def get_project(projects, urgent=False):
 
 def get_override_cycles(read_len, umi_len, index_len, max_index_len, index_2_orientation):
     """Get override cycles per sample."""
+    read_cycles = ['', '']
+    index_cycles = ['', '']
 
-    # Read cycles, Trim last base from read cycles
-    read_1_cycle = f'Y{read_len[0]-1}N1'
-    read_2_cycle = f'Y{read_len[1]-1}N1'
+    for idx in range(len(read_cycles)):
+        if umi_len[idx]:  # read cycle with umi
+            read_cycle = f'U{umi_len[idx]}Y{read_len[idx]-1-umi_len[idx]}N1'
+        else:  # read cycle without umi
+            read_cycle = f'Y{read_len[idx]-1}N1'
+        read_cycles[idx] = read_cycle
 
-    # Adjust read cycles if umi present
-    if umi_len[0]:
-        read_1_cycle = f'U{umi_len[0]}Y{read_len[0]-1-umi_len[0]}N1'
-    if umi_len[1]:
-        read_2_cycle = f'U{umi_len[1]}Y{read_len[1]-1-umi_len[1]}N1'
-
-    # Index cycles
-    index_1_cycle = f'I{index_len[0]}'
-    index_2_cycle = f'I{index_len[1]}'
-
-    # Adjust if index length is shorter than max index length
-    if index_len[0] < max_index_len[0]:
-        n_bases = max_index_len[0] - index_len[0]
-        index_1_cycle = f'I{index_len[0]}N{n_bases}'
-
-    if index_len[1] < max_index_len[1]:
-        n_bases = max_index_len[1] - index_len[1]
-        if index_2_orientation == 'RC':
-            index_2_cycle = f'I{index_len[1]}N{n_bases}'
-        else:  # index_2_orientation == 'F
-            index_2_cycle = f'N{n_bases}I{index_len[1]}'
+    for idx in range(len(index_cycles)):
+        if index_len[idx]:
+            if index_len[idx] < max_index_len[idx]:
+                n_bases = max_index_len[idx] - index_len[idx]
+                if idx == 1 and index_2_orientation == 'F':  # Index 2 in forward orientation (NovaSeq X Plus)
+                    index_cycle = f'N{n_bases}I{index_len[idx]}'
+                else:
+                    index_cycle = f'I{index_len[idx]}N{n_bases}'
+            else:
+                index_cycle = f'I{index_len[idx]}'
+        else:  # empty index, single index library
+            index_cycle = f'N{index_len[idx]}'
+        index_cycles[idx] = index_cycle
 
     override_cycles = ';'.join([
-        read_1_cycle,  # read 1
-        index_1_cycle,  # index 1
-        index_2_cycle,  # index 2
-        read_2_cycle,  # read 2
+        read_cycles[0],  # read 1
+        index_cycles[0],  # index 1
+        index_cycles[1],  # index 2
+        read_cycles[1],  # read 2
     ])
 
     return override_cycles
@@ -66,9 +63,11 @@ def get_samplesheet_samples(sample_artifacts, process, index_2_orientation):
     samplesheet_samples = {}
 
     for sample_artifact in sample_artifacts:
-        # Find sample artifact index, expected pattern = "<index name> (index1-index2)"
-        sample_index = get_sample_sequence_index(sample_artifact.reagent_labels[0])
         sample_sequence_name = get_sequence_name(sample_artifact)
+        sample_index = get_sample_sequence_index(sample_artifact.reagent_labels[0])
+        # Adjust empty second index for single index samples
+        if len(sample_index) == 1:
+            sample_index.append('')
 
         for sample in sample_artifact.samples:
             # Dx production sample

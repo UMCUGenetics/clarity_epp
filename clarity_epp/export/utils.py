@@ -89,9 +89,9 @@ def get_well_index(well, one_based=False):
 
 def get_sample_sequence_index(reagent_label):
     """Return sample sequence indices [index1, index2] from reagent label.
-    expected reagent label pattern = "<index name> (index1-index2)
+    expected reagent label pattern = "<index name> (index1-index2)" or "<index name> (index1)"
     """
-    sample_index_search = re.search(r".*\(([ACTGN]+)-([ACTGN]+)\)$", reagent_label)
-    sample_index = [sample_index_search.group(1), sample_index_search.group(2)]
+    sample_index_search = re.search(r"\(([ACTGN-]+)\)$", reagent_label)
+    sample_index = sample_index_search.group(1).split('-')
 
     return sample_index
