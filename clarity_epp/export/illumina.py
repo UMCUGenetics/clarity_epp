@@ -255,6 +255,8 @@ def create_samplesheet(lims, process_id, output_file):
     sample_sheet.append('AdapterRead1,{0}'.format(process.udf['Adapter']))
     sample_sheet.append('AdapterRead2,{0}'.format(process.udf['Adapter Read 2']))
     sample_sheet.append('FindAdaptersWithIndels,true')
+    sample_sheet.append('BarcodeMismatchesIndex1,0')
+    sample_sheet.append('BarcodeMismatchesIndex2,0')
 
     # BCLConvert_Data
     sample_sheet.append('[BCLConvert_Data]')
