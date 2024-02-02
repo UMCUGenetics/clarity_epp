@@ -241,11 +241,14 @@ def create_samplesheet(lims, process_id, output_file):
     # Header
     sample_sheet.append('[Header]')
     sample_sheet.append('FileFormatVersion,2')
+    sample_sheet.append('RunName,{0}'.format(process.udf['Experiment Name']))
 
     # Reads
     sample_sheet.append('[Reads]')
     sample_sheet.append('Read1Cycles,{0}'.format(process.udf['Read 1 Cycles']))
     sample_sheet.append('Read2Cycles,{0}'.format(process.udf['Read 2 Cycles']))
+    sample_sheet.append('Index1Cycles,{0}'.format(process.udf['Index Read 1']))
+    sample_sheet.append('Index2Cycles,{0}'.format(process.udf['Index Read 2']))
 
     # BCLConvert_Settings
     sample_sheet.append('[BCLConvert_Settings]')
