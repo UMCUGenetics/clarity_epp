@@ -124,8 +124,8 @@ def removed_samples(lims, output_file):
                 ))
 
 
-def sample_udf(lims, output_file, artifact_name=None, sequencing_run=None, sequencing_run_project=None, udf=None, column_name=None):
-    """Export table with sample udf. Lookup samples by sample name or sequencing run (project)."""
+def get_samples(lims, artifact_name=None, sequencing_run=None, sequencing_run_project=None):
+    """Lookup samples by sample name or sequencing run (project)."""
     samples = []
 
     # Get samples by artifact_name
@@ -141,6 +141,13 @@ def sample_udf(lims, output_file, artifact_name=None, sequencing_run=None, seque
 
         artifacts = lims.get_artifacts(type='Analyte', udf=udf_query)
         samples = {artifact.name: artifact.samples[0] for artifact in artifacts}
+
+    return samples
+
+
+def sample_udf(lims, output_file, artifact_name=None, sequencing_run=None, sequencing_run_project=None, udf=None, column_name=None):
+    """Export table with sample udf."""
+    samples = get_samples(lims, artifact_name, sequencing_run, sequencing_run_project)
 
     # Write result
     if samples:
