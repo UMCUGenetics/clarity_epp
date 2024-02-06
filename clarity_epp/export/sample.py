@@ -148,7 +148,6 @@ def get_samples(lims, artifact_name=None, sequencing_run=None, sequencing_run_pr
 def sample_udf(lims, output_file, artifact_name=None, sequencing_run=None, sequencing_run_project=None, udf=None, column_name=None):
     """Export table with sample udf."""
     samples = get_samples(lims, artifact_name, sequencing_run, sequencing_run_project)
-
     # Write result
     if samples:
         output_file.write(f'Sample\t{column_name}\n')
@@ -162,9 +161,9 @@ def sample_udf(lims, output_file, artifact_name=None, sequencing_run=None, seque
                 )
             else:
                 output_file.write(
-                    '{sample}\t{column}\n'.format(
+                    '{sample}\t{udf_value}\n'.format(
                         sample=sample_name,
-                        column='unkown'
+                        udf_value='unkown'
                     )
                 )
     else:
