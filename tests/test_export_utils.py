@@ -58,7 +58,7 @@ samples_mock[sample_name] = MyMock({udf_value: geslacht})
 
 
 @patch('clarity_epp.export.sample.get_samples')
-def test_get_samples_1(mock_get, capsys):
+def test_sample_udf_1(mock_get, capsys):
     mock_get.return_value = samples_mock
     sample.sample_udf("lims", sys.stdout, udf=udf_value, column_name=column_name)
     captured = capsys.readouterr()
@@ -66,7 +66,7 @@ def test_get_samples_1(mock_get, capsys):
 
 
 @patch('clarity_epp.export.sample.get_samples')
-def test_get_samples_2(mock_get, capsys):
+def test_sample_udf_2(mock_get, capsys):
     mock_get.return_value = samples_mock
     sample.sample_udf("lims", sys.stdout, udf="udf2", column_name=column_name)
     captured = capsys.readouterr()
@@ -74,7 +74,7 @@ def test_get_samples_2(mock_get, capsys):
 
 
 @patch('clarity_epp.export.sample.get_samples')
-def test_get_samples_3(mock_get, capsys):
+def test_sample_udf_3(mock_get, capsys):
     mock_get.return_value = None
     sample.sample_udf("lims", sys.stdout)
     captured = capsys.readouterr()
