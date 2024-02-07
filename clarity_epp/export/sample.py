@@ -163,7 +163,7 @@ def sample_udf(lims, output_file, artifact_name=None, sequencing_run=None, seque
                 output_file.write(
                     '{sample}\t{udf_value}\n'.format(
                         sample=sample_name,
-                        udf_value='unkown'
+                        udf_value='unknown'
                     )
                 )
     else:
