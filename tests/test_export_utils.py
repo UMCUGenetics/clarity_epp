@@ -56,7 +56,7 @@ def test_sample_udf_2(mock_get, capsys):
     mock_get.return_value = samples_mock
     sample.sample_udf("lims", sys.stdout, udf="udf2", column_name=column_name)
     captured = capsys.readouterr()
-    assert captured.out == f"Sample\t{column_name}\n{sample_name}\tunkown\n"
+    assert captured.out == f"Sample\t{column_name}\n{sample_name}\tunknown\n"
 
 
 @patch('clarity_epp.export.sample.get_samples')
