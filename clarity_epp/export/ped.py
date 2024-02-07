@@ -33,7 +33,7 @@ def create_file(lims, process_id, output_file):
                 ped_sample['sex'] = 0
 
             # Determine affection
-            ped_sample['affection'] = 0  # unkown
+            ped_sample['affection'] = 0  # unknown
             if 'Bevestiging diagnose' in sample.udf['Dx Onderzoeksreden']:
                 ped_sample['affection'] = 2  # affected
             elif 'Informativiteitstest' in sample.udf['Dx Onderzoeksreden']:
