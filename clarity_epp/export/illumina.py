@@ -256,10 +256,10 @@ def create_samplesheet(lims, process_id, output_file):
         "FindAdaptersWithIndels,true",
         "BarcodeMismatchesIndex1,0",
         "BarcodeMismatchesIndex2,0",
+        # BCLConvert_Data
         "[BCLConvert_Data]"
     ]
 
-    # BCLConvert_Data
     # Set header for single or multiple lanes conversion
     bcl_convert_data_header = "Sample_ID,index,index2,OverrideCycles,Sample_Project"
     if len(samplesheet_samples) == 1:  # All samples on all lanes
