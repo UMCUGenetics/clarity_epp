@@ -10,7 +10,9 @@ import config
 
 
 def get_project(projects, urgent=False):
-    """Get a project name for sample."""
+    """Get a project name from projects dict ({'project_name': sample_count, ...})
+    If urgent is True, return the first project with < 9 samples, else return the project with the least amount of samples.
+    """
     if urgent:  # Sort projects for urgent samples on name
         projects_sorted = sorted(projects.items(), key=operator.itemgetter(0))
         for project in projects_sorted:
@@ -72,10 +74,10 @@ def get_samplesheet_samples(sample_artifacts, process, index_2_orientation):
         for sample in sample_artifact.samples:
             # Dx production sample
             if (
-                'Dx Familienummer' in list(sample.udf) and
-                'Dx NICU Spoed' in list(sample.udf) and
-                'Dx Protocolomschrijving' in list(sample.udf) and
-                'Dx Stoftest code' in list(sample.udf)
+                'Dx Familienummer' in sample.udf and
+                'Dx NICU Spoed' in sample.udf and
+                'Dx Protocolomschrijving' in sample.udf and
+                'Dx Stoftest code' in sample.udf
             ):
                 # Skip Mengfractie samples
                 if sample.udf['Dx Stoftest code'] == config.stoftestcode_wes_duplo:
@@ -85,7 +87,7 @@ def get_samplesheet_samples(sample_artifacts, process, index_2_orientation):
                 sample_conversion_setting = config.conversion_settings['default']
                 newest_protocol = sample.udf['Dx Protocolomschrijving'].split(';')[0]
                 for protocol_code in config.conversion_settings:
-                    if protocol_code in newest_protocol:
+                    if protocol_code in newest_protocol:  # Look for protocol code (elid number) in newest protocol
                         sample_conversion_setting = config.conversion_settings[protocol_code]
                         break
 
@@ -236,56 +238,50 @@ def create_samplesheet(lims, process_id, output_file):
         samplesheet_samples.append(get_samplesheet_samples(sample_artifacts, process, index_2_orientation))
 
     # Create SampleSheet
-    sample_sheet = []
-
-    # Header
-    sample_sheet.append('[Header]')
-    sample_sheet.append('FileFormatVersion,2')
-    sample_sheet.append('RunName,{0}'.format(process.udf['Experiment Name']))
-
-    # Reads
-    sample_sheet.append('[Reads]')
-    sample_sheet.append('Read1Cycles,{0}'.format(process.udf['Read 1 Cycles']))
-    sample_sheet.append('Read2Cycles,{0}'.format(process.udf['Read 2 Cycles']))
-    sample_sheet.append('Index1Cycles,{0}'.format(process.udf['Index Read 1']))
-    sample_sheet.append('Index2Cycles,{0}'.format(process.udf['Index Read 2']))
-
-    # BCLConvert_Settings
-    sample_sheet.append('[BCLConvert_Settings]')
-    sample_sheet.append('AdapterRead1,{0}'.format(process.udf['Adapter']))
-    sample_sheet.append('AdapterRead2,{0}'.format(process.udf['Adapter Read 2']))
-    sample_sheet.append('FindAdaptersWithIndels,true')
-    sample_sheet.append('BarcodeMismatchesIndex1,0')
-    sample_sheet.append('BarcodeMismatchesIndex2,0')
+    sample_sheet = [
+        # Header
+        "[Header]",
+        "FileFormatVersion,2",
+        f"RunName,{process.udf['Experiment Name']}",
+        # Reads
+        "[Reads]",
+        f"Read1Cycles,{process.udf['Read 1 Cycles']}",
+        f"Read2Cycles,{process.udf['Read 2 Cycles']}",
+        f"Index1Cycles,{process.udf['Index Read 1']}",
+        f"Index2Cycles,{process.udf['Index Read 2']}",
+        # BCLConvert_Settings
+        "[BCLConvert_Settings]",
+        f"AdapterRead1,{process.udf['Adapter']}",
+        f"AdapterRead2,{process.udf['Adapter Read 2']}",
+        "FindAdaptersWithIndels,true",
+        "BarcodeMismatchesIndex1,0",
+        "BarcodeMismatchesIndex2,0",
+        "[BCLConvert_Data]"
+    ]
 
     # BCLConvert_Data
-    sample_sheet.append('[BCLConvert_Data]')
+    # Set header for single or multiple lanes conversion
+    bcl_convert_data_header = "Sample_ID,index,index2,OverrideCycles,Sample_Project"
     if len(samplesheet_samples) == 1:  # All samples on all lanes
-        lane = 0
-        sample_sheet.append('Sample_ID,index,index2,OverrideCycles,Sample_Project')
-        for sample in samplesheet_samples[lane]:
-            sample_sheet.append(
-                '{sample_name},{index_1},{index_2},{override_cycles},{project}'.format(
+        multiple_lanes = False
+    else:
+        multiple_lanes = True
+        bcl_convert_data_header = f"Lane,{bcl_convert_data_header}"  # Add lane column to header if multiple lanes conversion
+    sample_sheet.append(bcl_convert_data_header)
+
+    # Add samples to SampleSheet
+    for lane, lane_samples in enumerate(samplesheet_samples):
+        for sample in lane_samples:
+            bcl_convert_data_row = "{sample_name},{index_1},{index_2},{override_cycles},{project}".format(
                     sample_name=sample,
                     index_1=samplesheet_samples[lane][sample]['index_1'],
                     index_2=samplesheet_samples[lane][sample]['index_2'],
                     override_cycles=samplesheet_samples[lane][sample]['override_cycles'],
                     project=samplesheet_samples[lane][sample]['project']
                 )
-            )
-    else:  # Samples divided over lanes
-        sample_sheet.append('Lane,Sample_ID,index,index2,OverrideCycles,Sample_Project')
-        for lane, lane_samples in enumerate(samplesheet_samples):
-            for sample in lane_samples:
-                sample_sheet.append(
-                    '{lane},{sample_name},{index_1},{index_2},{override_cycles},{project}'.format(
-                        lane=lane+1,
-                        sample_name=sample,
-                        index_1=samplesheet_samples[lane][sample]['index_1'],
-                        index_2=samplesheet_samples[lane][sample]['index_2'],
-                        override_cycles=samplesheet_samples[lane][sample]['override_cycles'],
-                        project=samplesheet_samples[lane][sample]['project']
-                    )
-                )
+            if multiple_lanes:  # Add lane number to row if multiple lanes conversion
+                bcl_convert_data_row = f"{lane+1},{bcl_convert_data_row}"
+            sample_sheet.append(bcl_convert_data_row)
 
+    # Write SampleSheet to file
     output_file.write('\n'.join(sample_sheet))
