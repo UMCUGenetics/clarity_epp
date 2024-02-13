@@ -30,6 +30,9 @@ stoftestcode_workflow = {
     stoftestcode_mip: '1651',  # DEV Dx smMIP v1.2
 }
 
+# Update exome equivalent for certain indications
+indications_exome_equivalent = {'UBA1': 5, 'PID09': 5}
+
 # Export meetw protocol steps WES
 meetw_zui_wes_processes = [
     'Dx Sample registratie zuivering v1.1',
