@@ -24,7 +24,7 @@ def get_project(projects, urgent=False):
     return projects_sorted[0][0]  # return project with least amount of samples.
 
 
-def get_override_cycles(read_len, umi_len, index_len, max_index_len, index_2_orientation):
+def get_override_cycles(read_len, umi_len, index_len, max_index_len, index_2_conversion_orientation):
     """Get override cycles per sample."""
     read_cycles = ['', '']
     index_cycles = ['', '']
@@ -40,7 +40,7 @@ def get_override_cycles(read_len, umi_len, index_len, max_index_len, index_2_ori
         if index_len[idx]:
             if index_len[idx] < max_index_len[idx]:
                 n_bases = max_index_len[idx] - index_len[idx]
-                if idx == 1 and index_2_orientation == 'F':  # Index 2 in forward orientation (NovaSeq X Plus)
+                if idx == 1 and index_2_conversion_orientation == 'F':  # Index 2 in forward orientation (NovaSeq X Plus)
                     index_cycle = f'N{n_bases}I{index_len[idx]}'
                 else:
                     index_cycle = f'I{index_len[idx]}N{n_bases}'
@@ -60,7 +60,7 @@ def get_override_cycles(read_len, umi_len, index_len, max_index_len, index_2_ori
     return override_cycles
 
 
-def get_samplesheet_samples(sample_artifacts, process, index_2_orientation):
+def get_samplesheet_samples(sample_artifacts, process, index_2_conversion_orientation):
     families = {}
     samplesheet_samples = {}
 
@@ -83,12 +83,12 @@ def get_samplesheet_samples(sample_artifacts, process, index_2_orientation):
                 if sample.udf['Dx Stoftest code'] == config.stoftestcode_wes_duplo:
                     continue
 
-                # Get sample conversion_settings
-                sample_conversion_setting = config.conversion_settings['default']
+                # Get sample conversion settings
+                sample_conversion_setting = config.sample_conversion_settings['default']
                 newest_protocol = sample.udf['Dx Protocolomschrijving'].split(';')[0]
-                for protocol_code in config.conversion_settings:
+                for protocol_code in config.sample_conversion_settings:
                     if protocol_code in newest_protocol:  # Look for protocol code (elid number) in newest protocol
-                        sample_conversion_setting = config.conversion_settings[protocol_code]
+                        sample_conversion_setting = config.sample_conversion_settings[protocol_code]
                         break
 
                 # Get sample override cycles
@@ -97,7 +97,7 @@ def get_samplesheet_samples(sample_artifacts, process, index_2_orientation):
                     umi_len=sample_conversion_setting['umi_len'],
                     index_len=[len(sample_index[0]), len(sample_index[1])],
                     max_index_len=[process.udf['Index Read 1'], process.udf['Index Read 2']],
-                    index_2_orientation=index_2_orientation
+                    index_2_conversion_orientation=index_2_conversion_orientation
                 )
 
                 # Set family and create if not exist
@@ -158,10 +158,10 @@ def get_samplesheet_samples(sample_artifacts, process, index_2_orientation):
                 else:
                     sample_override_cycles = get_override_cycles(
                         read_len=[process.udf['Read 1 Cycles'], process.udf['Read 2 Cycles']],
-                        umi_len=config.conversion_settings['default']['umi_len'],
+                        umi_len=config.sample_conversion_settings['default']['umi_len'],
                         index_len=[len(sample_index[0]), len(sample_index[1])],
                         max_index_len=[process.udf['Index Read 1'], process.udf['Index Read 2']],
-                        index_2_orientation=index_2_orientation
+                        index_2_conversion_orientation=index_2_conversion_orientation
                     )
 
             # Add sample to samplesheet_samples
@@ -170,7 +170,7 @@ def get_samplesheet_samples(sample_artifacts, process, index_2_orientation):
                 'index_2': sample_index[1],
                 'override_cycles': sample_override_cycles,
             }
-            if index_2_orientation == 'RC':  # Reverse complement index 2
+            if index_2_conversion_orientation == 'RC':  # Reverse complement index 2
                 samplesheet_samples[sample_sequence_name]['index_2'] = reverse_complement(
                     samplesheet_samples[sample_sequence_name]['index_2']
                 )
@@ -229,19 +229,25 @@ def get_samplesheet_samples(sample_artifacts, process, index_2_orientation):
 def create_samplesheet(lims, process_id, output_file):
     """Create illumina samplesheet v2."""
     process = Process(lims, id=process_id)
-    index_2_orientation = config.index_2_orientation[process.type.name]
+    sequencer_conversion_settings = config.sequencer_conversion_settings[process.type.name]
 
     # Get samples samples per lane
     samplesheet_samples = []
     for lane in process.analytes()[0]:
         sample_artifacts = get_sample_artifacts_from_pool(lims, process.analytes()[0][0])
-        samplesheet_samples.append(get_samplesheet_samples(sample_artifacts, process, index_2_orientation))
+        samplesheet_samples.append(
+            get_samplesheet_samples(
+                sample_artifacts, process, sequencer_conversion_settings['index_2_conversion_orientation']
+            )
+        )
 
     # Create SampleSheet
     sample_sheet = [
         # Header
         "[Header]",
         "FileFormatVersion,2",
+        f"InstrumentPlatform,{sequencer_conversion_settings['instrument_platform']}",
+        f"IndexOrientation,{sequencer_conversion_settings['index_orientation']}",
         f"RunName,{process.udf['Experiment Name']}",
         # Reads
         "[Reads]",
@@ -251,6 +257,8 @@ def create_samplesheet(lims, process_id, output_file):
         f"Index2Cycles,{process.udf['Index Read 2']}",
         # BCLConvert_Settings
         "[BCLConvert_Settings]",
+        f"SoftwareVersion,{sequencer_conversion_settings['software_version']}",
+        f"FastqCompressionFormat,{sequencer_conversion_settings['fastq_compression_format']}",
         f"AdapterRead1,{process.udf['Adapter']}",
         f"AdapterRead2,{process.udf['Adapter Read 2']}",
         "FindAdaptersWithIndels,true",
