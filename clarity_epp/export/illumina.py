@@ -261,7 +261,7 @@ def create_samplesheet(lims, process_id, output_file):
         f"FastqCompressionFormat,{sequencer_conversion_settings['fastq_compression_format']}",
         f"AdapterRead1,{process.udf['Adapter']}",
         f"AdapterRead2,{process.udf['Adapter Read 2']}",
-        "FindAdaptersWithIndels,true",
+        "FindAdaptersWithIndels,TRUE",
         "BarcodeMismatchesIndex1,0",
         "BarcodeMismatchesIndex2,0",
         # BCLConvert_Data
