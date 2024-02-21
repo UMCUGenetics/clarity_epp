@@ -362,6 +362,8 @@ def samplesheet_multiplex_sequence_pool(lims, process_id, output_file):
     # print header
     output_file.write('Naam\tuL\n')
 
+    print(total_sample_count)
+    print(input_pools)
     # Last calcuations and print sample
     for input_pool in input_pools:
         input_pool_load_pM = (float(process.udf['Dx Laadconcentratie (pM)'])/total_sample_count) * input_pool['sample_count']
