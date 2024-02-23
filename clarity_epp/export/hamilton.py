@@ -11,7 +11,7 @@ def samplesheet_filling_out(lims, process_id, output_file):
     process = Process(lims, id=process_id)
     well_plate = {}
 
-    for placement, artifact in process.output_containers()[0].placements.iteritems():
+    for placement, artifact in process.output_containers()[0].placements.items():
         placement = ''.join(placement.split(':'))
         well_plate[placement] = artifact.samples[0].udf['Dx Fractienummer']
 
@@ -29,7 +29,7 @@ def samplesheet_purify(lims, process_id, output_file):
     parent_process_barcode = process.parent_processes()[0].output_containers()[0].name
     well_plate = {}
 
-    for placement, artifact in process.output_containers()[0].placements.iteritems():
+    for placement, artifact in process.output_containers()[0].placements.items():
         placement = ''.join(placement.split(':'))
         well_plate[placement] = artifact.samples[0].udf['Dx Fractienummer']
 
