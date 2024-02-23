@@ -7,6 +7,11 @@ from clarity_epp.export import utils
 from clarity_epp.export import sample
 
 
+class MyMock:
+    def __init__(self, udf):
+        self.udf = udf
+
+
 def test_sort_96_well_plate():
     assert utils.sort_96_well_plate(['B2', 'A1', 'E1']) == ['A1', 'E1', 'B2']
 
@@ -40,21 +45,6 @@ def test_get_sample_sequence_index():
     assert utils.get_sample_sequence_index('Dx 02B Agilent SureSelect XT HS2 UDI_v1 010 (TAGAGCTC)') == ['TAGAGCTC']
 
 
-column_name = "test_column"
-sample_name = "test_sample"
-udf_value = "Dx geslacht"
-geslacht = "Vrouw"
-
-
-class MyMock:
-    def __init__(self, udf):
-        self.udf = udf
-
-
-samples_mock = {}
-samples_mock[sample_name] = MyMock({udf_value: geslacht})
-
-
 def test_sample_udf_withudf(mocker, capsys):
     patched_clarity_epp = mocker.patch(
         'clarity_epp.export.sample.get_samples',
@@ -83,3 +73,11 @@ def test_sample_udf_nosamples(mocker, capsys):
     sample.sample_udf("lims", sys.stdout)
     captured = capsys.readouterr()
     assert captured.out == "no_sample_found\n"
+
+
+column_name = "test_column"
+sample_name = "test_sample"
+udf_value = "Dx geslacht"
+geslacht = "Vrouw"
+samples_mock = {}
+samples_mock[sample_name] = MyMock({udf_value: geslacht})
