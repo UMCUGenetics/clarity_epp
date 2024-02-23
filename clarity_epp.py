@@ -118,8 +118,15 @@ def export_removed_samples(args):
 def export_sample_udf(args):
     "Export sample udf table."""
     clarity_epp.export.sample.sample_udf(
-        lims, args.output_file, args.artifact_name, args.sequencing_run, args.sequencing_run_project, args.udf, args.column_name
+        lims,
+        args.output_file,
+        args.artifact_name,
+        args.sequencing_run,
+        args.sequencing_run_project,
+        args.udf,
+        args.column_name
     )
+
 
 def export_sample_related_mip(args):
     """Export related MIP samples"""
