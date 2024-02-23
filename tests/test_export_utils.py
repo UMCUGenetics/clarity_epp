@@ -46,6 +46,7 @@ def test_get_sample_sequence_index():
 
 
 def test_sample_udf_withudf(mocker, capsys):
+    # Test output for sample with known udf in database
     patched_clarity_epp = mocker.patch(
         'clarity_epp.export.sample.get_samples',
         return_value=samples_mock
@@ -56,6 +57,7 @@ def test_sample_udf_withudf(mocker, capsys):
 
 
 def test_sample_udf_withoutudf(mocker, capsys):
+    # Test output for sample with no known udf in database
     patched_clarity_epp = mocker.patch(
         'clarity_epp.export.sample.get_samples',
         return_value=samples_mock
@@ -66,6 +68,7 @@ def test_sample_udf_withoutudf(mocker, capsys):
 
 
 def test_sample_udf_nosamples(mocker, capsys):
+    # Test output for sample not known in database
     patched_clarity_epp = mocker.patch(
         'clarity_epp.export.sample.get_samples',
         return_value=None
