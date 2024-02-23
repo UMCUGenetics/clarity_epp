@@ -166,6 +166,10 @@ def from_helix(lims, email_settings, input_file):
         if udf_data['Dx Onderzoeksindicatie'] == 'DSD00' and udf_data['Dx Familie status'] == 'Kind':
             udf_data['Dx Geslacht'] = 'Onbekend'
 
+        # Set 'Dx Exoomequivalent' for specific indications
+        if udf_data['Dx Onderzoeksindicatie'] in config.indications_exome_equivalent:
+            udf_data['Dx Exoomequivalent'] = config.indications_exome_equivalent[udf_data['Dx Onderzoeksindicatie']]
+
         # Check 'Dx Familienummer' and correct
         if '/' in udf_data['Dx Familienummer']:
             udf_data['Dx Import warning'] = ';'.join([
