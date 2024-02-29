@@ -264,6 +264,7 @@ def create_samplesheet(lims, process_id, output_file):
         "FindAdaptersWithIndels,TRUE",
         "BarcodeMismatchesIndex1,0",
         "BarcodeMismatchesIndex2,0",
+        "TrimUMI,TRUE",
         # BCLConvert_Data
         "[BCLConvert_Data]"
     ]
