@@ -281,7 +281,7 @@ def create_samplesheet(lims, process_id, output_file):
     sample_sheet.append(bcl_convert_data_header)
 
     # Add samples to SampleSheet
-    for lane, lane_samples in samplesheet_samples.items():
+    for lane, lane_samples in sorted(samplesheet_samples.items()):
         for sample in lane_samples:
             bcl_convert_data_row = "{sample_name},{index_1},{index_2},{override_cycles},{project}".format(
                     sample_name=sample,
