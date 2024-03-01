@@ -231,14 +231,16 @@ def create_samplesheet(lims, process_id, output_file):
     process = Process(lims, id=process_id)
     sequencer_conversion_settings = config.sequencer_conversion_settings[process.type.name]
 
+    # Get output container assume one flowcell per sequencing run
+    output_container = process.output_containers()[0]
+
     # Get samples samples per lane
-    samplesheet_samples = []
-    for lane in process.analytes()[0]:
-        sample_artifacts = get_sample_artifacts_from_pool(lims, process.analytes()[0][0])
-        samplesheet_samples.append(
-            get_samplesheet_samples(
-                sample_artifacts, process, sequencer_conversion_settings['index_2_conversion_orientation']
-            )
+    samplesheet_samples = {}
+    for lane_idx, lane_artifact in output_container.get_placements().items():
+        lane_idx = lane_idx.split(':')[0]
+        sample_artifacts = get_sample_artifacts_from_pool(lims, lane_artifact)
+        samplesheet_samples[lane_idx] = get_samplesheet_samples(
+            sample_artifacts, process, sequencer_conversion_settings['index_2_conversion_orientation']
         )
 
     # Create SampleSheet
@@ -279,17 +281,17 @@ def create_samplesheet(lims, process_id, output_file):
     sample_sheet.append(bcl_convert_data_header)
 
     # Add samples to SampleSheet
-    for lane, lane_samples in enumerate(samplesheet_samples):
+    for lane, lane_samples in samplesheet_samples.items():
         for sample in lane_samples:
             bcl_convert_data_row = "{sample_name},{index_1},{index_2},{override_cycles},{project}".format(
                     sample_name=sample,
-                    index_1=samplesheet_samples[lane][sample]['index_1'],
-                    index_2=samplesheet_samples[lane][sample]['index_2'],
-                    override_cycles=samplesheet_samples[lane][sample]['override_cycles'],
-                    project=samplesheet_samples[lane][sample]['project']
+                    index_1=lane_samples[sample]['index_1'],
+                    index_2=lane_samples[sample]['index_2'],
+                    override_cycles=lane_samples[sample]['override_cycles'],
+                    project=lane_samples[sample]['project']
                 )
             if multiple_lanes:  # Add lane number to row if multiple lanes conversion
-                bcl_convert_data_row = f"{lane+1},{bcl_convert_data_row}"
+                bcl_convert_data_row = f"{lane},{bcl_convert_data_row}"
             sample_sheet.append(bcl_convert_data_row)
 
     # Write SampleSheet to file
