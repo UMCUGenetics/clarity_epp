@@ -12,6 +12,7 @@ def create_file(lims, process_id, output_file):
     output_container = process.output_containers()[0]
 
     # Get unique sample artifacts in run
+    # TODO: This is a copy of the code from merge.py. It should be refactored to a common function.
     sample_artifacts = []
     for lane_artifact in output_container.get_placements().values():
         for sample_artifact in get_sample_artifacts_from_pool(lims, lane_artifact):
