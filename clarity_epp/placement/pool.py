@@ -14,6 +14,11 @@ def unpooling(lims, process_id):
         pool_artifact = process.all_inputs()[0]
         pool_artifact_parent_process = pool_artifact.parent_process
 
+        # Fix for NovaSeqXPlus workflow configuration
+        # TODO: Set NovaSeqXPlus step to 'Analysis' type.
+        if 'laden' not in pool_artifact_parent_process.type.name.lower():
+            pool_artifact_parent_process = pool_artifact_parent_process.all_inputs()[0].parent_process
+
         run_id = pool_artifact.name  # Assume run id is set as pool name using placement/artifact/set_runid_name
         sample_artifacts = []  # sample artifacts before pooling
         sample_projects = {}
@@ -35,22 +40,23 @@ def unpooling(lims, process_id):
                         sample_projects[data[sample_index]] = data[project_index]
 
         # Parse sequencing run samples and move Dx samples to post sequencing workflow
-        for sample_artifact in get_sample_artifacts_from_pool(lims, pool_artifact):
-            sample = sample_artifact.samples[0]   # Asume all samples metadata is identical.
+        # for lane in
+        for lane in process.all_inputs():
+            for sample_artifact in get_sample_artifacts_from_pool(lims, lane):
+                sample = sample_artifact.samples[0]   # Asume all samples metadata is identical.
 
-            # Set sample sequencing run and project
-            sample_artifact.udf['Dx Sequencing Run ID'] = run_id
-            # Use sample.name for external (clarity_portal) samples
-            if 'Sample Type' in sample.udf and 'library' in sample.udf['Sample Type']:
-                sample_artifact.udf['Dx Sequencing Run Project'] = sample_projects[sample.name]
-            else:  # Use sample_artifact.name for Dx samples (upload via Helix)
-                sample_artifact.udf['Dx Sequencing Run Project'] = sample_projects[sample_artifact.name]
-            sample_artifact.put()
+                # Set sample sequencing run and project
+                sample_artifact.udf['Dx Sequencing Run ID'] = run_id
+                # Use sample.name for external (clarity_portal) samples
+                if 'Sample Type' in sample.udf and 'library' in sample.udf['Sample Type']:
+                    sample_artifact.udf['Dx Sequencing Run Project'] = sample_projects[sample.name]
+                else:  # Use sample_artifact.name for Dx samples (upload via Helix)
+                    sample_artifact.udf['Dx Sequencing Run Project'] = sample_projects[sample_artifact.name]
+                sample_artifact.put()
 
-            # Only move DX production samples to post sequencing workflow
-            if sample.project and sample.project.udf['Application'] == 'DX':
-                sample_artifacts.append(sample_artifact)
-
+                # Only move DX production samples to post sequencing workflow
+                if sample_artifact not in sample_artifacts and sample.project and sample.project.udf['Application'] == 'DX':
+                    sample_artifacts.append(sample_artifact)
         lims.route_artifacts(sample_artifacts, workflow_uri=Workflow(lims, id=config.post_sequencing_workflow).uri)
 
 

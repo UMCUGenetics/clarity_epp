@@ -3,6 +3,7 @@
 from genologics.entities import Process, Workflow
 
 from .. import get_sequence_name
+from clarity_epp.export.utils import sort_artifact_list
 import config
 
 
@@ -17,19 +18,23 @@ def set_sequence_name(lims, process_id):
 def set_runid_name(lims, process_id):
     """Change artifact name to run id."""
     process = Process(lims, id=process_id)
-    analyte = process.analytes()[0][0]
     input_artifact = process.all_inputs()[0]
 
-    container_name = analyte.container.name
+    # Fix for NovaSeqXPlus workflow configuration
+    # TODO: Set NovaSeqXPlus step to 'Analysis' type.
+    if 'NovaSeqXPlus' in input_artifact.parent_process.type.name:
+        input_artifact = input_artifact.parent_process.all_inputs()[0]
 
     # Find sequencing process
     # Assume one sequence process per input artifact
     for sequence_process_type in config.sequence_process_types:
         sequence_processes = lims.get_processes(type=sequence_process_type, inputartifactlimsid=input_artifact.id)
         for sequence_process in sequence_processes:
-            if sequence_process.analytes()[0][0].container.name == container_name:
-                analyte.name = sequence_process.udf['Run ID']
-                analyte.put()
+            sequence_process_lanes = sorted(sequence_process.analytes()[0], key=sort_artifact_list)
+            for lane_idx, lane in enumerate(sorted(process.analytes()[0], key=sort_artifact_list)):
+                if sequence_process_lanes[lane_idx].container.name == lane.container.name:
+                    lane.name = sequence_process.udf['Run ID']
+                    lane.put()
 
 
 def route_to_workflow(lims, process_id, workflow):
