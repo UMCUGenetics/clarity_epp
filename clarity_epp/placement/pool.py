@@ -40,7 +40,6 @@ def unpooling(lims, process_id):
                         sample_projects[data[sample_index]] = data[project_index]
 
         # Parse sequencing run samples and move Dx samples to post sequencing workflow
-        # for lane in
         for lane in process.all_inputs():
             for sample_artifact in get_sample_artifacts_from_pool(lims, lane):
                 sample = sample_artifact.samples[0]   # Asume all samples metadata is identical.
