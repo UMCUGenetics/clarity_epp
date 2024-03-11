@@ -145,20 +145,30 @@ def get_samples(lims, artifact_name=None, sequencing_run=None, sequencing_run_pr
     return samples
 
 
-def sample_udf(lims, output_file, artifact_name=None, sequencing_run=None, sequencing_run_project=None, udf=None, column_name=None):
-    """Export table with sample udf."""
+def sample_udf_dx(lims, output_file, artifact_name=None, sequencing_run=None, sequencing_run_project=None, udf=None, column_name=None):
+    """Export table with sample udf (Dx-udf only)."""
     samples = get_samples(lims, artifact_name, sequencing_run, sequencing_run_project)
     # Write result
     if samples:
         output_file.write(f'Sample\t{column_name}\n')
         for sample_name, sample in samples.items():
             if udf in sample.udf:
-                output_file.write(
-                    '{sample}\t{udf_value}\n'.format(
-                        sample=sample_name,
+                if 'Dx' in udf:
+                    if type (sample.udf[udf]) == str:
                         udf_value=sample.udf[udf].split(';')[0]  # select newest udf value
+                    else:
+                        udf_value=sample.udf[udf]
+
+                    output_file.write(
+                        '{sample}\t{udf_value}\n'.format(
+                            sample=sample_name,
+                            udf_value=udf_value
+                         )
                     )
-                )
+                else:
+                    output_file.write(
+                        f'Warning, udf is not type \'Dx\'\n'
+                    )
             else:
                 output_file.write(
                     '{sample}\t{udf_value}\n'.format(

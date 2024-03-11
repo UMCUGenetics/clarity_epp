@@ -115,9 +115,9 @@ def export_removed_samples(args):
     clarity_epp.export.sample.removed_samples(lims, args.output_file)
 
 
-def export_sample_udf(args):
-    "Export sample udf table."""
-    clarity_epp.export.sample.sample_udf(
+def export_sample_udf_dx(args):
+    "Export table sample udf (Dx-udf only)"""
+    clarity_epp.export.sample.sample_udf_dx(
         lims,
         args.output_file,
         args.artifact_name,
@@ -341,18 +341,18 @@ if __name__ == "__main__":
     )
     parser_export_removed_samples.set_defaults(func=export_removed_samples)
 
-    parser_export_sample_udf = subparser_export.add_parser(
-        'sample_udf', help='Export sample udf table.', parents=[output_parser]
+    parser_export_sample_udf_dx = subparser_export.add_parser(
+        'sample_udf_dx', help='Export sample udf table (Dx-udf only).', parents=[output_parser]
     )
-    parser_export_sample_udf_group = parser_export_sample_udf.add_mutually_exclusive_group(required=True)
-    parser_export_sample_udf_group.add_argument('-a', '--artifact_name', help='Artifact name')
-    parser_export_sample_udf_group.add_argument('-r', '--sequencing_run', help='Sequencing run name')
-    parser_export_sample_udf.add_argument(
+    parser_export_sample_udf_dx_group = parser_export_sample_udf_dx.add_mutually_exclusive_group(required=True)
+    parser_export_sample_udf_dx_group.add_argument('-a', '--artifact_name', help='Artifact name')
+    parser_export_sample_udf_dx_group.add_argument('-r', '--sequencing_run', help='Sequencing run name')
+    parser_export_sample_udf_dx.add_argument(
         '-p', '--sequencing_run_project',  nargs='?', help='Sequencing run project name'
     )
-    parser_export_sample_udf.add_argument('-u', '--udf', help='udf to query')
-    parser_export_sample_udf.add_argument('-c', '--column_name', help='naming of column')
-    parser_export_sample_udf.set_defaults(func=export_sample_udf)
+    parser_export_sample_udf_dx.add_argument('-u', '--udf', help='udf to query (limited to only Dx-udf)')
+    parser_export_sample_udf_dx.add_argument('-c', '--column_name', help='naming of column')
+    parser_export_sample_udf_dx.set_defaults(func=export_sample_udf_dx)
 
     parser_export_sample_related_mip = subparser_export.add_parser(
         'sample_related_mip', help='Export related mip samples.', parents=[output_parser]
