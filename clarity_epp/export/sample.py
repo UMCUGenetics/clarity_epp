@@ -124,8 +124,8 @@ def removed_samples(lims, output_file):
                 ))
 
 
-def sample_indications(lims, output_file, artifact_name=None, sequencing_run=None, sequencing_run_project=None):
-    """Export table with sample indications. Lookup samples by sample name or sequencing run (project)."""
+def get_samples(lims, artifact_name=None, sequencing_run=None, sequencing_run_project=None):
+    """Lookup samples by sample name or sequencing run (project)."""
     samples = []
 
     # Get samples by artifact_name
@@ -142,22 +142,38 @@ def sample_indications(lims, output_file, artifact_name=None, sequencing_run=Non
         artifacts = lims.get_artifacts(type='Analyte', udf=udf_query)
         samples = {artifact.name: artifact.samples[0] for artifact in artifacts}
 
+    return samples
+
+
+def sample_udf_dx(lims, output_file, artifact_name=None, sequencing_run=None, sequencing_run_project=None, udf=None, column_name=None):
+    """Export table with sample udf (Dx-udf only)."""
+    samples = get_samples(lims, artifact_name, sequencing_run, sequencing_run_project)
     # Write result
     if samples:
-        output_file.write('Sample\tIndication\n')
+        output_file.write(f'Sample\t{column_name}\n')
         for sample_name, sample in samples.items():
-            if 'Dx Onderzoeksindicatie' in sample.udf:
-                output_file.write(
-                    '{sample}\t{indication}\n'.format(
-                        sample=sample_name,
-                        indication=sample.udf['Dx Onderzoeksindicatie'].split(';')[0]  # select newest indication
+            if udf in sample.udf:
+                if 'Dx' in udf:
+                    if type (sample.udf[udf]) == str:
+                        udf_value=sample.udf[udf].split(';')[0]  # select newest udf value
+                    else:
+                        udf_value=sample.udf[udf]
+
+                    output_file.write(
+                        '{sample}\t{udf_value}\n'.format(
+                            sample=sample_name,
+                            udf_value=udf_value
+                         )
                     )
-                )
+                else:
+                    output_file.write(
+                        f'Warning, udf is not type \'Dx\'\n'
+                    )
             else:
                 output_file.write(
-                    '{sample}\t{indication}\n'.format(
+                    '{sample}\t{udf_value}\n'.format(
                         sample=sample_name,
-                        indication='unkown_indication'
+                        udf_value='unknown'
                     )
                 )
     else:
