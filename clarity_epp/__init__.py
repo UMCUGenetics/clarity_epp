@@ -38,8 +38,8 @@ def get_sample_artifacts_from_pool(lims, pool_artifact):
                 # Check if sample_artifact with 2 samples are from the same person
                 if len(sample_artifact.samples) == 2:
                     if (
-                        'Dx Persoons ID' in sample_artifact.samples[0].udf or
-                        'Dx Persoons ID' in sample_artifact.samples[1].udf or
+                        'Dx Persoons ID' in sample_artifact.samples[0].udf and
+                        'Dx Persoons ID' in sample_artifact.samples[1].udf and
                         sample_artifact.samples[0].udf['Dx Persoons ID'] == sample_artifact.samples[1].udf['Dx Persoons ID']
                     ):
                         sample_artifacts.append(sample_artifact)

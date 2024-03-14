@@ -10,7 +10,7 @@ from clarity_epp.upload.utils import txt_to_bool
 def results_qc(lims, process_id):
     """Upload tecan results to artifacts."""
     process = Process(lims, id=process_id)
-    concentration_range = map(float, re.findall('[\d\.]+', process.udf['Concentratiebereik (ng/ul)']))
+    concentration_range = list(map(float, re.findall('[\d\.]+', process.udf['Concentratiebereik (ng/ul)'])))
 
     # Parse output file
     for output in process.all_outputs(unique=True):
@@ -21,7 +21,7 @@ def results_qc(lims, process_id):
 
             measurements = {}
             sample_measurements = {}
-            for line in lims.get_file_contents(tecan_result_file.id).data.split('\n'):
+            for line in lims.get_file_contents(tecan_result_file.id).data.decode('utf-8').split('\n'):
                 if not line.startswith('<>'):
                     data = line.rstrip().split('\t')
                     for index, value in enumerate(data[1:]):

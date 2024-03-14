@@ -16,7 +16,7 @@ def samplesheet(lims, process_id, output_file):
     }
 
     # Get sample placement
-    for placement, artifact in process.output_containers()[0].placements.iteritems():
+    for placement, artifact in process.output_containers()[0].placements.items():
         placement = ''.join(placement.split(':'))
         plate[placement]['name'] = artifact.name
         plate[placement]['comment'] = ''

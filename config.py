@@ -30,6 +30,9 @@ stoftestcode_workflow = {
     stoftestcode_mip: '1651',  # DEV Dx smMIP v1.2
 }
 
+# Update exome equivalent for certain indications
+indications_exome_equivalent = {'UBA1': 5, 'PID09': 5}
+
 # Export meetw protocol steps WES
 meetw_zui_wes_processes = [
     'Dx Sample registratie zuivering v1.1',
@@ -85,10 +88,48 @@ sequence_process_types = [
     'Dx NextSeq Run v1.0', 'Dx NextSeq Run v1.1',
     'Dx Automated NovaSeq Run (standaard) v1.0', 'Dx Automated NovaSeq Run (standaard) v1.1',
     'AUTOMATED - NovaSeq Run (NovaSeq 6000 v3.1)',
+    'Dx NovaSeqXPlus Run v1.0'
 ]
 
+# BCLConvert conversion settings
+sequencer_conversion_settings = {
+    # Orientation options: F=forward or RC=reverse complement
+    # https://knowledge.illumina.com/software/general/software-general-reference_material-list/000001800
+    'Dx Library pool denatureren en laden (NovaSeq) v1.3': {
+        'index_2_conversion_orientation': 'RC',
+        'instrument_platform': 'NovaSeq',
+        'index_orientation': 'Forward',
+        'software_version': '4.1.7',
+        'fastq_compression_format': 'gzip',
+    },
+    'Dx Library pool denatureren en laden (NovaSeqXPlus) v1.0': {
+        'index_2_conversion_orientation': 'F',
+        'instrument_platform': 'NovaSeqXSeries',
+        'index_orientation': 'Forward',
+        'software_version': '4.1.7',
+        'fastq_compression_format': 'gzip',
+    },
+}
+sample_conversion_settings = {
+    'default': {
+        'project': 'unknown',
+        'split_project': False,
+        'umi_len': [0, 0],
+    },
+    'elidS34226467': {
+        'project': 'CREv4',
+        'split_project': True,
+        'umi_len': [5, 5],
+    },
+    'elidS31285117': {
+        'project': 'SSv7',
+        'split_project': True,
+        'umi_len': [5, 5],
+    },
+}
+
 # Post sequencing workflow
-sequencing_workflow = '1701'  # DEV Dx Illumina Sequencing v1.2
+sequencing_workflow = '2052'  # DEV Dx Illumina Sequencing v1.3
 post_sequencing_workflow = '1204'  # DEV Dx Bioinformatica analyses v1.1
 post_bioinf_workflow = '1803'  # DEV Dx NGS WES onderzoeken afronden v2.0
 
