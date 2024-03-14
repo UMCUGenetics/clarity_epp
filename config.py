@@ -88,6 +88,7 @@ sequence_process_types = [
     'Dx NextSeq Run v1.0', 'Dx NextSeq Run v1.1',
     'Dx Automated NovaSeq Run (standaard) v1.0', 'Dx Automated NovaSeq Run (standaard) v1.1',
     'AUTOMATED - NovaSeq Run (NovaSeq 6000 v3.1)',
+    'Dx NovaSeqXPlus Run v1.0'
 ]
 
 # BCLConvert conversion settings

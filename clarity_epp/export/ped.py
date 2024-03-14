@@ -7,7 +7,18 @@ from .. import get_sequence_name, get_sample_artifacts_from_pool
 def create_file(lims, process_id, output_file):
     """Create ped file."""
     process = Process(lims, id=process_id)
-    sample_artifacts = get_sample_artifacts_from_pool(lims, process.analytes()[0][0])
+
+    # Get output container assume one flowcell per sequencing run
+    output_container = process.output_containers()[0]
+
+    # Get unique sample artifacts in run
+    # TODO: This is a copy of the code from merge.py. It should be refactored to a common function.
+    sample_artifacts = []
+    for lane_artifact in output_container.get_placements().values():
+        for sample_artifact in get_sample_artifacts_from_pool(lims, lane_artifact):
+            if sample_artifact not in sample_artifacts:
+                sample_artifacts.append(sample_artifact)
+
     ped_families = {}
 
     for sample_artifact in sample_artifacts:
