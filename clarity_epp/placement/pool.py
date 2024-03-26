@@ -17,6 +17,7 @@ def unpooling(lims, process_id):
         run_id = pool_artifact.name  # Assume run id is set as pool name using placement/artifact/set_runid_name
         sample_artifacts = []  # sample artifacts before pooling
         sample_projects = {}
+        to_submit_samples = {}
 
         # Get sample projects from samplesheet
         for artifact in pool_artifact_parent_process.result_files():
@@ -36,7 +37,7 @@ def unpooling(lims, process_id):
 
         # Parse sequencing run samples and move Dx samples to post sequencing workflow
         for sample_artifact in get_sample_artifacts_from_pool(lims, pool_artifact):
-            sample = sample_artifact.samples[0]   # Asume all samples metadata is identical.
+            sample = sample_artifact.samples[0]  # Asume all samples metadata is identical.
 
             # Set sample sequencing run and project
             sample_artifact.udf['Dx Sequencing Run ID'] = run_id
@@ -47,11 +48,13 @@ def unpooling(lims, process_id):
                 sample_artifact.udf['Dx Sequencing Run Project'] = sample_projects[sample_artifact.name]
             sample_artifact.put()
 
-            # Only move DX production samples to post sequencing workflow
-            if sample.project and sample.project.udf['Application'] == 'DX':
-                sample_artifacts.append(sample_artifact)
+            for application in config.applications:
+                if sample.project and sample.project.udf['Application'] == application['type']:
+                    to_submit_samples[application['type']].append(sample_artifact)
 
-        lims.route_artifacts(sample_artifacts, workflow_uri=Workflow(lims, id=config.post_sequencing_workflow).uri)
+        for application in config.applications:
+            lims.route_artifacts(to_submit_samples[application['type']],
+                                 workflow_uri=Workflow(lims, id=application['post_sequencing_workflow']).uri)
 
 
 def create_patient_pools(lims, process_id):

@@ -96,3 +96,14 @@ post_bioinf_workflow = '1803'  # DEV Dx NGS WES onderzoeken afronden v2.0
 research_onderzoeksindicatie_project = {
     'PD-GRID': 'knoers_grid'
 }
+
+applications = [
+        {
+            "type": 'DX',
+            "post_sequencing_workflow": '1204'  # DEV Dx Bioinformatica analyses v1.1
+        },
+        {
+            "type": 'DX_extern_magnis',
+            "post_sequencing_workflow": '1853'  # DEV Dx Magnis prep & sequencing v1.0
+        }
+    ]
