@@ -1,53 +1,113 @@
 """Illumina export functions."""
 import operator
 import re
-import csv
 
-from genologics.entities import Process, Artifact
+from genologics.entities import Process
 
 from .. import get_sequence_name, get_sample_artifacts_from_pool
-import clarity_epp.export.utils
+from clarity_epp.export.utils import get_sample_sequence_index, reverse_complement
 import config
 
 
-def update_samplesheet(lims, process_id, artifact_id, output_file, conversion_tool):
-    """Update illumina samplesheet."""
-    process = Process(lims, id=process_id)
-    trim_last_base = True  # Used to set Read1EndWithCycle
+def get_project(projects, urgent=False):
+    """Get a project name from projects dict ({'project_name': sample_count, ...})
+    If urgent is True, return the first project with < 9 samples, else return the project with the least amount of samples.
+    """
+    if urgent:  # Sort projects for urgent samples on name
+        projects_sorted = sorted(projects.items(), key=operator.itemgetter(0))
+        for project in projects_sorted:
+            if project[1] < 9:
+                return project[0]  # return first project with < 9 samples
 
-    def get_project(projects, urgent=False):
-        """Inner function to get a project name for samples."""
-        if urgent:  # Sort projects for urgent samples on name
-            projects_sorted = sorted(projects.items(), key=operator.itemgetter(0))
-            for project in projects_sorted:
-                if project[1] < 9:
-                    return project[0]  # return first project with < 9 samples
+    # Sort projects on number of samples, if not urgent or no projects left with <9 samples
+    projects_sorted = sorted(projects.items(), key=operator.itemgetter(1))
+    return projects_sorted[0][0]  # return project with least amount of samples.
 
-        # Sort projects on number of samples, if not urgent or no projects left with <9 samples
-        projects_sorted = sorted(projects.items(), key=operator.itemgetter(1))
-        return projects_sorted[0][0]  # return project with least amount of samples.
 
-    # Parse families
+def get_override_cycles(read_len, umi_len, index_len, max_index_len, index_2_conversion_orientation):
+    """Get override cycles per sample."""
+    read_cycles = ['', '']
+    index_cycles = ['', '']
+
+    for idx in range(len(read_cycles)):
+        if umi_len[idx]:  # read cycle with umi
+            read_cycle = f'U{umi_len[idx]}Y{read_len[idx]-1-umi_len[idx]}N1'
+        else:  # read cycle without umi
+            read_cycle = f'Y{read_len[idx]-1}N1'
+        read_cycles[idx] = read_cycle
+
+    for idx in range(len(index_cycles)):
+        if index_len[idx]:
+            if index_len[idx] < max_index_len[idx]:
+                n_bases = max_index_len[idx] - index_len[idx]
+                if idx == 1 and index_2_conversion_orientation == 'F':  # Index 2 in forward orientation (NovaSeq X Plus)
+                    index_cycle = f'N{n_bases}I{index_len[idx]}'
+                else:
+                    index_cycle = f'I{index_len[idx]}N{n_bases}'
+            else:
+                index_cycle = f'I{index_len[idx]}'
+        else:  # empty index, single index library
+            index_cycle = f'N{index_len[idx]}'
+        index_cycles[idx] = index_cycle
+
+    override_cycles = ';'.join([
+        read_cycles[0],  # read 1
+        index_cycles[0],  # index 1
+        index_cycles[1],  # index 2
+        read_cycles[1],  # read 2
+    ])
+
+    return override_cycles
+
+
+def get_samplesheet_samples(sample_artifacts, process, index_2_conversion_orientation):
     families = {}
-    sample_artifacts = get_sample_artifacts_from_pool(lims, process.analytes()[0][0])
+    samplesheet_samples = {}
 
     for sample_artifact in sample_artifacts:
-        for sample in sample_artifact.samples:
-            if (
-                'Dx Familienummer' in list(sample.udf) and
-                'Dx NICU Spoed' in list(sample.udf) and
-                'Dx Protocolomschrijving' in list(sample.udf)
-            ):
-                # Dx production sample
-                family = sample.udf['Dx Familienummer']
+        sample_sequence_name = get_sequence_name(sample_artifact)
+        sample_index = get_sample_sequence_index(sample_artifact.reagent_labels[0])
+        # Adjust empty second index for single index samples
+        if len(sample_index) == 1:
+            sample_index.append('')
 
-                # Create family if not exist
+        for sample in sample_artifact.samples:
+            # Dx production sample
+            if (
+                'Dx Familienummer' in sample.udf and
+                'Dx NICU Spoed' in sample.udf and
+                'Dx Protocolomschrijving' in sample.udf and
+                'Dx Stoftest code' in sample.udf
+            ):
+                # Skip Mengfractie samples
+                if sample.udf['Dx Stoftest code'] == config.stoftestcode_wes_duplo:
+                    continue
+
+                # Get sample conversion settings
+                sample_conversion_setting = config.sample_conversion_settings['default']
+                newest_protocol = sample.udf['Dx Protocolomschrijving'].split(';')[0]
+                for protocol_code in config.sample_conversion_settings:
+                    if protocol_code in newest_protocol:  # Look for protocol code (elid number) in newest protocol
+                        sample_conversion_setting = config.sample_conversion_settings[protocol_code]
+                        break
+
+                # Get sample override cycles
+                sample_override_cycles = get_override_cycles(
+                    read_len=[process.udf['Read 1 Cycles'], process.udf['Read 2 Cycles']],
+                    umi_len=sample_conversion_setting['umi_len'],
+                    index_len=[len(sample_index[0]), len(sample_index[1])],
+                    max_index_len=[process.udf['Index Read 1'], process.udf['Index Read 2']],
+                    index_2_conversion_orientation=index_2_conversion_orientation
+                )
+
+                # Set family and create if not exist
+                family = sample.udf['Dx Familienummer']
                 if family not in families:
                     families[family] = {
                         'samples': [],
                         'NICU': False,
-                        'project_type': 'unknown_project',
-                        'split_project_type': False,
+                        'project_type': sample_conversion_setting['project'],
+                        'split_project_type': sample_conversion_setting['split_project'],
                         'urgent': False,
                         'deviating': False  # merge, deep sequencing (5x), etc samples
                     }
@@ -62,34 +122,10 @@ def update_samplesheet(lims, process_id, artifact_id, output_file, conversion_to
                             break
 
                 else:  # Dx clinic sample
-                    newest_protocol = sample.udf['Dx Protocolomschrijving'].split(';')[0]
-                    if 'SNP fingerprint MIP' in newest_protocol and not families[family]['NICU']:
-                        project_type = 'Fingerprint'
-                        families[family]['project_type'] = project_type
-                        families[family]['split_project_type'] = False
-                        trim_last_base = False
-                    elif 'PID09.V7_smMIP' in newest_protocol and not families[family]['NICU']:
-                        project_type = 'ERARE'
-                        families[family]['project_type'] = project_type
-                        families[family]['split_project_type'] = False
-                        trim_last_base = False
-                    elif sample.udf['Dx NICU Spoed']:
+                    if sample.udf['Dx NICU Spoed']:
                         families[family]['NICU'] = True
-                        project_type = 'NICU_{0}'.format(sample.udf['Dx Familienummer'])
-                        families[family]['project_type'] = project_type
+                        families[family]['project_type'] = 'NICU_{0}'.format(sample.udf['Dx Familienummer'])
                         families[family]['split_project_type'] = False
-                    elif 'elidS30409818' in newest_protocol and not families[family]['NICU']:
-                        project_type = 'CREv2'
-                        families[family]['project_type'] = project_type
-                        families[family]['split_project_type'] = True
-                    elif 'elidS31285117' in newest_protocol and not families[family]['NICU']:
-                        project_type = 'SSv7'
-                        families[family]['project_type'] = project_type
-                        families[family]['split_project_type'] = True
-                    elif 'elidS34226467' in newest_protocol and not families[family]['NICU']:
-                        project_type = 'CREv4'
-                        families[family]['project_type'] = project_type
-                        families[family]['split_project_type'] = True
 
                     # Set urgent status
                     if 'Dx Spoed' in list(sample.udf) and sample.udf['Dx Spoed']:
@@ -104,12 +140,8 @@ def update_samplesheet(lims, process_id, artifact_id, output_file, conversion_to
                         families[family]['urgent'] = False
 
             else:  # Other samples
-                if 'GIAB' in sample.name.upper() and not sample.project:  # GIAB control samples
-                    family = 'GIAB'
-                else:
-                    family = sample.project.name
-                    # Remove 'dx' (ignore case) and strip leading space or _
-                    family = re.sub('^dx[ _]*', '', family, flags=re.IGNORECASE)
+                # Use project name as family name and Remove 'dx' (ignore case) and strip leading space or _
+                family = re.sub('^dx[ _]*', '', sample.project.name, flags=re.IGNORECASE)
                 if family not in families:
                     families[family] = {
                         'samples': [],
@@ -120,9 +152,32 @@ def update_samplesheet(lims, process_id, artifact_id, output_file, conversion_to
                         'deviating': False
                     }
 
-            # Add sample_artifact to family
-            if sample_artifact not in families[family]['samples']:
-                families[family]['samples'].append(sample_artifact)
+                # Setup override cycles
+                if 'Dx Override Cycles' in list(sample.udf) and sample.udf['Dx Override Cycles']:
+                    sample_override_cycles = sample.udf['Dx Override Cycles']
+                else:
+                    sample_override_cycles = get_override_cycles(
+                        read_len=[process.udf['Read 1 Cycles'], process.udf['Read 2 Cycles']],
+                        umi_len=config.sample_conversion_settings['default']['umi_len'],
+                        index_len=[len(sample_index[0]), len(sample_index[1])],
+                        max_index_len=[process.udf['Index Read 1'], process.udf['Index Read 2']],
+                        index_2_conversion_orientation=index_2_conversion_orientation
+                    )
+
+            # Add sample to samplesheet_samples
+            samplesheet_samples[sample_sequence_name] = {
+                'index_1': sample_index[0],
+                'index_2': sample_index[1],
+                'override_cycles': sample_override_cycles,
+            }
+            if index_2_conversion_orientation == 'RC':  # Reverse complement index 2
+                samplesheet_samples[sample_sequence_name]['index_2'] = reverse_complement(
+                    samplesheet_samples[sample_sequence_name]['index_2']
+                )
+
+            # Add sample to family
+            if sample_sequence_name not in families[family]['samples']:
+                families[family]['samples'].append(sample_sequence_name)
 
     # Get all project types and count samples
     project_types = {}
@@ -146,148 +201,98 @@ def update_samplesheet(lims, process_id, artifact_id, output_file, conversion_to
             project_types[project_type]['projects'][project_type] = 0
 
     # Set sample projects
-    sample_projects = {}
-    sample_sequence_names = {}
-
     # Urgent families / samples, skip deviating
     for family in [family for family in families.values() if family['urgent'] and not family['deviating']]:
         family_project = get_project(project_types[family['project_type']]['projects'], urgent=True)
-        for sample_artifact in family['samples']:
-            sample_sequence_name = get_sequence_name(sample_artifact)
-            for sample in sample_artifact.samples:
-                sample_sequence_names[sample.name] = sample_sequence_name
-            sample_projects[sample_sequence_name] = family_project
+        for sample_sequence_name in family['samples']:
+            samplesheet_samples[sample_sequence_name]['project'] = family_project
             project_types[family['project_type']]['projects'][family_project] += 1
 
     # Deviating families / samples
     for family in [family for family in families.values() if family['deviating']]:
         family_project = get_project(project_types[family['project_type']]['projects'])
-        for sample_artifact in family['samples']:
-            sample_sequence_name = get_sequence_name(sample_artifact)
-            for sample in sample_artifact.samples:
-                sample_sequence_names[sample.name] = sample_sequence_name
-            sample_projects[sample_sequence_name] = family_project
+        for sample_sequence_name in family['samples']:
+            samplesheet_samples[sample_sequence_name]['project'] = family_project
             project_types[family['project_type']]['projects'][family_project] += 1
 
     # Non urgent and non deviating families / samples
     normal_families = [family for family in families.values() if not family['urgent'] and not family['deviating']]
     for family in sorted(normal_families, key=lambda fam: (len(fam['samples'])), reverse=True):
         family_project = get_project(project_types[family['project_type']]['projects'])
-        for sample_artifact in family['samples']:
-            sample_sequence_name = get_sequence_name(sample_artifact)
-            for sample in sample_artifact.samples:
-                sample_sequence_names[sample.name] = sample_sequence_name
-            sample_projects[sample_sequence_name] = family_project
+        for sample_sequence_name in family['samples']:
+            samplesheet_samples[sample_sequence_name]['project'] = family_project
             project_types[family['project_type']]['projects'][family_project] += 1
 
-    # Check sequencer type
-    # NextSeq runs need to reverse complement 'index2' for dual barcodes and 'index' for single barcodes.
-    if 'nextseq' in process.type.name.lower():
-        nextseq_run = True
-    else:
-        nextseq_run = False
+    return samplesheet_samples
 
-    # Edit clarity samplesheet
-    sample_header = ''  # empty until [data] section
-    settings_section = False
-    samplesheet_artifact = Artifact(lims, id=artifact_id)
-    file_id = samplesheet_artifact.files[0].id
 
-    # Setup custom settings
-    custom_settings = ''
+def create_samplesheet(lims, process_id, output_file):
+    """Create illumina samplesheet v2."""
+    process = Process(lims, id=process_id)
+    sequencer_conversion_settings = config.sequencer_conversion_settings[process.type.name]
 
-    if conversion_tool == 'bcl2fastq' and trim_last_base:
-        custom_settings = (
-            'Read1EndWithCycle,{read_1_value}\n'
-            'Read2EndWithCycle,{read_2_value}\n'
-        ).format(
-            read_1_value=process.udf['Read 1 Cycles']-1, read_2_value=process.udf['Read 2 Cycles']-1
+    # Get output container assume one flowcell per sequencing run
+    output_container = process.output_containers()[0]
+
+    # Get samples samples per lane
+    samplesheet_samples = {}
+    for lane_idx, lane_artifact in output_container.get_placements().items():
+        lane_idx = lane_idx.split(':')[0]
+        sample_artifacts = get_sample_artifacts_from_pool(lims, lane_artifact)
+        samplesheet_samples[lane_idx] = get_samplesheet_samples(
+            sample_artifacts, process, sequencer_conversion_settings['index_2_conversion_orientation']
         )
 
-    elif conversion_tool == 'bclconvert':
-        # Setup OverrideCycles
-        if trim_last_base or process.udf['UMI - Trim']:
-            override_cycles = [
-                '',  # read 1
-                'I{0}'.format(process.udf['Index Read 1']),  # index 1
-                'I{0}'.format(process.udf['Index Read 2']),  # index 2
-                '',  # read 2
-            ]
+    # Create SampleSheet
+    sample_sheet = [
+        # Header
+        "[Header]",
+        "FileFormatVersion,2",
+        f"InstrumentPlatform,{sequencer_conversion_settings['instrument_platform']}",
+        f"IndexOrientation,{sequencer_conversion_settings['index_orientation']}",
+        f"RunName,{process.udf['Experiment Name']}",
+        # Reads
+        "[Reads]",
+        f"Read1Cycles,{process.udf['Read 1 Cycles']}",
+        f"Read2Cycles,{process.udf['Read 2 Cycles']}",
+        f"Index1Cycles,{process.udf['Index Read 1']}",
+        f"Index2Cycles,{process.udf['Index Read 2']}",
+        # BCLConvert_Settings
+        "[BCLConvert_Settings]",
+        f"SoftwareVersion,{sequencer_conversion_settings['software_version']}",
+        f"FastqCompressionFormat,{sequencer_conversion_settings['fastq_compression_format']}",
+        f"AdapterRead1,{process.udf['Adapter']}",
+        f"AdapterRead2,{process.udf['Adapter Read 2']}",
+        "FindAdaptersWithIndels,TRUE",
+        "BarcodeMismatchesIndex1,0",
+        "BarcodeMismatchesIndex2,0",
+        "TrimUMI,TRUE",
+        # BCLConvert_Data
+        "[BCLConvert_Data]"
+    ]
 
-            if trim_last_base and process.udf['UMI - Trim']:
-                override_cycles[0] = 'U{umi}Y{read}N1'.format(
-                    umi=process.udf['UMI - Read 1 Length'],
-                    read=process.udf['Read 1 Cycles'] - process.udf['UMI - Read 1 Length'] - 1
+    # Set header for single or multiple lanes conversion
+    bcl_convert_data_header = "Sample_ID,index,index2,OverrideCycles,Sample_Project"
+    if len(samplesheet_samples) == 1:  # All samples on all lanes
+        multiple_lanes = False
+    else:
+        multiple_lanes = True
+        bcl_convert_data_header = f"Lane,{bcl_convert_data_header}"  # Add lane column to header if multiple lanes conversion
+    sample_sheet.append(bcl_convert_data_header)
+
+    # Add samples to SampleSheet
+    for lane, lane_samples in sorted(samplesheet_samples.items()):
+        for sample in lane_samples:
+            bcl_convert_data_row = "{sample_name},{index_1},{index_2},{override_cycles},{project}".format(
+                    sample_name=sample,
+                    index_1=lane_samples[sample]['index_1'],
+                    index_2=lane_samples[sample]['index_2'],
+                    override_cycles=lane_samples[sample]['override_cycles'],
+                    project=lane_samples[sample]['project']
                 )
-                override_cycles[3] = 'U{umi}Y{read}N1'.format(
-                    umi=process.udf['UMI - Read 2 Length'],
-                    read=process.udf['Read 2 Cycles'] - process.udf['UMI - Read 2 Length'] - 1
-                )
-                custom_settings = 'TrimUMI,1\n'
+            if multiple_lanes:  # Add lane number to row if multiple lanes conversion
+                bcl_convert_data_row = f"{lane},{bcl_convert_data_row}"
+            sample_sheet.append(bcl_convert_data_row)
 
-            elif trim_last_base:
-                override_cycles[0] = 'Y{read}N1'.format(read=process.udf['Read 1 Cycles'] - 1)
-                override_cycles[3] = 'Y{read}N1'.format(read=process.udf['Read 2 Cycles'] - 1)
-
-            elif process.udf['UMI - Trim']:
-                override_cycles[0] = 'U{umi}Y{read}'.format(
-                    umi=process.udf['UMI - Read 1 Length'],
-                    read=process.udf['Read 1 Cycles'] - process.udf['UMI - Read 1 Length']
-                )
-                override_cycles[3] = 'U{umi}Y{read}'.format(
-                    umi=process.udf['UMI - Read 2 Length'],
-                    read=process.udf['Read 2 Cycles'] - process.udf['UMI - Read 2 Length']
-                )
-                custom_settings = 'TrimUMI,1\n'
-
-            custom_settings = '{settings}OverrideCycles,{override_cycles}\n'.format(
-                settings=custom_settings,
-                override_cycles=';'.join(override_cycles)
-            )
-
-    for data in csv.reader(
-        lims.get_file_contents(id=file_id).rstrip().split('\n'),
-        quotechar='"', delimiter=',', quoting=csv.QUOTE_ALL, skipinitialspace=True
-    ):
-        if data[0] == '[Settings]' and custom_settings:
-            output_file.write('{line}\n'.format(line=','.join(data)))
-            output_file.write(custom_settings)
-            settings_section = True
-
-        elif data[0] == '[Data]' and custom_settings and not settings_section:
-            output_file.write('[Settings]\n')
-            output_file.write(custom_settings)
-            output_file.write('{line}\n'.format(line=','.join(data)))
-
-        elif data[0] == 'Sample_ID':  # Samples header line
-            sample_header = data
-            sample_id_index = sample_header.index('Sample_ID')
-            sample_name_index = sample_header.index('Sample_Name')
-            sample_project_index = sample_header.index('Sample_Project')
-
-            if 'index2' in sample_header:
-                index_index = sample_header.index('index2')
-            else:
-                index_index = sample_header.index('index')
-
-            output_file.write('{line}\n'.format(line=','.join(data)))
-
-        elif sample_header:  # Samples header seen, so continue with samples.
-            sample_name = data[sample_name_index].split(',')[0]
-            if sample_name in sample_sequence_names:
-                data[sample_name_index] = sample_sequence_names[sample_name]
-
-            # Set Sample_Project
-            if data[sample_name_index] in sample_projects:
-                data[sample_project_index] = sample_projects[data[sample_name_index]]
-
-            # Overwrite Sample_ID with Sample_name to get correct conversion output folder structure
-            data[sample_id_index] = data[sample_name_index]
-
-            # Reverse complement index for NextSeq runs
-            if nextseq_run:
-                data[index_index] = clarity_epp.export.utils.reverse_complement(data[index_index])
-
-            output_file.write('{line}\n'.format(line=','.join(data)))
-        else:  # Leave other lines untouched.
-            output_file.write('{line}\n'.format(line=','.join(data)))
+    # Write SampleSheet to file
+    output_file.write('\n'.join(sample_sheet))

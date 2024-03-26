@@ -53,8 +53,8 @@ def export_hamilton(args):
 
 def export_illumina(args):
     """Export (updated) illumina samplesheet."""
-    clarity_epp.export.illumina.update_samplesheet(
-        lims, args.process_id, args.artifact_id, args.output_file, args.conversion_tool
+    clarity_epp.export.illumina.create_samplesheet(
+        lims, args.process_id, args.output_file
     )
 
 
@@ -124,10 +124,16 @@ def export_removed_samples(args):
     clarity_epp.export.sample.removed_samples(lims, args.output_file)
 
 
-def export_sample_indications(args):
-    """Export sample indication table."""
-    clarity_epp.export.sample.sample_indications(
-        lims, args.output_file, args.artifact_name, args.sequencing_run, args.sequencing_run_project
+def export_sample_udf_dx(args):
+    "Export table sample udf (Dx-udf only)"""
+    clarity_epp.export.sample.sample_udf_dx(
+        lims,
+        args.output_file,
+        args.artifact_name,
+        args.sequencing_run,
+        args.sequencing_run_project,
+        args.udf,
+        args.column_name
     )
 
 
@@ -307,13 +313,9 @@ if __name__ == "__main__":
     parser_export_hamilton.set_defaults(func=export_hamilton)
 
     parser_export_illumina = subparser_export.add_parser(
-        'illumina', help='Export updated illumina samplesheet', parents=[output_parser]
+        'illumina', help='Export illumina samplesheet', parents=[output_parser]
     )
     parser_export_illumina.add_argument('process_id', help='Clarity lims process id')
-    parser_export_illumina.add_argument('artifact_id', help='Clarity lims samplesheet artifact id')
-    parser_export_illumina.add_argument(
-        '-c', '--conversion_tool', choices=['bcl2fastq', 'bclconvert'], default='bcl2fastq', help='Illumina conversion tool'
-    )
     parser_export_illumina.set_defaults(func=export_illumina)
 
     parser_export_labels = subparser_export.add_parser('labels', help='Export container labels', parents=[output_parser])
@@ -359,16 +361,18 @@ if __name__ == "__main__":
     )
     parser_export_removed_samples.set_defaults(func=export_removed_samples)
 
-    parser_export_sample_indications = subparser_export.add_parser(
-        'sample_indications', help='Export sample indication table.', parents=[output_parser]
+    parser_export_sample_udf_dx = subparser_export.add_parser(
+        'sample_udf_dx', help='Export sample udf table (Dx-udf only).', parents=[output_parser]
     )
-    parser_export_sample_indications_group = parser_export_sample_indications.add_mutually_exclusive_group(required=True)
-    parser_export_sample_indications_group.add_argument('-a', '--artifact_name', help='Artifact name')
-    parser_export_sample_indications_group.add_argument('-r', '--sequencing_run', help='Sequencing run name')
-    parser_export_sample_indications.add_argument(
+    parser_export_sample_udf_dx_group = parser_export_sample_udf_dx.add_mutually_exclusive_group(required=True)
+    parser_export_sample_udf_dx_group.add_argument('-a', '--artifact_name', help='Artifact name')
+    parser_export_sample_udf_dx_group.add_argument('-r', '--sequencing_run', help='Sequencing run name')
+    parser_export_sample_udf_dx.add_argument(
         '-p', '--sequencing_run_project',  nargs='?', help='Sequencing run project name'
     )
-    parser_export_sample_indications.set_defaults(func=export_sample_indications)
+    parser_export_sample_udf_dx.add_argument('-u', '--udf', help='udf to query (limited to only Dx-udf)')
+    parser_export_sample_udf_dx.add_argument('-c', '--column_name', help='naming of column')
+    parser_export_sample_udf_dx.set_defaults(func=export_sample_udf_dx)
 
     parser_export_sample_related_mip = subparser_export.add_parser(
         'sample_related_mip', help='Export related mip samples.', parents=[output_parser]
