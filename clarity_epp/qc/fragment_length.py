@@ -25,6 +25,7 @@ def set_qc_flag(lims, process_id):
 
 
 def set_fragment_length_udf(lims, process_id):
+    """Checks for empty fragment length udf and if so and WGS, fills it with 'fragment_length_wgs' from config."""
     process = Process(lims, id=process_id)
 
     for artifact in process.all_inputs():
