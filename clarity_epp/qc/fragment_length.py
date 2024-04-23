@@ -1,6 +1,7 @@
 """Fragment length QC epp functions."""
 
 from genologics.entities import Process
+import config
 
 
 def set_qc_flag(lims, process_id):
@@ -21,3 +22,13 @@ def set_qc_flag(lims, process_id):
             artifact.qc_flag = 'FAILED'
         finally:
             artifact.put()
+
+
+def set_fragment_length_udf(lims, process_id):
+    process = Process(lims, id=process_id)
+
+    for artifact in process.all_inputs():
+        if 'Dx Fragmentlengte (bp)' not in artifact.udf:
+            if 'Dx QC check WGS prep' in artifact.workflow_stages_and_statuses[0][2]:
+                artifact.udf['Dx Fragmentlengte (bp)'] = config.fragment_length_wgs
+                artifact.put()

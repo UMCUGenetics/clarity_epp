@@ -202,6 +202,11 @@ def qc_fragment_length(args):
     clarity_epp.qc.fragment_length.set_qc_flag(lims, args.process_id)
 
 
+def set_fragment_length(args):
+    """Set empty fragment length udf."""
+    clarity_epp.qc.fragment_length.set_fragment_length_udf(lims, args.process_id)
+
+
 def qc_illumina(args):
     """Set average % Bases >=Q30."""
     clarity_epp.qc.illumina.set_avg_q30(lims, args.process_id)
@@ -433,6 +438,10 @@ if __name__ == "__main__":
     parser_qc_fragment_length = subparser_qc.add_parser('fragment_length', help='Set fragment length qc flag')
     parser_qc_fragment_length.add_argument('process_id', help='Clarity lims process id')
     parser_qc_fragment_length.set_defaults(func=qc_fragment_length)
+
+    parser_qc_set_fragment_length = subparser_qc.add_parser('set_fragment_length', help='Set empty fragment length udf')
+    parser_qc_set_fragment_length.add_argument('process_id', help='Clarity lims process id')
+    parser_qc_set_fragment_length.set_defaults(func=set_fragment_length)
 
     parser_qc_illumina = subparser_qc.add_parser('illumina', help='Set average % Bases >=Q30')
     parser_qc_illumina.add_argument('process_id', help='Clarity lims process id')

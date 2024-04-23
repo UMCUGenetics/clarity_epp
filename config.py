@@ -143,3 +143,6 @@ post_bioinf_workflow = '1803'  # DEV Dx NGS WES onderzoeken afronden v2.0
 research_onderzoeksindicatie_project = {
     'PD-GRID': 'knoers_grid'
 }
+
+# Fragment length WGS
+fragment_length_wgs = 450
