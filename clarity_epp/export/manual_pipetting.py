@@ -3,7 +3,7 @@ import re
 
 from genologics.entities import Process
 
-from .. import get_mix_sample_barcode, get_unique_sample_id
+from .. import get_mix_sample_barcode, get_unique_sample_id, get_index_performance
 import clarity_epp.export.utils
 
 
@@ -950,5 +950,42 @@ def samplesheet_3nm_dilution_mirocanvas(lims, process_id, output_file):
                 output_file.write(
                     '{samplename}\t"Dx volume sample (ul)" en/of "Dx nM sample" niet ingevuld.\n'.format(
                         samplename=output_artifact.name
+                    )
+                )
+
+
+def samplesheet_multiplex_enrichment_mirocanvas(lims, process_id, output_file):
+    """
+    Create manual pipetting samplesheet for step Multiplex enrichment samples (nM) Mirocanvas.
+
+    Args:
+        lims (object): Lims connection
+        process_id (str): Process ID
+        output_file (file): Manual pipetting samplesheet file path.
+    """
+    process = Process(lims, id=process_id)
+
+    output_file.write(
+        'Samplenaam\tVolume sample (ul)\n'
+    )
+
+    for input_artifact in process.all_inputs():
+        if input_artifact.type == 'Analyte':
+            sample_volume = input_artifact.udf['Dx volume sample (ul)']
+            index = input_artifact.reagent_labels[0]
+            index_performance = get_index_performance(index)
+            if index_performance:
+                corrected_volume = sample_volume * (1 / index_performance)
+                output_file.write(
+                    '{samplename}\t{sample_volume:.2f}\n'.format(
+                        samplename=input_artifact.name,
+                        sample_volume=corrected_volume
+                    )
+                )
+            else:
+                output_file.write(
+                    '{samplename}\tGeen performance bekend voor index {index}\n'.format(
+                        samplename=input_artifact.name,
+                        index=index
                     )
                 )
