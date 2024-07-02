@@ -5,7 +5,7 @@ import sys
 import argparse
 
 import genologics.lims
-from tenacity import Retrying, RetryError, stop_after_attempt
+from tenacity import Retrying, RetryError, stop_after_attempt, wait_fixed
 
 import clarity_epp.upload
 import clarity_epp.export
@@ -19,7 +19,7 @@ lims = genologics.lims.Lims(config.baseuri, config.username, config.password)
 genologics.lims.TIMEOUT = config.api_timeout
 
 try:
-    for lims_connection_attempt in Retrying(stop=stop_after_attempt(2)):
+    for lims_connection_attempt in Retrying(stop=stop_after_attempt(2), wait=wait_fixed(1)):
         with lims_connection_attempt:
             lims.check_version()
 except RetryError:
