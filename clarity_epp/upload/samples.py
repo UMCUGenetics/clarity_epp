@@ -89,31 +89,42 @@ def from_helix(lims, email_settings, input_file):
     sample_messages = {}
 
     # Parse samples
-    for line in input_file:
+    for line_index, line in enumerate(input_file):
         data = line.rstrip().strip('"').split('","')
 
         udf_data = {'Sample Type': 'DNA isolated', 'Dx Import warning': '', 'Dx Exoomequivalent': 1}  # required lims input
         for udf in udf_column:
             # Transform specific udf
-            if udf in ['Dx Overleden', 'Dx Spoed', 'Dx NICU Spoed']:
-                udf_data[udf] = clarity_epp.upload.utils.txt_to_bool(data[udf_column[udf]['index']])
-            elif udf in ['Dx Geslacht', 'Dx Foetus geslacht']:
-                udf_data[udf] = clarity_epp.upload.utils.transform_sex(data[udf_column[udf]['index']])
-            elif udf == 'Dx Foetus':
-                udf_data[udf] = bool(data[udf_column[udf]['index']].strip())
-            elif udf == 'Dx Concentratie (ng/ul)':
-                udf_data[udf] = data[udf_column[udf]['index']].replace(',', '.')
-                if udf_data[udf]:
-                    udf_data[udf] = float(udf_data[udf])
-            elif udf in ['Dx Monsternummer', 'Dx Fractienummer']:
-                udf_data[udf] = clarity_epp.upload.utils.transform_sample_name(data[udf_column[udf]['index']])
-            elif udf == 'Dx Gerelateerde onderzoeken':
-                udf_data[udf] = data[udf_column[udf]['index']].replace(',', ';')
-            elif udf == 'Dx Einddatum':
-                date = datetime.strptime(data[udf_column[udf]['index']], '%d-%m-%Y')  # Helix format (14-01-2021)
-                udf_data[udf] = date.strftime('%Y-%m-%d')  # LIMS format (2021-01-14)
-            else:
-                udf_data[udf] = data[udf_column[udf]['index']]
+            try:
+                if udf in ['Dx Overleden', 'Dx Spoed', 'Dx NICU Spoed']:
+                    udf_data[udf] = clarity_epp.upload.utils.txt_to_bool(data[udf_column[udf]['index']])
+                elif udf in ['Dx Geslacht', 'Dx Foetus geslacht']:
+                    udf_data[udf] = clarity_epp.upload.utils.transform_sex(data[udf_column[udf]['index']])
+                elif udf == 'Dx Foetus':
+                    udf_data[udf] = bool(data[udf_column[udf]['index']].strip())
+                elif udf == 'Dx Concentratie (ng/ul)':
+                    udf_data[udf] = data[udf_column[udf]['index']].replace(',', '.')
+                    if udf_data[udf]:
+                        udf_data[udf] = float(udf_data[udf])
+                elif udf in ['Dx Monsternummer', 'Dx Fractienummer']:
+                    udf_data[udf] = clarity_epp.upload.utils.transform_sample_name(data[udf_column[udf]['index']])
+                elif udf == 'Dx Gerelateerde onderzoeken':
+                    udf_data[udf] = data[udf_column[udf]['index']].replace(',', ';')
+                elif udf == 'Dx Einddatum':
+                    date = datetime.strptime(data[udf_column[udf]['index']], '%d-%m-%Y')  # Helix format (14-01-2021)
+                    udf_data[udf] = date.strftime('%Y-%m-%d')  # LIMS format (2021-01-14)
+                else:
+                    udf_data[udf] = data[udf_column[udf]['index']]
+            except (IndexError, ValueError):
+                # Catch parsing errors and send email
+                subject = "ERROR Lims Helix Upload: {0}".format(project_name)
+                message = (
+                    "Could not correctly parse data from helix export file (werklijst).\n"
+                    f"Row = {line_index+1} \t Column = {udf_column[udf]['column']} \t UDF = {udf}.\n"
+                    "Please check/update the file and try again. Make sure to remove the project from LIMS before retrying."
+                )
+                send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
+                sys.exit(message)
 
         sample_name = '{0}_{1}'.format(udf_data['Dx Monsternummer'], udf_data['Dx Meet ID'])
 
@@ -292,4 +303,5 @@ def from_helix(lims, email_settings, input_file):
 
     # Send final email
     message += '\n'.join(sample_messages.values())
-    send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
+    print(message)
+    # send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
