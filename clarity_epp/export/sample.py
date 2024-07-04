@@ -20,7 +20,7 @@ def removed_samples(lims, output_file):
     for sample in dx_samples:
         sample_removed = False
         removed_stage = None
-        removed_process_id = None
+        removed_process_id = 0
         removed_date = None
 
         for artifact in sorted(lims.get_artifacts(type="Analyte", sample_name=sample.name, resolve=True), key=clarity_epp.export.utils.sort_artifact_list):
@@ -50,7 +50,7 @@ def removed_samples(lims, output_file):
                     if stage == removed_stage:
                         sample_removed = False
                         removed_stage = None
-                        removed_process_id = None
+                        removed_process_id = 0
                         removed_date = None
 
                     # Other process completed.
@@ -64,7 +64,7 @@ def removed_samples(lims, output_file):
                             if process_id > removed_process_id:  # Other process completed after removal from workflow
                                 sample_removed = False
                                 removed_stage = None
-                                removed_process_id = None
+                                removed_process_id = 0
                                 removed_date = None
                                 break
 
@@ -81,7 +81,7 @@ def removed_samples(lims, output_file):
                     if person_sample_date > removed_date:  # New sample loaded after removal from workflow
                         sample_removed = False
                         removed_stage = None
-                        removed_process_id = None
+                        removed_process_id = 0
                         removed_date = None
 
                     else:  # Work done on other sample after removal from workflow
@@ -96,7 +96,7 @@ def removed_samples(lims, output_file):
                                         if process_id > removed_process_id:  # Other process completed after removal from workflow
                                             sample_removed = False
                                             removed_stage = None
-                                            removed_process_id = None
+                                            removed_process_id = 0
                                             removed_date = None
                                             break
 
