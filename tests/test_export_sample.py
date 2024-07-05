@@ -1,59 +1,57 @@
 import sys
 
-from clarity_epp.export import sample
+from clarity_epp.export.sample import sample_udf_dx
 
 
-class MyMock:
-    def __init__(self, udf):
-        self.udf = udf
+class SampleMock:
+    def __init__(self, name, udf_dict):
+        self.name = name
+        self.udf = udf_dict
 
 
-def test_sample_udf_withudf(mocker, capsys):
+def test_sample_udf_with_udf(mocker, capsys):
     # Test output for sample with known Dx-udf in database
-    samples_mock[sample_name] = MyMock({"Dx geslacht": "Vrouw"})
-    patched_clarity_epp = mocker.patch(
-        'clarity_epp.export.sample.get_samples',
-        return_value=samples_mock
-    )
-    sample.sample_udf_dx("lims", sys.stdout, udf="Dx geslacht", column_name=column_name)
+    sample = SampleMock("test_sample", {"Dx geslacht": "Vrouw"})
+    samples = {sample.name: sample}
+    column_name = "test_column"
+
+    mocker.patch('clarity_epp.export.sample.get_samples', return_value=samples)
+
+    sample_udf_dx("lims", sys.stdout, udf="Dx geslacht", column_name=column_name)
     captured = capsys.readouterr()
-    assert captured.out == f"Sample\t{column_name}\n{sample_name}\tVrouw\n"
+    assert captured.out == f"Sample\t{column_name}\n{sample.name}\tVrouw\n"
 
 
-def test_sample_udf_withoutudf(mocker, capsys):
+def test_sample_udf_without_udf(mocker, capsys):
     # Test output for sample with no known udf in database
-    samples_mock[sample_name] = MyMock({"Dx geslacht": "Vrouw"})
-    patched_clarity_epp = mocker.patch(
-        'clarity_epp.export.sample.get_samples',
-        return_value=samples_mock
-    )
-    sample.sample_udf_dx("lims", sys.stdout, udf="udf2", column_name=column_name)
-    captured = capsys.readouterr()
-    assert captured.out == f"Sample\t{column_name}\n{sample_name}\tunknown\n"
+    sample = SampleMock("test_sample", {"Dx geslacht": "Vrouw"})
+    samples = {sample.name: sample}
+    column_name = "test_column"
 
-def test_sample_udf_withoutdxudf(mocker, capsys):
+    mocker.patch('clarity_epp.export.sample.get_samples', return_value=samples)
+
+    sample_udf_dx("lims", sys.stdout, udf="udf2", column_name=column_name)
+    captured = capsys.readouterr()
+    assert captured.out == f"Sample\t{column_name}\n{sample.name}\tunknown\n"
+
+
+def test_sample_udf_without_dx_udf(mocker, capsys):
     # Test output for sample with known udf in database, but not Dx-udf
-    samples_mock[sample_name] = MyMock({"Geslacht": "Vrouw"})
-    patched_clarity_epp = mocker.patch(
-        'clarity_epp.export.sample.get_samples',
-        return_value=samples_mock
-    )
-    sample.sample_udf_dx("lims", sys.stdout, udf="Geslacht", column_name=column_name)
+    sample = SampleMock("test_sample", {"Geslacht": "Vrouw"})
+    samples = {sample.name: sample}
+    column_name = "test_column"
+
+    mocker.patch('clarity_epp.export.sample.get_samples', return_value=samples)
+
+    sample_udf_dx("lims", sys.stdout, udf="Geslacht", column_name=column_name)
     captured = capsys.readouterr()
     assert captured.out == f"Sample\t{column_name}\nWarning, udf is not type \'Dx\'\n"
 
 
-def test_sample_udf_nosamples(mocker, capsys):
+def test_sample_udf_no_samples(mocker, capsys):
     # Test output for sample not known in database
-    samples_mock[sample_name] = MyMock({"Dx geslacht": "Vrouw"})
-    patched_clarity_epp = mocker.patch(
-        'clarity_epp.export.sample.get_samples',
-        return_value=None
-    )
-    sample.sample_udf_dx("lims", sys.stdout)
+    mocker.patch('clarity_epp.export.sample.get_samples', return_value=[])
+
+    sample_udf_dx("lims", sys.stdout)
     captured = capsys.readouterr()
     assert captured.out == "no_sample_found\n"
-
-column_name = "test_column"
-sample_name = "test_sample"
-samples_mock = {}
