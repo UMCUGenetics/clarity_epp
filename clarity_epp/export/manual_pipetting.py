@@ -966,7 +966,7 @@ def samplesheet_multiplex_enrichment_mirocanvas(lims, process_id, output_file):
     process = Process(lims, id=process_id)
 
     output_file.write(
-        'Samplenaam\tVolume sample (ul)\n'
+        'Samplenaam\tGecorrigeerd volume (ul)\n'
     )
 
     for input_artifact in process.all_inputs():
@@ -984,8 +984,9 @@ def samplesheet_multiplex_enrichment_mirocanvas(lims, process_id, output_file):
                 )
             else:
                 output_file.write(
-                    '{samplename}\tGeen performance bekend voor index {index}\n'.format(
-                        samplename=input_artifact.name,
-                        index=index
+                    '{sample}\tGeen performance bekend voor index {index}, niet gecorrigeerd volume: {volume} ul\n'.format(
+                        sample=input_artifact.name,
+                        index=index,
+                        volume=sample_volume
                     )
                 )
