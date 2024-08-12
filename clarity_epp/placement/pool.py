@@ -85,3 +85,24 @@ def create_patient_pools(lims, process_id):
     for artifact in process.all_outputs():
         artifact.name = get_sequence_name(artifact)
         artifact.put()
+
+
+def check_merge_complete(lims, process_id):
+    process = Process(lims, id=process_id)
+
+    for pool in process.analytes()[0]:
+        udf = []
+        research_numbers = []
+        for sample in pool.samples:
+            if 'Dx Onderzoeknummer' in sample.udf:
+                research_numbers.append(sample.udf['Dx Onderzoeknummer'])
+        for sample in pool.samples:
+            if 'Dx Gerelateerde onderzoeken' in sample.udf:
+                for sample_research in sample.udf['Dx Gerelateerde onderzoeken'].split('; '):
+                    if sample_research not in research_numbers:
+                        message = ('aan sample ' + sample.name + ' gerelateerd onderzoek ' + sample_research + ' niet in '
+                                   + pool.name)
+                        udf.append(message)
+        if udf:
+            pool.udf['Dx missende merge'] = udf
+            pool.put()

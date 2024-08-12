@@ -248,6 +248,12 @@ def placement_patient_pools(args):
     clarity_epp.placement.pool.create_patient_pools(lims, args.process_id)
 
 
+def placement_pool(args):
+    """Check pools."""
+    if args.type == 'check_merge':
+        clarity_epp.placement.pool.check_merge_complete(lims, args.process_id)
+
+
 def placement_complete_step(args):
     """Complete protocol step (Dx Mark protocol complete)."""
     clarity_epp.placement.step.finish_protocol_complete(lims, args.process_id)
@@ -468,9 +474,15 @@ if __name__ == "__main__":
     parser_placement_unpooling.add_argument('process_id', help='Clarity lims process id')
     parser_placement_unpooling.set_defaults(func=placement_unpooling)
 
-    parser_placement_patient_pools = subparser_placement.add_parser('patient_pools', help='Create patient pools for Dx samples')
+    parser_placement_patient_pools = subparser_placement.add_parser('patient_pools',
+                                                                    help='Create patient pools for Dx samples')
     parser_placement_patient_pools.add_argument('process_id', help='Clarity lims process id')
     parser_placement_patient_pools.set_defaults(func=placement_patient_pools)
+
+    parser_placement_pool = subparser_placement.add_parser('pool_check', help='Check pool clarity_epp.placement')
+    parser_placement_pool.add_argument('type', choices=['check_merge'], help='Check type')
+    parser_placement_pool.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_pool.set_defaults(func=placement_pool)
 
     parser_placement_tecan = subparser_placement.add_parser('tecan', help='Placement of samples in tecan step')
     parser_placement_tecan.add_argument('process_id', help='Clarity lims process id')
