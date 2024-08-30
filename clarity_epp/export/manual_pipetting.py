@@ -954,12 +954,13 @@ def samplesheet_3nm_dilution_mirocanvas(lims, process_id, output_file):
                 )
 
 
-def samplesheet_multiplex_enrichment_mirocanvas(lims, process_id, output_file):
+def samplesheet_multiplex_enrichment_mirocanvas(lims, label_performance_file, process_id, output_file):
     """
     Create manual pipetting samplesheet for step Multiplex enrichment samples (nM) Mirocanvas.
 
     Args:
         lims (object): Lims connection
+        label_performance_file (str): Path to label performance file.
         process_id (str): Process ID
         output_file (file): Manual pipetting samplesheet file path.
     """
@@ -973,7 +974,7 @@ def samplesheet_multiplex_enrichment_mirocanvas(lims, process_id, output_file):
         if input_artifact.type == 'Analyte':
             sample_volume = input_artifact.udf['Dx volume sample (ul)']
             index = input_artifact.reagent_labels[0]
-            index_performance = get_index_performance(index)
+            index_performance = get_index_performance(index, label_performance_file)
             if index_performance:
                 corrected_volume = sample_volume * (1 / index_performance)
                 output_file.write(

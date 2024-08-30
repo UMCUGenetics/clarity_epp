@@ -108,21 +108,22 @@ def send_email(server, sender, receivers, subject, text, attachment=None):
     s.quit()
 
 
-def get_index_performance(index):
+def get_index_performance(index, label_performance_file):
     """
     Returns the performance for given index.
 
     Args:
         index (str): Index name.
+        label_performance_file (str): Path to label performance file.
 
     Returns:
         float: Performance for given index from label_performance file or returns None if no performance present for index.
     """
     label_performance = {}
-    label_performance_file = open('files/label_performance.csv', 'r')
-    for line in label_performance_file:
-        label_name, performance = line.rstrip().split(';')
-        label_performance[label_name] = performance.replace(',', '.')
+    with open(label_performance_file, 'r') as performance_file:
+        for line in performance_file:
+            label_name, performance = line.rstrip().split(';')
+            label_performance[label_name] = performance.replace(',', '.')
     if index in label_performance:
         performance = label_performance[index]
         return performance

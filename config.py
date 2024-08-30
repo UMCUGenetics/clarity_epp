@@ -146,3 +146,6 @@ research_onderzoeksindicatie_project = {
 
 # Fragment length WGS
 fragment_length_wgs = 450
+
+# File location
+label_performance_file = '/opt/gls/clarity/customextensions/DX_clarity_epp/files/label_performance.csv'

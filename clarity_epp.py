@@ -109,7 +109,7 @@ def export_manual_pipetting(args):
         clarity_epp.export.manual_pipetting.samplesheet_3nm_dilution_mirocanvas(lims, args.process_id, args.output_file)
     elif args.type == 'multiplex_enrichment_mirocanvas':
         clarity_epp.export.manual_pipetting.samplesheet_multiplex_enrichment_mirocanvas(
-            lims, args.process_id, args.output_file
+            lims, config.label_performance_file, args.process_id, args.output_file
         )
 
 
