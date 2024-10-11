@@ -984,22 +984,31 @@ def samplesheet_multiplex_enrichment_mirocanvas(lims, label_performance_file, pr
 
     for input_artifact in process.all_inputs():
         if input_artifact.type == 'Analyte':
-            sample_volume = input_artifact.udf['Dx volume sample (ul)']
-            index = input_artifact.reagent_labels[0]
-            index_performance = get_index_performance(index, label_performance_file)
-            if index_performance:
-                corrected_volume = sample_volume * (1 / index_performance)
-                output_file.write(
-                    '{samplename}\t{sample_volume:.2f}\n'.format(
-                        samplename=input_artifact.name,
-                        sample_volume=corrected_volume
+            output_artifact = process.outputs_per_input(input_artifact.id, Analyte=True)[0]  # assume one artifact per input
+            if 'Dx sample volume (ul)' in output_artifact.udf:
+                sample_volume = output_artifact.udf['Dx sample volume (ul)']
+                index = input_artifact.reagent_labels[0]
+                index_performance = get_index_performance(index, label_performance_file)
+                if index_performance:
+                    corrected_volume = sample_volume * (1 / index_performance)
+                    output_file.write(
+                        '{samplename}\t{sample_volume:.2f}\n'.format(
+                            samplename=input_artifact.name,
+                            sample_volume=corrected_volume
+                        )
                     )
-                )
+                else:
+                    output_file.write(
+                        '{sample}\tGeen performance bekend voor index {index}, niet gecorrigeerd volume: {volume} ul\n'.format(
+                            sample=input_artifact.name,
+                            index=index,
+                            volume=sample_volume
+                        )
+                    )
             else:
                 output_file.write(
-                    '{sample}\tGeen performance bekend voor index {index}, niet gecorrigeerd volume: {volume} ul\n'.format(
+                    '{sample}\tGeen volume ingevuld in CF "Dx sample volume (ul)" voor {pool}\n'.format(
                         sample=input_artifact.name,
-                        index=index,
-                        volume=sample_volume
+                        pool=output_artifact.name
                     )
                 )
