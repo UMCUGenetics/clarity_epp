@@ -858,7 +858,7 @@ def samplesheet_dilution_library_prep_input(lims, process_id, output_file):
     process = Process(lims, id=process_id)
 
     output_file.write(
-        'Samplenaam\tContainer_id\tul sample\tul water\n'
+        'Samplenaam\tContainer_id\tOutput_Container\tWell_ID\tul sample\tul water\n'
     )
 
     samples = {}
@@ -898,24 +898,36 @@ def samplesheet_dilution_library_prep_input(lims, process_id, output_file):
     end_volume = process.udf['Dx Eindvolume (ul)']
     ng_input = process.udf['Dx Input (ng)']
 
-    to_sort = []
-    for input_artifact in process.all_inputs():
-        to_sort.append(input_artifact.name)
-    sorted_artifacts = sorted(to_sort)
+    # Get all input artifact and store per container
+    output_containers = {}
+    for input_artifact in process.all_inputs(resolve=True):
+        output_artifact = process.outputs_per_input(input_artifact.id, Analyte=True)[0]  # assume one artifact per input
+        container = output_artifact.location[0].name
+        well = ''.join(output_artifact.location[1].split(':'))
 
-    for sorted_artifact in sorted_artifacts:
-        for input_artifact in process.all_inputs():
-            if input_artifact.name == sorted_artifact:
-                sample_volume = ng_input / samples[input_artifact.samples[0].udf['Dx Monsternummer']]["conc"]
-                water_volume = end_volume - sample_volume
-                output_file.write(
-                    '{samplename}\t{container}\t{sample_volume:.2f}\t{water_volume:.2f}\n'.format(
-                        samplename=input_artifact.name,
-                        container=input_artifact.container.id,
-                        sample_volume=sample_volume,
-                        water_volume=water_volume
-                    )
+        if container not in output_containers:
+            output_containers[container] = {}
+
+        output_containers[container][well] = input_artifact
+
+    # Sort on container and well
+    for output_container in sorted(output_containers.keys()):
+        input_artifacts = output_containers[output_container]
+        for well in clarity_epp.export.utils.sort_96_well_plate(input_artifacts.keys()):
+            input_artifact = input_artifacts[well]
+            output_artifact = process.outputs_per_input(input_artifact.id, Analyte=True)[0]  # assume one artifact per input
+            sample_volume = ng_input / samples[input_artifact.samples[0].udf['Dx Monsternummer']]["conc"]
+            water_volume = end_volume - sample_volume
+            output_file.write(
+                '{samplename}\t{containerID}\t{output}\t{well}\t{sample_volume:.2f}\t{water_volume:.2f}\n'.format(
+                    samplename=input_artifact.name,
+                    containerID=input_artifact.container.id,
+                    output=output_container,
+                    well=well,
+                    sample_volume=sample_volume,
+                    water_volume=water_volume
                 )
+            )
 
 
 def samplesheet_3nm_dilution_mirocanvas(lims, process_id, output_file):
