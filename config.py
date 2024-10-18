@@ -21,10 +21,12 @@ email = {
 stoftestcode_wes = 'NGS_025'
 stoftestcode_mip = 'NGS_027'
 stoftestcode_research = 'NGS_023'
+stoftestcode_array = 'ARRAY_003'
 
 stoftestcode_workflow = {
     stoftestcode_wes: '1654',  # DEV Dx Exoom Magnis v1.2
     stoftestcode_mip: '1651',  # DEV Dx smMIP v1.2
+    stoftestcode_array: '1657' # DEV Dx SNP array sample prep test 1.0
 }
 
 # Export meetw protocol steps WES
