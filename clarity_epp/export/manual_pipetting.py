@@ -1012,3 +1012,64 @@ def samplesheet_multiplex_enrichment_mirocanvas(lims, label_performance_file, pr
                         pool=output_artifact.name
                     )
                 )
+
+
+def samplesheet_dilution_purify_manual(lims, process_id, output_file):
+    """
+    Create manual pipetting samplesheet for step Dx verdunning zuivering manueel.
+
+    Args:
+        lims (object): Lims connection
+        process_id (str): Process ID
+        output_file (file): Manual pipetting samplesheet file path.
+    """
+
+    output_file.write('Monsternummer,Pipetteervolume DNA (ul),Pipetteervolume H2O (ul)\n')
+    process = Process(lims, id=process_id)
+    tube = {}
+
+    qc_process_types = clarity_epp.export.utils.get_process_types(lims, ['Dx Qubit QC', 'Dx Tecan Spark 10M QC'])
+
+    for output_container in sorted(process.output_containers(), key=lambda container: container.id):
+        for item in output_container.placements.items():
+            artifact = item[1]
+            container_id = output_container.id
+            tube[container_id] = {'samples': [], 'volume_dna': []}
+
+            if len(artifact.samples) == 1:
+                input_artifacts = [artifact.input_artifact_list()[0]]
+            else:
+                input_artifacts = artifact.input_artifact_list()[0].input_artifact_list()
+
+            for input_artifact in input_artifacts:
+                # Find last qc process for artifact
+                qc_process = lims.get_processes(type=qc_process_types, inputartifactlimsid=input_artifact.id)
+                concentration = None
+                if qc_process:
+                    qc_process = sorted(
+                        qc_process,
+                        key=lambda process: int(process.id.split('-')[-1])
+                    )[-1]
+                    for qc_artifact in qc_process.outputs_per_input(input_artifact.id):
+                        if input_artifact.name in qc_artifact.name:
+                            concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+                            break
+
+                if not concentration:
+                    concentration = input_artifact.samples[0].udf['Dx Concentratie (ng/ul)']
+
+                # Calculate volumes
+                volume_dna = (artifact.udf['Dx Input (ng)']/len(input_artifacts)) / concentration
+                tube[container_id]['samples'].append(input_artifact.samples[0].udf['Dx Monsternummer'])
+                tube[container_id]['volume_dna'].append(volume_dna)
+
+        volume_h2o = artifact.udf['Dx Eindvolume (ul)'] - sum(tube[container_id]['volume_dna'])
+        if volume_h2o < 0:  # Set volume_h2o to 0 if negative
+            volume_h2o = 0
+
+        for index, sample in enumerate(tube[container_id]['samples']):
+            output_file.write('{name},{volume_dna:.2f},{volume_h2o:.2f}\n'.format(
+                name=sample,
+                volume_dna=tube[container_id]['volume_dna'][index],
+                volume_h2o=volume_h2o
+            ))

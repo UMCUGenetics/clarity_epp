@@ -38,11 +38,6 @@ def export_email(args):
         clarity_epp.export.email.sequencing_run(lims, config.email, args.process_id)
 
 
-def export_fueco(args):
-    """Export samplesheets for fueco - pipetting assistence"""
-    clarity_epp.export.fueco.samplesheet(lims, args.process_id, args.output_file)
-
-
 def export_hamilton(args):
     """Export samplesheets for hamilton machine."""
     if args.type == 'filling_out':
@@ -111,6 +106,8 @@ def export_manual_pipetting(args):
         clarity_epp.export.manual_pipetting.samplesheet_multiplex_enrichment_mirocanvas(
             lims, config.label_performance_file, args.process_id, args.output_file
         )
+    elif args.type == 'dilution_purify_manual':
+        clarity_epp.export.manual_pipetting.samplesheet_dilution_purify_manual(lims, args.process_id, args.output_file)
 
 
 def export_ped_file(args):
@@ -308,12 +305,6 @@ if __name__ == "__main__":
     parser_export_email.add_argument('process_id', help='Clarity lims process id')
     parser_export_email.set_defaults(func=export_email)
 
-    parser_export_fueco = subparser_export.add_parser(
-        'fueco', help='Create fueco samplesheet', parents=[output_parser]
-    )
-    parser_export_fueco.add_argument('process_id', help='Clarity lims process id')
-    parser_export_fueco.set_defaults(func=export_fueco)
-
     parser_export_hamilton = subparser_export.add_parser(
         'hamilton', help='Create hamilton samplesheets', parents=[output_parser]
     )
@@ -351,7 +342,7 @@ if __name__ == "__main__":
             'purify', 'dilute_library_pool', 'multiplex_library_pool', 'multiplex_sequence_pool', 'normalization',
             'capture', 'exonuclease', 'pcr_exonuclease', 'mip_multiplex_pool', 'mip_dilute_pool', 'pool_samples',
             'pool_magnis_pools', 'normalization_mix', 'dilution_library_prep_input', '3nm_dilution_mirocanvas',
-            'multiplex_enrichment_mirocanvas'
+            'multiplex_enrichment_mirocanvas', 'dilution_purify_manual'
         ],
         help='Samplesheet type'
     )
