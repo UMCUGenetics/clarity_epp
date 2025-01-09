@@ -125,7 +125,7 @@ def get_index_performance(index, label_performance_file):
             label_name, performance = line.rstrip().split(';')
             label_performance[label_name] = performance.replace(',', '.')
     if index in label_performance:
-        performance = label_performance[index]
+        performance = float(label_performance[index])
         return performance
     else:
         return None
