@@ -858,7 +858,7 @@ def samplesheet_dilution_library_prep_input(lims, process_id, output_file):
     process = Process(lims, id=process_id)
 
     output_file.write(
-        'Samplenaam\tContainer_id\tOutput_Container\tWell_ID\tul sample\tul water\n'
+        'Samplenaam\tContainer_id\tWell_ID\tOutput_Container\tWell_ID_Output_Container\tul sample\tul water\n'
     )
 
     samples = {}
@@ -919,11 +919,12 @@ def samplesheet_dilution_library_prep_input(lims, process_id, output_file):
             sample_volume = ng_input / samples[input_artifact.samples[0].udf['Dx Monsternummer']]["conc"]
             water_volume = end_volume - sample_volume
             output_file.write(
-                '{samplename}\t{containerID}\t{output}\t{well}\t{sample_volume:.2f}\t{water_volume:.2f}\n'.format(
-                    samplename=input_artifact.name,
+                '{sample}\t{containerID}\t{well_in}\t{output}\t{well_out}\t{sample_volume:.2f}\t{water_volume:.2f}\n'.format(
+                    sample=input_artifact.name,
                     containerID=input_artifact.container.id,
+                    well_in=''.join(input_artifact.location[1].split(':')),
                     output=output_container,
-                    well=well,
+                    well_out=well,
                     sample_volume=sample_volume,
                     water_volume=water_volume
                 )
