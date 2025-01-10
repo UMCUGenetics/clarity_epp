@@ -15,7 +15,10 @@ def get_sequence_name(artifact):
     """Generate sequence name, for combined or single samples."""
     sample_numbers = []
     for sample in artifact.samples:
-        if 'Dx Monsternummer' in sample.udf:  # Use monsternummer for Dx samples
+        # Use GLIMS ID for Farmacogenetics samples
+        if 'Dx Onderzoeksindicatie' in sample.udf and sample.udf['Dx Onderzoeksindicatie'] == 'PG':
+            sample_numbers.append(sample.udf['Dx GLIMS ID'])
+        elif 'Dx Monsternummer' in sample.udf:  # Use monsternummer for other Dx samples
             sample_numbers.append(sample.udf['Dx Monsternummer'])
 
     if sample_numbers:  # Merge monsternummer for Dx samples
