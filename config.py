@@ -34,7 +34,7 @@ stoftestcode_workflow = {
 }
 
 # Import samples: fixed workflows
-pg_workflow = '1901'  # Dx Library Prep Mirocanvas test1
+pg_workflow = '2153'  # Dx Library Prep Mirocanvas test3
 
 # Update exome equivalent for certain indications
 indications_exome_equivalent = {'UBA1': 5, 'PID09': 5}
