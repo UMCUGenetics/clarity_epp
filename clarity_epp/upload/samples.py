@@ -469,18 +469,22 @@ def from_glims(lims, email_settings, input_file):
         email_settings (dict): dict with email settings (used settings: 'server','from','to_import_helix','to_import_glims')
         input_file (file): Input from GLIMS file path.
     """
-    # Test connection
+    # Set project name and test connection
+    filename = input_file.name.rstrip('.csv').split('/')[-1]
+    project_name = 'Dx_{filename}'.format(filename=filename)
     test_lims_connection(lims, email_settings, 'GLIMS Import')
 
     # Get researcher
     researcher = get_researcher(lims, email_settings, 'DX', input_file.name.split('/')[-1])
 
-    # Get project
-    project_name = 'Dx_Farmacogenetica'
-    project = Project.create(lims, name=project_name, researcher=researcher, udf={'Application': 'DX'})
-    project_name = '{0}_{1}'.format(project.name, project.id)
-    project.name = project_name
-    project.put()
+    # Create project
+    if not lims.get_projects(name=project_name):
+        project = Project.create(lims, name=project_name, researcher=researcher, udf={'Application': 'DX'})
+    else:
+        subject = "ERROR Lims Helix Upload: {0}".format(project_name)
+        message = "Duplicate project / werklijst. Samples not loaded."
+        send_email(email_settings['server'], email_settings['from'], email_settings['to_import_glims'], subject, message)
+        sys.exit(message)
 
     # Setup email
     subject = "Lims GLIMS Upload: {0}".format(project_name)
