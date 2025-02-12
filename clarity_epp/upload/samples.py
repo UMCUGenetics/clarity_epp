@@ -478,7 +478,8 @@ def from_glims(lims, email_settings, input_file):
     # Get project
     project_name = 'Dx_Farmacogenetica'
     project = Project.create(lims, name=project_name, researcher=researcher, udf={'Application': 'DX'})
-    project.name = '{0}_{1}'.format(project.name, project.id)
+    project_name = '{0}_{1}'.format(project.name, project.id)
+    project.name = project_name
     project.put()
 
     # Setup email
