@@ -137,3 +137,8 @@ post_bioinf_workflow = '1803'  # DEV Dx NGS WES onderzoeken afronden v2.0
 research_onderzoeksindicatie_project = {
     'PD-GRID': 'knoers_grid'
 }
+
+# Fragment length
+fragment_length = {
+    'Genp.analy_IL_elidXXXXX_srWGS.': 400,  # TODO: adjust description and length
+}
