@@ -5,9 +5,9 @@ from genologics.lims import Lims
 from genologics.entities import Artifact
 
 # Setup lims connection
-baseuri = 'https://usf-lims.umcutrecht.nl'
-username = 'lims_user'
-password = 'lims_user_password'
+baseuri = "https://usf-lims.umcutrecht.nl"
+username = "lims_user"
+password = "lims_user_password"
 lims = Lims(baseuri, username, password)
 
 # month quarter
@@ -56,7 +56,6 @@ processes = [
     "Dx Normaliseren (Fluent 480)",
     "Dx gDNA handmatige normalisatie WES",
     "Dx Fragmenteren",
-    "Dx Library Prep & Target Enrichment Magnis",
     "Dx Library Prep & Target Enrichment Magnis",
     "Dx 3nM verdunning Magnis",
     "Dx Multiplexen Enrichment samples (3nM) Magnis",
