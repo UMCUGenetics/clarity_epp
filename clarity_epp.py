@@ -71,6 +71,8 @@ def export_labels(args):
         clarity_epp.export.labels.storage_location(lims, args.process_id, args.output_file)
     elif args.type == 'nunc_mix_sample':
         clarity_epp.export.labels.nunc_mix_sample(lims, args.process_id, args.output_file)
+    elif args.type == 'strips_callisto':
+        clarity_epp.export.labels.strips_callisto(lims, args.process_id, args.output_file)
 
 
 def export_magnis(args):
@@ -309,7 +311,7 @@ if __name__ == "__main__":
     parser_export_labels = subparser_export.add_parser('labels', help='Export container labels', parents=[output_parser])
     parser_export_labels.add_argument(
         'type',
-        choices=['container', 'container_sample', 'storage_location', 'nunc_mix_sample'],
+        choices=['container', 'container_sample', 'storage_location', 'nunc_mix_sample', 'strips_callisto'],
         help='Label type')
     parser_export_labels.add_argument('process_id', help='Clarity lims process id')
     parser_export_labels.add_argument('-d', '--description',  nargs='?', help='Container name description')
