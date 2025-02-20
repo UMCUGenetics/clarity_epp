@@ -29,7 +29,7 @@ def set_fragment_length_udf(lims, process_id):
     udf 'Dx Protocolomschrijving' contains protocol description from config.fragment_length.
 
     Args:
-        llims (object): Lims connection
+        lims (object): Lims connection
         process_id (str): Process ID
     """
     process = Process(lims, id=process_id)
