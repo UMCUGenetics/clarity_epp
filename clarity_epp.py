@@ -110,14 +110,19 @@ def export_manual_pipetting(args):
         clarity_epp.export.manual_pipetting.samplesheet_normalization_mix(lims, args.process_id, args.output_file)
 
 
-def export_ped_file(args):
-    """Export ped file."""
-    clarity_epp.export.ped.create_file(lims, args.process_id, args.output_file)
-
-
 def export_merge_file(args):
     """Export merge file."""
     clarity_epp.export.merge.create_file(lims, args.process_id, args.output_file)
+
+
+def export_myra(args):
+    """Export myra samplesheet."""
+    clarity_epp.export.myra.samplesheet(lims, args.process_id, args.output_file)
+
+
+def export_ped_file(args):
+    """Export ped file."""
+    clarity_epp.export.ped.create_file(lims, args.process_id, args.output_file)
 
 
 def export_removed_samples(args):
@@ -342,6 +347,10 @@ if __name__ == "__main__":
     parser_export_merge.add_argument('process_id', help='Clarity lims process id')
     parser_export_merge.set_defaults(func=export_merge_file)
 
+    parser_export_myra = subparser_export.add_parser('myra', help='Export myra samplesheet', parents=[output_parser])
+    parser_export_myra.add_argument('process_id', help='Clarity lims process id')
+    parser_export_myra.set_defaults(func=export_myra)
+
     parser_export_ped = subparser_export.add_parser('ped', help='Export ped file', parents=[output_parser])
     parser_export_ped.add_argument('process_id', help='Clarity lims process id')
     parser_export_ped.set_defaults(func=export_ped_file)
@@ -470,7 +479,9 @@ if __name__ == "__main__":
     parser_placement_unpooling.add_argument('process_id', help='Clarity lims process id')
     parser_placement_unpooling.set_defaults(func=placement_unpooling)
 
-    parser_placement_patient_pools = subparser_placement.add_parser('patient_pools', help='Create patient pools for Dx samples')
+    parser_placement_patient_pools = subparser_placement.add_parser(
+        'patient_pools', help='Create patient pools for Dx samples'
+    )
     parser_placement_patient_pools.add_argument('process_id', help='Clarity lims process id')
     parser_placement_patient_pools.set_defaults(func=placement_patient_pools)
 
