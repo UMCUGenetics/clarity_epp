@@ -123,7 +123,9 @@ def from_helix(lims, email_settings, input_file):
                     f"Row = {line_index+1} \t Column = {udf_column[udf]['column']} \t UDF = {udf}.\n"
                     "Please check/update the file and try again. Make sure to remove the project from LIMS before retrying."
                 )
-                send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
+                send_email(
+                    email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message
+                )
                 sys.exit(message)
 
         sample_name = '{0}_{1}'.format(udf_data['Dx Monsternummer'], udf_data['Dx Meet ID'])
@@ -133,7 +135,8 @@ def from_helix(lims, email_settings, input_file):
             udf_data['Dx Foetus']
             or udf_data['Dx Overleden']
             or udf_data['Dx Materiaal type'] not in ['BL', 'BLHEP', 'BM', 'BMEDTA']
-            or re.match(r'\d{4}D\d+', udf_data['Dx Monsternummer']) and int(udf_data['Dx Monsternummer'][:4]) < 2010  # Samples older then 2010
+            or re.match(r'\d{4}D\d+', udf_data['Dx Monsternummer'])
+            and int(udf_data['Dx Monsternummer'][:4]) < 2010  # Samples older then 2010
             or udf_data['Dx Monsternummer'].startswith('D')  # Old samples names, all older then 2005
         ):
             udf_data['Dx Handmatig'] = True
@@ -158,7 +161,8 @@ def from_helix(lims, email_settings, input_file):
             udf_data['Dx Familie status'] = 'Kind'
         elif udf_data['Dx Onderzoeksreden'] == 'Dragerschapbepaling':
             udf_data['Dx Familie status'] = 'Kind'
-        elif udf_data['Dx Onderzoeksreden'] == 'Presymptomatisch onderzoe':  # Helix export is truncated (Presymptomatisch onderzoek)
+        # Helix export is truncated (Presymptomatisch onderzoek)
+        elif udf_data['Dx Onderzoeksreden'] == 'Presymptomatisch onderzoe':
             udf_data['Dx Familie status'] = 'Kind'
         elif udf_data['Dx Onderzoeksreden'] == 'Informativiteitstest':
             udf_data['Dx Familie status'] = 'Ouder'
@@ -238,7 +242,10 @@ def from_helix(lims, email_settings, input_file):
                 udf_data['Dx Mengfractie'] = True
                 for duplo_sample in duplo_samples:
                     # Remove import warning from WES_duplo samples
-                    if 'Dx Import warning' in duplo_sample.udf and 'Alleen WES_duplo aangemeld.' in duplo_sample.udf['Dx Import warning']:
+                    if (
+                        'Dx Import warning' in duplo_sample.udf
+                        and 'Alleen WES_duplo aangemeld.' in duplo_sample.udf['Dx Import warning']
+                    ):
                         import_warning = duplo_sample.udf['Dx Import warning'].split(';')
                         import_warning.remove('Alleen WES_duplo aangemeld.')
                         duplo_sample.udf['Dx Import warning'] = ';'.join(import_warning)
@@ -287,7 +294,10 @@ def from_helix(lims, email_settings, input_file):
                 udf_data['Dx Mengfractie'] = True
                 for duplo_sample in duplo_samples:
                     # Remove import warning from srWGS_duplo samples
-                    if 'Dx Import warning' in duplo_sample.udf and 'Alleen srWGS_duplo aangemeld.' in duplo_sample.udf['Dx Import warning']:
+                    if (
+                        'Dx Import warning' in duplo_sample.udf
+                        and 'Alleen srWGS_duplo aangemeld.' in duplo_sample.udf['Dx Import warning']
+                    ):
                         import_warning = duplo_sample.udf['Dx Import warning'].split(';')
                         import_warning.remove('Alleen srWGS_duplo aangemeld.')
                         duplo_sample.udf['Dx Import warning'] = ';'.join(import_warning)

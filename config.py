@@ -30,7 +30,7 @@ stoftestcode_workflow = {
     stoftestcode_wes: '1852',  # DEV Dx Exoom Magnis v2.1
     stoftestcode_wes_duplo: '1852',  # DEV Dx Exoom Magnis v2.1
     stoftestcode_mip: '1651',  # DEV Dx smMIP v1.2
-    stoftestcode_srwgs: '2305'  # DEV Dx srWGS Callisto v0.2
+    stoftestcode_srwgs: '2305',  # DEV Dx srWGS Callisto v0.2
     stoftestcode_srwgs_duplo: '2305'  # DEV Dx srWGS Callisto v0.2
 }
 
