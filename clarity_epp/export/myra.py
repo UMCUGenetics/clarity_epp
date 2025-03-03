@@ -51,7 +51,7 @@ def samplesheet_to_callisto(lims, process_id, output_file):
             if well in output_data[output_id]:
                 output_file.write('{line}\n'.format(line=output_data[output_id][well]))
             else:
-                output_file.write('LEEG,,,{output},\n'.format(output=label_id))
+                output_file.write('LEEG,,,,\n')
 
 
 def samplesheet_from_callisto(lims, process_id, output_file):
@@ -102,4 +102,4 @@ def samplesheet_from_callisto(lims, process_id, output_file):
             if well in output_data[input_id]:
                 output_file.write('{line}\n'.format(line=output_data[input_id][well]))
             else:
-                output_file.write('LEEG,,,{output},\n'.format(output=label_id))
+                output_file.write('LEEG,,,,\n')
