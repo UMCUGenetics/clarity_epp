@@ -140,5 +140,5 @@ research_onderzoeksindicatie_project = {
 
 # Fragment length
 fragment_length = {
-    'Genp.analy_IL_elidXXXXX_srWGS.': 400,  # TODO: adjust description and length
+    'Gen.analy_IL_versieVP_LP0002_srWGS': 550,
 }
