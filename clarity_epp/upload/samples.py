@@ -204,7 +204,7 @@ def from_helix(lims, email_settings, input_file):
                 ):
                     udf_data['Dx NICU Spoed'] = related_sample.udf['Dx NICU Spoed']
 
-        # Set 'Dx Mengfractie'
+        # Set 'Dx Mengfractie' WES
         if udf_data['Dx Stoftest code'] == config.stoftestcode_wes_duplo:
             udf_data['Dx Mengfractie'] = True
 
@@ -248,6 +248,55 @@ def from_helix(lims, email_settings, input_file):
                     if duplo_sample.udf['Dx Monsternummer'] == udf_data['Dx Monsternummer']:
                         udf_data['Dx Import warning'] = ';'.join([
                             'WES en WES_duplo zelfde monster ({sample}).'.format(sample=duplo_sample.name),
+                            udf_data['Dx Import warning']
+                        ])
+            else:
+                udf_data['Dx Mengfractie'] = False
+
+        # Set 'Dx Mengfractie' srWGS
+        if udf_data['Dx Stoftest code'] == config.stoftestcode_srwgs_duplo:
+            udf_data['Dx Mengfractie'] = True
+
+            # Find srWGS sample(s)
+            duplo_samples = lims.get_samples(udf={
+                'Dx Persoons ID': udf_data['Dx Persoons ID'],
+                'Dx Onderzoeknummer': udf_data['Dx Onderzoeknummer'],
+                'Dx Stoftest code': config.stoftestcode_srwgs,
+            })
+            if duplo_samples:  # Set duplo status for srWGS samples
+                for duplo_sample in duplo_samples:
+                    duplo_sample.udf['Dx Mengfractie'] = True
+                    duplo_sample.put()
+                    # Check Dx Monsternummer
+                    if duplo_sample.udf['Dx Monsternummer'] == udf_data['Dx Monsternummer']:
+                        udf_data['Dx Import warning'] = ';'.join([
+                            'srWGS en srWGS_duplo zelfde monster ({sample}).'.format(sample=duplo_sample.name),
+                            udf_data['Dx Import warning']
+                        ])
+            else:  # Set import warning if no srWGS samples found
+                udf_data['Dx Import warning'] = ';'.join(['Alleen srWGS_duplo aangemeld.', udf_data['Dx Import warning']])
+
+        elif udf_data['Dx Stoftest code'] == config.stoftestcode_srwgs:
+            # Find srWGS_duplo sample(s)
+            duplo_samples = lims.get_samples(udf={
+                'Dx Persoons ID': udf_data['Dx Persoons ID'],
+                'Dx Onderzoeknummer': udf_data['Dx Onderzoeknummer'],
+                'Dx Stoftest code': config.stoftestcode_srwgs_duplo,
+            })
+            if duplo_samples:  # Set duplo status for srWGS sample
+                udf_data['Dx Mengfractie'] = True
+                for duplo_sample in duplo_samples:
+                    # Remove import warning from srWGS_duplo samples
+                    if 'Dx Import warning' in duplo_sample.udf and 'Alleen srWGS_duplo aangemeld.' in duplo_sample.udf['Dx Import warning']:
+                        import_warning = duplo_sample.udf['Dx Import warning'].split(';')
+                        import_warning.remove('Alleen srWGS_duplo aangemeld.')
+                        duplo_sample.udf['Dx Import warning'] = ';'.join(import_warning)
+                        duplo_sample.put()
+
+                    # Check Dx Monsternummer
+                    if duplo_sample.udf['Dx Monsternummer'] == udf_data['Dx Monsternummer']:
+                        udf_data['Dx Import warning'] = ';'.join([
+                            'srWGS en srWGS_duplo zelfde monster ({sample}).'.format(sample=duplo_sample.name),
                             udf_data['Dx Import warning']
                         ])
             else:
