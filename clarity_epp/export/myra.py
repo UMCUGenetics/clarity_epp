@@ -12,7 +12,7 @@ def samplesheet(lims, process_id, output_file):
         output_file (file): Myra samplesheet file path.
     """
     process = Process(lims, id=process_id)
-    output_file.write('sample_ID,input_ID,well_input_ID,output_ID,well_output_ID,label_ID,volume\n')
+    output_file.write('sample_ID,input_ID,well_input_ID,output_ID,volume\n')
 
     row_number = {"A": "1", "D": "2", "G": "3"}
     wells = {
@@ -37,13 +37,11 @@ def samplesheet(lims, process_id, output_file):
         output_well = ''.join(output_artifact.location[1].split(':'))
         output_row = row_number[output_artifact.location[1][0]]
         label_id = '{output}_{number}'.format(output=output_id, number=output_row)
-        line = '{sample},{input},{input_well},{output},{output_well},{label_id},{volume}'.format(
+        line = '{sample},{input},{input_well},{output},{volume}'.format(
             sample=output_artifact.name,
             input=input_artifact.container.id,
             input_well=''.join(input_artifact.location[1].split(':')),
-            output=output_id,
-            output_well=output_well,
-            label_id=label_id,
+            output=label_id,
             volume=process.udf['Dx pipetteervolume (ul)']
         )
         output_data[output_id][output_well] = line
