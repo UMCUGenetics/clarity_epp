@@ -65,7 +65,6 @@ def samplesheet_from_callisto(lims, process_id, output_file):
     process = Process(lims, id=process_id)
     output_file.write('sample_ID,input_ID,well_input_ID,output_ID,volume\n')
 
-    row_number = {"A": "1", "D": "2", "G": "3"}
     wells = {
         "8 well strip Callisto":
         ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8'],
@@ -83,16 +82,15 @@ def samplesheet_from_callisto(lims, process_id, output_file):
     for output_artifact in process.analytes()[0]:
         input_artifact = output_artifact.input_artifact_list()[0]
         input_id = input_artifact.container.id
+        output_id = output_artifact.container.id
         if input_id not in output_data:
             output_data[input_id] = {"type": input_artifact.container.type.name}
         input_well = ''.join(input_artifact.location[1].split(':'))
-        input_row = row_number[input_artifact.location[1][0]]
-        label_id = '{output}_{number}'.format(output=input_id, number=input_row)
         line = '{sample},{input},{input_well},{output},{volume}'.format(
             sample=output_artifact.name,
             input=input_artifact.container.id,
             input_well=''.join(input_artifact.location[1].split(':')),
-            output=label_id,
+            output=output_id,
             volume=process.udf['Dx pipetteervolume (ul)']
         )
         output_data[input_id][input_well] = line
