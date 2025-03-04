@@ -68,6 +68,29 @@ meetw_seq_wes_processes = [
     'Dx NovaSeq QC controle Lab sequencen v1.3',
 ]
 
+# Export meetw protocol steps srWGS
+meetw_zui_srwgs_processes = [
+    'Dx Sample registratie zuivering v1.1',
+    'Dx Uitvullen en zuiveren (Fluent 480) v1.1',
+    'Dx Normaliseren (Fluent 480) v1.0',
+    'Dx gDNA handmatige normalisatie srWGS v1.0',
+]
+
+meetw_sampleprep_srwgs_processes = [
+    'Dx Library Prep Callisto v1.0',
+]
+
+meetw_seq_srwgs_processes = [
+    'Dx Multiplexen Callisto v1.0',
+    'Dx Multiplexen sequence pool v1.2',
+    'Dx Library pool denatureren en laden (NovaSeq) v1.3',
+    'AUTOMATED - NovaSeq Run (NovaSeq 6000 v3.1)',
+    'Dx Library pool denatureren en laden (NovaSeqXPlus) v1.0',
+    'Dx NovaSeqXPlus Run v1.0',
+    'Dx QC controle Lab sequencen v1.1',
+    'Dx NovaSeq QC controle Lab sequencen v1.3',
+]
+
 # Export meetw protocol steps MIP
 meetw_libprep_mip_processes = [
     'Dx Sample registratie v1.0',

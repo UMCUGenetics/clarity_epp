@@ -167,6 +167,8 @@ def export_workflow(args):
         clarity_epp.export.workflow.helix_magnis(lims, args.process_id, args.output_file)
     elif args.type == 'mip':
         clarity_epp.export.workflow.helix_mip(lims, args.process_id, args.output_file)
+    elif args.type == 'callisto':
+        clarity_epp.export.workflow.helix_callisto(lims, args.process_id, args.output_file)
 
 
 # Upload Functions
@@ -399,7 +401,7 @@ if __name__ == "__main__":
     parser_export_workflow = subparser_export.add_parser(
         'workflow', help='Export workflow result file', parents=[output_parser]
     )
-    parser_export_workflow.add_argument('type', choices=['magnis', 'mip'], help='Workflow type')
+    parser_export_workflow.add_argument('type', choices=['magnis', 'mip', 'callisto'], help='Workflow type')
     parser_export_workflow.add_argument('process_id', help='Clarity lims process id')
     parser_export_workflow.set_defaults(func=export_workflow)
 
