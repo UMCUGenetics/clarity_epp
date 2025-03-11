@@ -206,8 +206,11 @@ def upload_magnis_results(args):
 
 # QC functions
 def qc_fragment_length(args):
-    """Set QC status based on fragment length measurement."""
-    clarity_epp.qc.fragment_length.set_qc_flag(lims, args.process_id)
+    """Sets empty fragment length or QC status based on fragment length measurement."""
+    if args.type == 'set_qc_flag':
+        clarity_epp.qc.fragment_length.set_qc_flag(lims, args.process_id)
+    elif args.type == 'set_udf':
+        clarity_epp.qc.fragment_length.set_fragment_length_udf(lims, args.process_id)
 
 
 def qc_illumina(args):
@@ -436,8 +439,9 @@ if __name__ == "__main__":
     parser_qc = subparser.add_parser('qc', help='Set QC values/flags')
     subparser_qc = parser_qc.add_subparsers()
 
-    parser_qc_fragment_length = subparser_qc.add_parser('fragment_length', help='Set fragment length qc flag')
+    parser_qc_fragment_length = subparser_qc.add_parser('fragment_length', help='Set fragment length (qc flag)')
     parser_qc_fragment_length.add_argument('process_id', help='Clarity lims process id')
+    parser_qc_fragment_length.add_argument('type', choices=['set_qc_flag', 'set_udf'], help='What to set')
     parser_qc_fragment_length.set_defaults(func=qc_fragment_length)
 
     parser_qc_illumina = subparser_qc.add_parser('illumina', help='Set average % Bases >=Q30')
