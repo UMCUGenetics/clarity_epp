@@ -153,6 +153,11 @@ sample_conversion_settings = {
         'split_project': True,
         'umi_len': [5, 5],
     },
+    'versieVP_LP0002': {
+        'project': 'srWGS',
+        'split_project': True,
+        'umi_len': [0, 0],
+    },
 }
 
 # Post sequencing workflow
