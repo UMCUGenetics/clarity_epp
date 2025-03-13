@@ -33,7 +33,8 @@ def create_file(lims, process_id, output_file):
                 ped_families[family] = {
                     'father': {},
                     'mother': {},
-                    'children': []
+                    'children': [],
+                    'unrelated': []
                 }
 
             if sample.udf['Dx Geslacht'].lower() == 'man':
@@ -53,7 +54,12 @@ def create_file(lims, process_id, output_file):
                 ped_sample['affection'] = 1  # unaffected
 
             # Determine family relationships
-            if sample.udf['Dx Familie status'] == 'Ouder' and ped_sample['sex'] == 1:
+            if (
+                'Dx Gerelateerde onderzoeken' not in sample.udf
+                and 'Dx gerelateerd aan oz' not in sample.udf
+            ):
+                ped_families[family]['unrelated'].append(ped_sample)
+            elif sample.udf['Dx Familie status'] == 'Ouder' and ped_sample['sex'] == 1:
                 ped_families[family]['father'] = ped_sample
             elif sample.udf['Dx Familie status'] == 'Ouder' and ped_sample['sex'] == 2:
                 ped_families[family]['mother'] = ped_sample
@@ -93,4 +99,13 @@ def create_file(lims, process_id, output_file):
                 maternal_sample=maternal_sample_name,
                 sex=child_sample['sex'],
                 affection=child_sample['affection'],
+            ))
+        for unrelated_sample in ped_family['unrelated']:
+            output_file.write('{family}\t{name}\t{paternal_sample}\t{maternal_sample}\t{sex}\t{affection}\n'.format(
+                family=family,
+                name=unrelated_sample['name'],
+                paternal_sample='0',
+                maternal_sample='0',
+                sex=unrelated_sample['sex'],
+                affection=unrelated_sample['affection'],
             ))
