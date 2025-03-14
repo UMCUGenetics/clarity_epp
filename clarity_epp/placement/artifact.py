@@ -64,8 +64,10 @@ def route_to_workflow(lims, process_id, workflow):
             or artifact.samples[0].udf['Dx Stoftest code'] == config.stoftestcode_srwgs_duplo
         ]
 
-        lims.route_artifacts(route_artifacts_wes, workflow_uri=Workflow(lims, id=config.post_bioinf_workflow_wes).uri)
-        lims.route_artifacts(route_artifacts_srwgs, workflow_uri=Workflow(lims, id=config.post_bioinf_workflow_srwgs).uri)
+        if route_artifacts_wes:
+            lims.route_artifacts(route_artifacts_wes, workflow_uri=Workflow(lims, id=config.post_bioinf_workflow_wes).uri)
+        if route_artifacts_srwgs:
+            lims.route_artifacts(route_artifacts_srwgs, workflow_uri=Workflow(lims, id=config.post_bioinf_workflow_srwgs).uri)
 
     elif workflow == 'sequencing':
         lims.route_artifacts(artifacts_completed, workflow_uri=Workflow(lims, id=config.sequencing_workflow).uri)

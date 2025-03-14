@@ -37,13 +37,14 @@ def set_fragment_length_udf(lims, process_id):
     for artifact in process.all_inputs():
         if 'Dx Fragmentlengte (bp)' not in artifact.udf or artifact.udf['Dx Fragmentlengte (bp)'] == "":
             for protocol in config.fragment_length:
-                for sample in artifact.samples:
-                    if 'Dx Protocolomschrijving' in sample.udf:
-                        if protocol in sample.udf['Dx Protocolomschrijving']:
-                            artifact.udf['Dx Fragmentlengte (bp)'] = config.fragment_length[protocol]
-                            artifact.put()
+                if protocol != 'default':
+                    for sample in artifact.samples:
+                        if 'Dx Protocolomschrijving' in sample.udf:
+                            if protocol in sample.udf['Dx Protocolomschrijving']:
+                                artifact.udf['Dx Fragmentlengte (bp)'] = config.fragment_length[protocol]
+                                artifact.put()
 
             # No Dx Protocolomschijving or description not in config
             if 'Dx Fragmentlengte (bp)' not in artifact.udf or artifact.udf['Dx Fragmentlengte (bp)'] == "":
-                artifact.udf['Dx Fragmentlengte (bp)'] = 450
+                artifact.udf['Dx Fragmentlengte (bp)'] = config.fragment_length['default']
                 artifact.put()

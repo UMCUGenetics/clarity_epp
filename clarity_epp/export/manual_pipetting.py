@@ -703,7 +703,7 @@ def samplesheet_pool_magnis_pools(lims, process_id, output_file):
     # set up multiplier
     multiplier = 1
     if 'Run type' in process.udf:
-        run_type = re.search(r'\(\*.+\)' ,process.udf['Run type'])
+        run_type = re.search(r'\(\*.+\)', process.udf['Run type'])
         if run_type:
             multiplier = float(run_type.string[run_type.start()+2:run_type.end()-1])
 
@@ -847,11 +847,12 @@ def samplesheet_normalization_mix(lims, process_id, output_file):
                 else:
                     output[well] = {monster: output_data}
 
-    # Write output file per sample sorted for well
     if len(output.keys()) > 1:
+        # Write output file per sample sorted for well if samples in plate
         for well in clarity_epp.export.utils.sort_96_well_plate(output.keys()):
             for sample in output[well]:
                 output_file.write(output[well][sample])
     else:
+        # Write output file per sample if samples in tubes (all samples have same well: '1:1'; split above result: 11)
         for sample in output['11']:
             output_file.write(output['11'][sample])

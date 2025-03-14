@@ -117,10 +117,8 @@ def export_merge_file(args):
 
 def export_myra(args):
     """Export myra samplesheet."""
-    if args.type == 'to_callisto':
-        clarity_epp.export.myra.samplesheet_to_callisto(lims, args.process_id, args.output_file)
-    elif args.type == 'from_callisto':
-        clarity_epp.export.myra.samplesheet_from_callisto(lims, args.process_id, args.output_file)
+    if args.type == 'callisto':
+        clarity_epp.export.myra.samplesheet_callisto(lims, args.process_id, args.output_file)
     elif args.type == 'dilute':
         clarity_epp.export.myra.samplesheet_dilute(lims, args.process_id, args.output_file)
 
@@ -358,7 +356,7 @@ if __name__ == "__main__":
     parser_export_merge.set_defaults(func=export_merge_file)
 
     parser_export_myra = subparser_export.add_parser('myra', help='Export myra samplesheet', parents=[output_parser])
-    parser_export_myra.add_argument('type', choices=['to_callisto', 'from_callisto', 'dilute'], help='Samplesheet type')
+    parser_export_myra.add_argument('type', choices=['callisto', 'dilute'], help='Samplesheet type')
     parser_export_myra.add_argument('process_id', help='Clarity lims process id')
     parser_export_myra.set_defaults(func=export_myra)
 

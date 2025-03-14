@@ -174,4 +174,5 @@ research_onderzoeksindicatie_project = {
 # Fragment length
 fragment_length = {
     'Gen.analy_IL_versieVP_LP0002_srWGS': 550,
+    'default': 450,
 }

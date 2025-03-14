@@ -4,8 +4,8 @@ import string
 from genologics.entities import Process
 
 
-def samplesheet_to_callisto(lims, process_id, output_file):
-    """Generate Myra samplesheet
+def samplesheet_callisto(lims, process_id, output_file):
+    """Generate Myra samplesheet for step with Callisto strips as input container or output container
 
     Args:
         lims (object): Lims connection
@@ -32,78 +32,52 @@ def samplesheet_to_callisto(lims, process_id, output_file):
 
     for output_artifact in process.analytes()[0]:
         input_artifact = output_artifact.input_artifact_list()[0]
-        output_id = output_artifact.container.id
-        if output_id not in output_data:
-            output_data[output_id] = {"type": output_artifact.container.type.name}
-        output_well = ''.join(output_artifact.location[1].split(':'))
-        output_row = row_number[output_artifact.location[1][0]]
-        label_id = '{output}_{number}'.format(output=output_id, number=output_row)
-        line = '{sample},{input},{input_well},{output},{output_well},{volume}'.format(
-            sample=output_artifact.name,
-            input=input_artifact.container.id,
-            input_well=''.join(input_artifact.location[1].split(':')),
-            output=label_id,
-            output_well=output_well,
-            volume=process.udf['Dx pipetteervolume (ul)']
-        )
-        output_data[output_id][output_well] = line
-
-    for output_id in output_data:
-        for well in wells[output_data[output_id]["type"]]:
-            if well in output_data[output_id]:
-                output_file.write('{line}\n'.format(line=output_data[output_id][well]))
-            else:
-                output_file.write('LEEG,,,,\n')
-
-
-def samplesheet_from_callisto(lims, process_id, output_file):
-    """Generate Myra samplesheet
-
-    Args:
-        lims (object): Lims connection
-        process_id (str): Process ID
-        output_file (file): Myra samplesheet file path.
-    """
-    process = Process(lims, id=process_id)
-    output_file.write('sample_ID,input_ID,well_input_ID,output_ID,well_output_ID,volume\n')
-
-    wells = {
-        "8 well strip Callisto":
-        ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8'],
-        "16 Wells Strip Callisto":
-        ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8',
-         'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8'],
-        "24 Wells Strip Callisto":
-        ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8',
-         'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8',
-         'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7', 'G8']
-    }
-
-    output_data = {}
-
-    for output_artifact in process.analytes()[0]:
-        input_artifact = output_artifact.input_artifact_list()[0]
         input_id = input_artifact.container.id
-        output_id = output_artifact.container.id
-        if input_id not in output_data:
-            output_data[input_id] = {"type": input_artifact.container.type.name}
-        output_well = ''.join(output_artifact.location[1].split(':'))
         input_well = ''.join(input_artifact.location[1].split(':'))
+        output_id = output_artifact.container.id
+        output_well = ''.join(output_artifact.location[1].split(':'))
+        label_id = ''
+
+        # Callisto strip is input container
+        if "Callisto" in input_artifact.container.type.name:
+            strip_id = input_id
+            type = input_artifact.container.type.name
+            strip_well = input_well
+        # Callisto strip is output container
+        elif "Callisto" in output_artifact.container.type.name:
+            strip_id = output_id
+            type = output_artifact.container.type.name
+            strip_well = output_well
+            row = row_number[output_artifact.location[1][0]]
+            label_id = '{strip}_{number}'.format(strip=strip_id, number=row)
+
+        if strip_id not in output_data:
+            output_data[strip_id] = {"type": type}
+
+        # Callisto strip is output container
+        if label_id:
+            output = label_id
+        # Callisto strip is input container
+        else:
+            output = output_id
+
         line = '{sample},{input},{input_well},{output},{output_well},{volume}'.format(
             sample=output_artifact.name,
             input=input_artifact.container.id,
             input_well=''.join(input_artifact.location[1].split(':')),
-            output=output_id,
+            output=output,
             output_well=output_well,
             volume=process.udf['Dx pipetteervolume (ul)']
         )
-        output_data[input_id][input_well] = line
+        output_data[strip_id][strip_well] = line
 
-    for input_id in output_data:
-        for well in wells[output_data[input_id]["type"]]:
-            if well in output_data[input_id]:
-                output_file.write('{line}\n'.format(line=output_data[input_id][well]))
+    # Write output for every well of Callisto strip (Callisto strip is input container and Callisto strip is output container)
+    for strip_id in output_data:
+        for well in wells[output_data[strip_id]["type"]]:
+            if well in output_data[strip_id]:
+                output_file.write('{line}\n'.format(line=output_data[strip_id][well]))
             else:
+                # Callisto strip well is empty
                 output_file.write('LEEG,,,,\n')
 
 
