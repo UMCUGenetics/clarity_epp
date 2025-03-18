@@ -33,9 +33,9 @@ def samplesheet_callisto(lims, process_id, output_file):
     for output_artifact in process.analytes()[0]:
         input_artifact = output_artifact.input_artifact_list()[0]
         input_id = input_artifact.container.id
-        input_well = ''.join(input_artifact.location[1].split(':'))
+        input_well = input_artifact.location[1].replace(':', '')
         output_id = output_artifact.container.id
-        output_well = ''.join(output_artifact.location[1].split(':'))
+        output_well = output_artifact.location[1].replace(':', '')
         label_id = ''
 
         # Callisto strip is input container
@@ -64,7 +64,7 @@ def samplesheet_callisto(lims, process_id, output_file):
         line = '{sample},{input},{input_well},{output},{output_well},{volume}'.format(
             sample=output_artifact.name,
             input=input_artifact.container.id,
-            input_well=''.join(input_artifact.location[1].split(':')),
+            input_well=input_well,
             output=output,
             output_well=output_well,
             volume=process.udf['Dx pipetteervolume (ul)']
@@ -115,7 +115,7 @@ def samplesheet_dilute(lims, process_id, output_file):
         ul_water = output_ul - ul_sample
 
         # Store output lines by well
-        well = ''.join(input_artifact.location[1].split(':'))
+        well = input_artifact.location[1].replace(':', '')
         output[well] = '{name};{plate_id_input};{well};{plate_id_output};{volume_dna:.1f};{volume_water:.1f}\n'.format(
             name=input_artifact.name,
             plate_id_input=plate_id_input,
