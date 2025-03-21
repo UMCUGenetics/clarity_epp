@@ -248,6 +248,10 @@ def helix_callisto(lims, process_id, output_file):
                     elif 'Dx GATK vcf' in artifact.input_artifact_list()[0].udf:  # Look one more step back.
                         gatk_vcf = artifact.input_artifact_list()[0].udf['Dx GATK vcf']
 
+                    # Compose unique id sample_flowcell
+                    flowcell = artifact.udf['Dx Sequencing Run ID'].split('_')[-1]
+                    sample_flowcell = ('{sample}_{flowcell}').format(sample=sequence_name, flowcell=flowcell)
+
                 output_file.write((
                     "{meet_id}\t{werklijst}\t{onderzoeksnummer}\t{monsternummer}\t{meetw_zui}\t{meetw_zui_herh}\t"
                     "{meetw_sampleprep}\t{meetw_sampleprep_herh}\t{meetw_seq}\t{meetw_seq_herh}\t{meetw_bfx}\t"
@@ -261,7 +265,7 @@ def helix_callisto(lims, process_id, output_file):
                         meetw_sampleprep=meetw_sampleprep, meetw_sampleprep_herh=meetw_sampleprep_herh,
                         meetw_seq=meetw_seq, meetw_seq_herh=meetw_seq_herh,
                         meetw_bfx='J',
-                        sample_name=sequence_name,
+                        sample_name=sample_flowcell,
                         vcf_file=gatk_vcf,
                         cnv_vcf_file='',
                     )
