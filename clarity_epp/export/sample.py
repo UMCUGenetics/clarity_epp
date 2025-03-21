@@ -15,7 +15,12 @@ def removed_samples(lims, output_file):
     dx_samples = []
 
     for project in dx_projects:
-        dx_samples.extend(lims.get_samples(projectname=project.name))
+        samples = lims.get_samples(projectname=project.name)
+        for sample in samples:
+            # only include with date_received < 1 year
+            date_received = datetime.datetime.strptime(sample.date_received, '%Y-%m-%d')
+            if date_received > datetime.datetime.now() - datetime.timedelta(days=365):
+                dx_samples.append(sample)
 
     for sample in dx_samples:
         sample_removed = False

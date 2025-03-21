@@ -82,6 +82,8 @@ def get_samplesheet_samples(sample_artifacts, process, index_2_conversion_orient
                 # Skip Mengfractie samples
                 if sample.udf['Dx Stoftest code'] == config.stoftestcode_wes_duplo:
                     continue
+                elif sample.udf['Dx Stoftest code'] == config.stoftestcode_srwgs_duplo:
+                    continue
 
                 # Get sample conversion settings
                 sample_conversion_setting = config.sample_conversion_settings['default']
