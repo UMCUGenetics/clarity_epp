@@ -71,6 +71,8 @@ def export_labels(args):
         clarity_epp.export.labels.storage_location(lims, args.process_id, args.output_file)
     elif args.type == 'nunc_mix_sample':
         clarity_epp.export.labels.nunc_mix_sample(lims, args.process_id, args.output_file)
+    elif args.type == 'strips_callisto':
+        clarity_epp.export.labels.strips_callisto(lims, args.process_id, args.output_file)
 
 
 def export_magnis(args):
@@ -108,14 +110,22 @@ def export_manual_pipetting(args):
         clarity_epp.export.manual_pipetting.samplesheet_normalization_mix(lims, args.process_id, args.output_file)
 
 
-def export_ped_file(args):
-    """Export ped file."""
-    clarity_epp.export.ped.create_file(lims, args.process_id, args.output_file)
-
-
 def export_merge_file(args):
     """Export merge file."""
     clarity_epp.export.merge.create_file(lims, args.process_id, args.output_file)
+
+
+def export_myra(args):
+    """Export myra samplesheet."""
+    if args.type == 'callisto':
+        clarity_epp.export.myra.samplesheet_callisto(lims, args.process_id, args.output_file)
+    elif args.type == 'dilute':
+        clarity_epp.export.myra.samplesheet_dilute(lims, args.process_id, args.output_file)
+
+
+def export_ped_file(args):
+    """Export ped file."""
+    clarity_epp.export.ped.create_file(lims, args.process_id, args.output_file)
 
 
 def export_removed_samples(args):
@@ -157,6 +167,8 @@ def export_workflow(args):
         clarity_epp.export.workflow.helix_magnis(lims, args.process_id, args.output_file)
     elif args.type == 'mip':
         clarity_epp.export.workflow.helix_mip(lims, args.process_id, args.output_file)
+    elif args.type == 'callisto':
+        clarity_epp.export.workflow.helix_callisto(lims, args.process_id, args.output_file)
 
 
 # Upload Functions
@@ -192,8 +204,11 @@ def upload_magnis_results(args):
 
 # QC functions
 def qc_fragment_length(args):
-    """Set QC status based on fragment length measurement."""
-    clarity_epp.qc.fragment_length.set_qc_flag(lims, args.process_id)
+    """Sets empty fragment length or QC status based on fragment length measurement."""
+    if args.type == 'set_qc_flag':
+        clarity_epp.qc.fragment_length.set_qc_flag(lims, args.process_id)
+    elif args.type == 'set_udf':
+        clarity_epp.qc.fragment_length.set_fragment_length_udf(lims, args.process_id)
 
 
 def qc_illumina(args):
@@ -309,7 +324,7 @@ if __name__ == "__main__":
     parser_export_labels = subparser_export.add_parser('labels', help='Export container labels', parents=[output_parser])
     parser_export_labels.add_argument(
         'type',
-        choices=['container', 'container_sample', 'storage_location', 'nunc_mix_sample'],
+        choices=['container', 'container_sample', 'storage_location', 'nunc_mix_sample', 'strips_callisto'],
         help='Label type')
     parser_export_labels.add_argument('process_id', help='Clarity lims process id')
     parser_export_labels.add_argument('-d', '--description',  nargs='?', help='Container name description')
@@ -339,6 +354,11 @@ if __name__ == "__main__":
     parser_export_merge = subparser_export.add_parser('merge', help='Export merge file', parents=[output_parser])
     parser_export_merge.add_argument('process_id', help='Clarity lims process id')
     parser_export_merge.set_defaults(func=export_merge_file)
+
+    parser_export_myra = subparser_export.add_parser('myra', help='Export myra samplesheet', parents=[output_parser])
+    parser_export_myra.add_argument('type', choices=['callisto', 'dilute'], help='Samplesheet type')
+    parser_export_myra.add_argument('process_id', help='Clarity lims process id')
+    parser_export_myra.set_defaults(func=export_myra)
 
     parser_export_ped = subparser_export.add_parser('ped', help='Export ped file', parents=[output_parser])
     parser_export_ped.add_argument('process_id', help='Clarity lims process id')
@@ -384,7 +404,7 @@ if __name__ == "__main__":
     parser_export_workflow = subparser_export.add_parser(
         'workflow', help='Export workflow result file', parents=[output_parser]
     )
-    parser_export_workflow.add_argument('type', choices=['magnis', 'mip'], help='Workflow type')
+    parser_export_workflow.add_argument('type', choices=['magnis', 'mip', 'callisto'], help='Workflow type')
     parser_export_workflow.add_argument('process_id', help='Clarity lims process id')
     parser_export_workflow.set_defaults(func=export_workflow)
 
@@ -417,8 +437,9 @@ if __name__ == "__main__":
     parser_qc = subparser.add_parser('qc', help='Set QC values/flags')
     subparser_qc = parser_qc.add_subparsers()
 
-    parser_qc_fragment_length = subparser_qc.add_parser('fragment_length', help='Set fragment length qc flag')
+    parser_qc_fragment_length = subparser_qc.add_parser('fragment_length', help='Set fragment length (qc flag)')
     parser_qc_fragment_length.add_argument('process_id', help='Clarity lims process id')
+    parser_qc_fragment_length.add_argument('type', choices=['set_qc_flag', 'set_udf'], help='What to set')
     parser_qc_fragment_length.set_defaults(func=qc_fragment_length)
 
     parser_qc_illumina = subparser_qc.add_parser('illumina', help='Set average % Bases >=Q30')
@@ -468,7 +489,9 @@ if __name__ == "__main__":
     parser_placement_unpooling.add_argument('process_id', help='Clarity lims process id')
     parser_placement_unpooling.set_defaults(func=placement_unpooling)
 
-    parser_placement_patient_pools = subparser_placement.add_parser('patient_pools', help='Create patient pools for Dx samples')
+    parser_placement_patient_pools = subparser_placement.add_parser(
+        'patient_pools', help='Create patient pools for Dx samples'
+    )
     parser_placement_patient_pools.add_argument('process_id', help='Clarity lims process id')
     parser_placement_patient_pools.set_defaults(func=placement_patient_pools)
 

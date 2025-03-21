@@ -123,7 +123,9 @@ def from_helix(lims, email_settings, input_file):
                     f"Row = {line_index+1} \t Column = {udf_column[udf]['column']} \t UDF = {udf}.\n"
                     "Please check/update the file and try again. Make sure to remove the project from LIMS before retrying."
                 )
-                send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
+                send_email(
+                    email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message
+                )
                 sys.exit(message)
 
         sample_name = '{0}_{1}'.format(udf_data['Dx Monsternummer'], udf_data['Dx Meet ID'])
@@ -133,7 +135,8 @@ def from_helix(lims, email_settings, input_file):
             udf_data['Dx Foetus']
             or udf_data['Dx Overleden']
             or udf_data['Dx Materiaal type'] not in ['BL', 'BLHEP', 'BM', 'BMEDTA']
-            or re.match(r'\d{4}D\d+', udf_data['Dx Monsternummer']) and int(udf_data['Dx Monsternummer'][:4]) < 2010  # Samples older then 2010
+            or re.match(r'\d{4}D\d+', udf_data['Dx Monsternummer'])
+            and int(udf_data['Dx Monsternummer'][:4]) < 2010  # Samples older then 2010
             or udf_data['Dx Monsternummer'].startswith('D')  # Old samples names, all older then 2005
         ):
             udf_data['Dx Handmatig'] = True
@@ -158,7 +161,8 @@ def from_helix(lims, email_settings, input_file):
             udf_data['Dx Familie status'] = 'Kind'
         elif udf_data['Dx Onderzoeksreden'] == 'Dragerschapbepaling':
             udf_data['Dx Familie status'] = 'Kind'
-        elif udf_data['Dx Onderzoeksreden'] == 'Presymptomatisch onderzoe':  # Helix export is truncated (Presymptomatisch onderzoek)
+        # Helix export is truncated (Presymptomatisch onderzoek)
+        elif udf_data['Dx Onderzoeksreden'] == 'Presymptomatisch onderzoe':
             udf_data['Dx Familie status'] = 'Kind'
         elif udf_data['Dx Onderzoeksreden'] == 'Informativiteitstest':
             udf_data['Dx Familie status'] = 'Ouder'
@@ -204,7 +208,7 @@ def from_helix(lims, email_settings, input_file):
                 ):
                     udf_data['Dx NICU Spoed'] = related_sample.udf['Dx NICU Spoed']
 
-        # Set 'Dx Mengfractie'
+        # Set 'Dx Mengfractie' WES
         if udf_data['Dx Stoftest code'] == config.stoftestcode_wes_duplo:
             udf_data['Dx Mengfractie'] = True
 
@@ -238,7 +242,10 @@ def from_helix(lims, email_settings, input_file):
                 udf_data['Dx Mengfractie'] = True
                 for duplo_sample in duplo_samples:
                     # Remove import warning from WES_duplo samples
-                    if 'Dx Import warning' in duplo_sample.udf and 'Alleen WES_duplo aangemeld.' in duplo_sample.udf['Dx Import warning']:
+                    if (
+                        'Dx Import warning' in duplo_sample.udf
+                        and 'Alleen WES_duplo aangemeld.' in duplo_sample.udf['Dx Import warning']
+                    ):
                         import_warning = duplo_sample.udf['Dx Import warning'].split(';')
                         import_warning.remove('Alleen WES_duplo aangemeld.')
                         duplo_sample.udf['Dx Import warning'] = ';'.join(import_warning)
@@ -248,6 +255,58 @@ def from_helix(lims, email_settings, input_file):
                     if duplo_sample.udf['Dx Monsternummer'] == udf_data['Dx Monsternummer']:
                         udf_data['Dx Import warning'] = ';'.join([
                             'WES en WES_duplo zelfde monster ({sample}).'.format(sample=duplo_sample.name),
+                            udf_data['Dx Import warning']
+                        ])
+            else:
+                udf_data['Dx Mengfractie'] = False
+
+        # Set 'Dx Mengfractie' srWGS
+        if udf_data['Dx Stoftest code'] == config.stoftestcode_srwgs_duplo:
+            udf_data['Dx Mengfractie'] = True
+
+            # Find srWGS sample(s)
+            duplo_samples = lims.get_samples(udf={
+                'Dx Persoons ID': udf_data['Dx Persoons ID'],
+                'Dx Onderzoeknummer': udf_data['Dx Onderzoeknummer'],
+                'Dx Stoftest code': config.stoftestcode_srwgs,
+            })
+            if duplo_samples:  # Set duplo status for srWGS samples
+                for duplo_sample in duplo_samples:
+                    duplo_sample.udf['Dx Mengfractie'] = True
+                    duplo_sample.put()
+                    # Check Dx Monsternummer
+                    if duplo_sample.udf['Dx Monsternummer'] == udf_data['Dx Monsternummer']:
+                        udf_data['Dx Import warning'] = ';'.join([
+                            'srWGS en srWGS_duplo zelfde monster ({sample}).'.format(sample=duplo_sample.name),
+                            udf_data['Dx Import warning']
+                        ])
+            else:  # Set import warning if no srWGS samples found
+                udf_data['Dx Import warning'] = ';'.join(['Alleen srWGS_duplo aangemeld.', udf_data['Dx Import warning']])
+
+        elif udf_data['Dx Stoftest code'] == config.stoftestcode_srwgs:
+            # Find srWGS_duplo sample(s)
+            duplo_samples = lims.get_samples(udf={
+                'Dx Persoons ID': udf_data['Dx Persoons ID'],
+                'Dx Onderzoeknummer': udf_data['Dx Onderzoeknummer'],
+                'Dx Stoftest code': config.stoftestcode_srwgs_duplo,
+            })
+            if duplo_samples:  # Set duplo status for srWGS sample
+                udf_data['Dx Mengfractie'] = True
+                for duplo_sample in duplo_samples:
+                    # Remove import warning from srWGS_duplo samples
+                    if (
+                        'Dx Import warning' in duplo_sample.udf
+                        and 'Alleen srWGS_duplo aangemeld.' in duplo_sample.udf['Dx Import warning']
+                    ):
+                        import_warning = duplo_sample.udf['Dx Import warning'].split(';')
+                        import_warning.remove('Alleen srWGS_duplo aangemeld.')
+                        duplo_sample.udf['Dx Import warning'] = ';'.join(import_warning)
+                        duplo_sample.put()
+
+                    # Check Dx Monsternummer
+                    if duplo_sample.udf['Dx Monsternummer'] == udf_data['Dx Monsternummer']:
+                        udf_data['Dx Import warning'] = ';'.join([
+                            'srWGS en srWGS_duplo zelfde monster ({sample}).'.format(sample=duplo_sample.name),
                             udf_data['Dx Import warning']
                         ])
             else:
