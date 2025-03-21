@@ -155,7 +155,7 @@ sample_conversion_settings = {
     },
     'versieVP_LP0002': {
         'project': 'srWGS',
-        'split_project': True,
+        'split_project': False,
         'umi_len': [0, 0],
     },
 }
