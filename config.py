@@ -23,11 +23,15 @@ stoftestcode_wes = 'NGS_025'
 stoftestcode_wes_duplo = 'NGS_028'
 stoftestcode_mip = 'NGS_027'
 stoftestcode_research = 'NGS_023'
+stoftestcode_srwgs = 'NGS_029'
+stoftestcode_srwgs_duplo = 'NGS_031'
 
 stoftestcode_workflow = {
     stoftestcode_wes: '1852',  # DEV Dx Exoom Magnis v2.1
     stoftestcode_wes_duplo: '1852',  # DEV Dx Exoom Magnis v2.1
     stoftestcode_mip: '1651',  # DEV Dx smMIP v1.2
+    stoftestcode_srwgs: '2352',  # DEV Dx srWGS Callisto v1.0
+    stoftestcode_srwgs_duplo: '2352',  # DEV Dx srWGS Callisto v1.0
 }
 
 # Update exome equivalent for certain indications
@@ -60,6 +64,29 @@ meetw_seq_wes_processes = [
     'Dx Multiplexen sequence pool v1.2',
     'Dx Library pool denatureren en laden (NovaSeq) v1.3',
     'AUTOMATED - NovaSeq Run (NovaSeq 6000 v3.1)',
+    'Dx QC controle Lab sequencen v1.1',
+    'Dx NovaSeq QC controle Lab sequencen v1.3',
+]
+
+# Export meetw protocol steps srWGS
+meetw_zui_srwgs_processes = [
+    'Dx Sample registratie zuivering v1.1',
+    'Dx Uitvullen en zuiveren (Fluent 480) v1.1',
+    'Dx Normaliseren (Fluent 480) v1.0',
+    'Dx gDNA handmatige normalisatie srWGS v1.0',
+]
+
+meetw_sampleprep_srwgs_processes = [
+    'Dx Library Prep Callisto v1.0',
+]
+
+meetw_seq_srwgs_processes = [
+    'Dx Multiplexen Callisto v1.0',
+    'Dx Multiplexen sequence pool v1.2',
+    'Dx Library pool denatureren en laden (NovaSeq) v1.3',
+    'AUTOMATED - NovaSeq Run (NovaSeq 6000 v3.1)',
+    'Dx Library pool denatureren en laden (NovaSeqXPlus) v1.0',
+    'Dx NovaSeqXPlus Run v1.0',
     'Dx QC controle Lab sequencen v1.1',
     'Dx NovaSeq QC controle Lab sequencen v1.3',
 ]
@@ -126,14 +153,26 @@ sample_conversion_settings = {
         'split_project': True,
         'umi_len': [5, 5],
     },
+    'versieVP_LP0002': {
+        'project': 'srWGS',
+        'split_project': False,
+        'umi_len': [0, 0],
+    },
 }
 
 # Post sequencing workflow
 sequencing_workflow = '2052'  # DEV Dx Illumina Sequencing v1.3
 post_sequencing_workflow = '1204'  # DEV Dx Bioinformatica analyses v1.1
-post_bioinf_workflow = '1803'  # DEV Dx NGS WES onderzoeken afronden v2.0
+post_bioinf_workflow_wes = '1803'  # DEV Dx NGS WES onderzoeken afronden v2.0
+post_bioinf_workflow_srwgs = '2306'  # DEV Dx NGS srWGS Onderzoeken Afronden v1.0
 
 # Research Onderzoeksindicatie
 research_onderzoeksindicatie_project = {
     'PD-GRID': 'knoers_grid'
+}
+
+# Fragment length
+fragment_length = {
+    'Gen.analy_IL_versieVP_LP0002_srWGS': 550,
+    'default': 450,
 }
