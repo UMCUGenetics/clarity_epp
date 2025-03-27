@@ -31,6 +31,7 @@ def test_sample_udf_withoutudf(mocker, capsys):
     captured = capsys.readouterr()
     assert captured.out == f"Sample\t{column_name}\n{sample_name}\tunknown\n"
 
+
 def test_sample_udf_with_multiple_equal_values(mocker, capsys):
     # Test output for sample with no known udf in database
     samples_mock[sample_name] = [SampleMock({"Dx geslacht": "Vrouw"}), SampleMock({"Dx geslacht": "Vrouw"})]
