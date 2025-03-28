@@ -48,12 +48,26 @@ def route_to_workflow(lims, process_id, workflow):
     ]
 
     if workflow == 'post_bioinf':
-        #  Remove research artifacts
-        route_artifacts = [
+        #  Select WES artifacts
+        route_artifacts_wes = [
             artifact for artifact in artifacts_completed
-            if artifact.samples[0].udf['Dx Stoftest code'] != config.stoftestcode_research  # Asume all samples metadata is identical.
+            # Asume all samples metadata is identical.
+            if artifact.samples[0].udf['Dx Stoftest code'] == config.stoftestcode_wes
+            or artifact.samples[0].udf['Dx Stoftest code'] == config.stoftestcode_wes_duplo
         ]
-        lims.route_artifacts(route_artifacts, workflow_uri=Workflow(lims, id=config.post_bioinf_workflow).uri)
+
+        #  Select srWGS artifacts
+        route_artifacts_srwgs = [
+            artifact for artifact in artifacts_completed
+            # Asume all samples metadata is identical.
+            if artifact.samples[0].udf['Dx Stoftest code'] == config.stoftestcode_srwgs
+            or artifact.samples[0].udf['Dx Stoftest code'] == config.stoftestcode_srwgs_duplo
+        ]
+
+        if route_artifacts_wes:
+            lims.route_artifacts(route_artifacts_wes, workflow_uri=Workflow(lims, id=config.post_bioinf_workflow_wes).uri)
+        if route_artifacts_srwgs:
+            lims.route_artifacts(route_artifacts_srwgs, workflow_uri=Workflow(lims, id=config.post_bioinf_workflow_srwgs).uri)
 
     elif workflow == 'sequencing':
         lims.route_artifacts(artifacts_completed, workflow_uri=Workflow(lims, id=config.sequencing_workflow).uri)
@@ -66,6 +80,6 @@ def set_norm_manual_udf(lims, process_id):
     for artifact in process.all_outputs():
         artifact.udf['Dx norm. manueel'] = False
         for sample in artifact.samples:
-            if sample.udf['Dx norm. manueel'] == True:
+            if sample.udf['Dx norm. manueel']:
                 artifact.udf['Dx norm. manueel'] = True
         artifact.put()

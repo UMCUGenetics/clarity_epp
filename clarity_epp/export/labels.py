@@ -78,3 +78,24 @@ def nunc_mix_sample(lims, process_id, output_file):
                 container=artifact.container.name,
                 well=well
             ))
+
+
+def strips_callisto(lims, process_id, output_file):
+    """Generate label file for strips Callisto.
+
+    Args:
+        lims (object): Lims connection
+        process_id (str): Process ID
+        output_file (file): Callisto strip label file path.
+    """
+    process = Process(lims, id=process_id)
+    rows = []
+
+    for artifact in process.analytes()[0]:
+        row = artifact.location[1][0]
+        if row not in rows:
+            rows.append(row)
+            output_file.write('{container}_{number}\r\n'.format(
+                container=artifact.container.id,
+                number=len(rows)
+            ))
