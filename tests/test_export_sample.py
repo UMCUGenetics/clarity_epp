@@ -58,7 +58,7 @@ def test_sample_udf_without_udf(mocker, capsys):
 
 
 def test_sample_udf_with_multiple_equal_values(mocker, capsys):
-    # Test output for sample with no known udf in database
+    # Test output for multiple samples with known Dx-udf and equal values in database
     samples = {
         "test_sample": [
             SampleMock("test_sample", udf={"Dx geslacht": "Vrouw"}),
@@ -75,7 +75,7 @@ def test_sample_udf_with_multiple_equal_values(mocker, capsys):
 
 
 def test_sample_udf_with_multiple_different_values(mocker, capsys):
-    # Test output for sample with no known udf in database
+    # Test output for multiple samples with known Dx-udf and different values in database
     samples = {
         "test_sample": [
             SampleMock("test_sample", udf={"Dx geslacht": "Vrouw"}),
@@ -94,7 +94,7 @@ def test_sample_udf_with_multiple_different_values(mocker, capsys):
 
 
 def test_sample_udf_with_multiple_missing_value(mocker, capsys):
-    # Test output for sample with no known udf in database
+    # Test output for multiple samples with known Dx-udf and one missing value in database
     samples = {
         "test_sample": [
             SampleMock("test_sample", udf={"Dx geslacht": "Vrouw"}),

@@ -163,7 +163,7 @@ def sample_udf_dx(lims, output_file, artifact_name=None, sequencing_run=None, se
     if artifact_samples:
         output_file.write(f'Sample\t{column_name}\n')
         for artifact_name, samples in artifact_samples.items():
-            sample_udf_values= set()
+            sample_udf_values = set()
             for sample in samples:
                 if udf in sample.udf:
                     if type(sample.udf[udf]) is str:
