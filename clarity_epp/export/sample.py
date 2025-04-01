@@ -129,14 +129,16 @@ def removed_samples(lims, output_file):
                 ))
 
 
-def get_samples(lims, artifact_name=None, sequencing_run=None, sequencing_run_project=None):
-    """Lookup samples by sample name or sequencing run (project)."""
-    samples = []
+def get_artifact_samples(lims, artifact_name=None, sequencing_run=None, sequencing_run_project=None):
+    """Lookup samples by artifact name or sequencing run (project)."""
+    samples = {}
 
     # Get samples by artifact_name
     if artifact_name:
+        samples[artifact_name] = set()
         artifacts = lims.get_artifacts(name=artifact_name)
-        samples = {artifact_name: artifact.samples[0] for artifact in artifacts}
+        for artifact in artifacts:
+            samples[artifact_name].add(artifact.samples[0])
 
     # Get samples by sequencing run
     elif sequencing_run:
@@ -145,42 +147,37 @@ def get_samples(lims, artifact_name=None, sequencing_run=None, sequencing_run_pr
             udf_query['Dx Sequencing Run Project'] = sequencing_run_project
 
         artifacts = lims.get_artifacts(type='Analyte', udf=udf_query)
-        samples = {artifact.name: artifact.samples[0] for artifact in artifacts}
+        for artifact in artifacts:
+            if artifact.name not in samples:
+                samples[artifact.name] = set()
+            samples[artifact.name].add(artifact.samples[0])
 
     return samples
 
 
 def sample_udf_dx(lims, output_file, artifact_name=None, sequencing_run=None, sequencing_run_project=None, udf=None, column_name=None):
     """Export table with sample udf (Dx-udf only)."""
-    samples = get_samples(lims, artifact_name, sequencing_run, sequencing_run_project)
+    artifact_samples = get_artifact_samples(lims, artifact_name, sequencing_run, sequencing_run_project)
+
     # Write result
-    if samples:
+    if artifact_samples:
         output_file.write(f'Sample\t{column_name}\n')
-        for sample_name, sample in samples.items():
-            if udf in sample.udf:
-                if 'Dx' in udf:
-                    if type (sample.udf[udf]) == str:
+        for artifact_name, samples in artifact_samples.items():
+            sample_udf_values = set()
+            for sample in samples:
+                if udf in sample.udf:
+                    if type(sample.udf[udf]) is str:
                         udf_value=sample.udf[udf].split(';')[0]  # select newest udf value
                     else:
                         udf_value=sample.udf[udf]
+                    sample_udf_values.add(udf_value)
 
-                    output_file.write(
-                        '{sample}\t{udf_value}\n'.format(
-                            sample=sample_name,
-                            udf_value=udf_value
-                         )
-                    )
-                else:
-                    output_file.write(
-                        f'Warning, udf is not type \'Dx\'\n'
-                    )
+            if len(sample_udf_values) == 1:
+                output_file.write('{sample}\t{udf_value}\n'.format(sample=artifact_name, udf_value=udf_value))
+            elif len(sample_udf_values) > 1:
+                output_file.write('{sample}\t{udf_value}\n'.format(sample=artifact_name, udf_value='multiple_values_for_udf'))
             else:
-                output_file.write(
-                    '{sample}\t{udf_value}\n'.format(
-                        sample=sample_name,
-                        udf_value='unknown'
-                    )
-                )
+                output_file.write('{sample}\t{udf_value}\n'.format(sample=artifact_name, udf_value='unknown'))
     else:
         print("no_sample_found")
 
