@@ -9,6 +9,7 @@ import clarity_epp.export.labels
 import clarity_epp.export.magnis
 import clarity_epp.export.manual_pipetting
 import clarity_epp.export.merge
+import clarity_epp.export.myra
 import clarity_epp.export.ped
 import clarity_epp.export.sample
 import clarity_epp.export.tapestation
