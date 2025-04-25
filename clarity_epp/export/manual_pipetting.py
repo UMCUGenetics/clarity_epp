@@ -847,12 +847,14 @@ def samplesheet_normalization_mix(lims, process_id, output_file):
                 else:
                     output[well] = {monster: output_data}
 
-    if len(output.keys()) > 1:
+    if len(output.keys()) == 1 and '11' in output:
+        # Write output file per sample if samples in tubes (all samples have same well: '1:1'; split above result: 11)
+        for sample in output['11']:
+            output_file.write(output['11'][sample])
+    elif len(output.keys()) > 1 and '11' in output:
+        output_file.write("Verwachte input is een 96-wells plaat of tubes, niet beide.")
+    else:  
         # Write output file per sample sorted for well if samples in plate
         for well in clarity_epp.export.utils.sort_96_well_plate(output.keys()):
             for sample in output[well]:
                 output_file.write(output[well][sample])
-    else:
-        # Write output file per sample if samples in tubes (all samples have same well: '1:1'; split above result: 11)
-        for sample in output['11']:
-            output_file.write(output['11'][sample])
