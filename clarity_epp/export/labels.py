@@ -96,6 +96,6 @@ def strips_callisto(lims, process_id, output_file):
         if row not in rows:
             rows.append(row)
             output_file.write('{container}_{number}\r\n'.format(
-                container=artifact.container.id,
+                container=artifact.container.name,
                 number=len(rows)
             ))
