@@ -32,20 +32,20 @@ def samplesheet_callisto(lims, process_id, output_file):
 
     for output_artifact in process.analytes()[0]:
         input_artifact = output_artifact.input_artifact_list()[0]
-        input_id = input_artifact.container.id
+        input_name = input_artifact.container.name
         input_well = input_artifact.location[1].replace(':', '')
-        output_id = output_artifact.container.id
+        output_name = output_artifact.container.name
         output_well = output_artifact.location[1].replace(':', '')
         label_id = ''
 
         # Callisto strip is input container
         if "Callisto" in input_artifact.container.type.name:
-            strip_id = input_id
+            strip_id = input_name
             type = input_artifact.container.type.name
             strip_well = input_well
         # Callisto strip is output container
         elif "Callisto" in output_artifact.container.type.name:
-            strip_id = output_id
+            strip_id = output_name
             type = output_artifact.container.type.name
             strip_well = output_well
             row = row_number[output_artifact.location[1][0]]
@@ -59,11 +59,11 @@ def samplesheet_callisto(lims, process_id, output_file):
             output = label_id
         # Callisto strip is input container
         else:
-            output = output_id
+            output = output_name
 
         line = '{sample},{input},{input_well},{output},{output_well},{volume}'.format(
             sample=output_artifact.name,
-            input=input_artifact.container.id,
+            input=input_artifact.container.name,
             input_well=input_well,
             output=output,
             output_well=output_well,
