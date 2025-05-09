@@ -439,6 +439,10 @@ def from_helix_pg(lims, email_settings, input_file):
                         else:
                             udf_data[udf] = data[udf_column[udf]['index']].strip()
 
+                    # Setting Dx protocolomschrijving needed for filling udf Dx Fragmentlengte (bp) later in workflow
+                    if "FARMACO" in line:
+                        udf_data['Dx Protocolomschrijving'] = "FARMACO"
+
                     # Get sample
                     if not lims.get_samples(name=udf_data['Dx GLIMS ID']):
                         message += "No sample with Dx GLIMS ID {glims_id} present in Clarity LIMS, sample not loaded\n".format(

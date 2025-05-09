@@ -182,5 +182,6 @@ fragment_length = {
     'Exoom.analy_IL_versieVP_LP0002_srWGS': 550,
     'Gen.analy_IL_versieVP_LP0002_srWGS': 550,
     'SingleGeneAnaly_IL_versieVP_LP0002_srWGS': 550,
+    'FARMACO': 550,
     'default': '',
 }
