@@ -440,22 +440,27 @@ def from_helix_pg(lims, email_settings, input_file):
                             udf_data[udf] = data[udf_column[udf]['index']].strip()
 
                     # Get sample
-                    sample = lims.get_samples(name=udf_data['Dx GLIMS ID'])[0]
+                    if not lims.get_samples(name=udf_data['Dx GLIMS ID']):
+                        message += "No sample with Dx GLIMS ID {glims_id} present in Clarity LIMS, sample not loaded\n".format(
+                            glims_id=udf_data['Dx GLIMS ID']
+                        )
+                    else:
+                        sample = lims.get_samples(name=udf_data['Dx GLIMS ID'])[0]
 
-                    # Update sample udf fields with helix data
-                    for udf in udf_data:
-                        sample.udf[udf] = udf_data[udf]
-                    sample.put()
+                        # Update sample udf fields with helix data
+                        for udf in udf_data:
+                            sample.udf[udf] = udf_data[udf]
+                        sample.put()
 
-                    # Route sample to workflow
-                    workflow = Workflow(lims, id=config.pg_workflow)
-                    lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
+                        # Route sample to workflow
+                        workflow = Workflow(lims, id=config.pg_workflow)
+                        lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
 
-                    message += "{sample}\t{project}\tAdded to workflow {workflow}\n".format(
-                        sample=sample.name,
-                        project=sample.project.name,
-                        workflow=workflow.name
-                    )
+                        message += "{sample}\t{project}\tAdded to workflow {workflow}\n".format(
+                            sample=sample.name,
+                            project=sample.project.name,
+                            workflow=workflow.name
+                        )
 
     # Send email
     send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
