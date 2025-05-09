@@ -445,19 +445,14 @@ def from_helix_pg(lims, email_settings, input_file):
 
                     # Get sample
                     if not lims.get_samples(name=udf_data['Dx GLIMS ID']):
-                        message += "No sample with Dx GLIMS ID {glims_id} present in Clarity LIMS, sample not loaded\n".format(
+                        message += "Sample niet ingeladen; onbekend GLIMS_ID {glims_id}\n".format(
                             glims_id=udf_data['Dx GLIMS ID']
                         )
                     else:
                         sample = lims.get_samples(name=udf_data['Dx GLIMS ID'])[0]
 
                         # Update sample udf fields with helix data
-                        if 'Dx Monsternummer' in sample.udf:  # check if sample is imported before
-                            message += "Sample with Dx GLIIMS ID {glims_id} has already filled udf Dx Monsternummer, \
-                                sample not loaded again\n".format(
-                                glims_id=udf_data['Dx GLIMS ID']
-                            )
-                        else:
+                        if 'Dx Monsternummer' not in sample.udf:  # check if sample is imported before
                             for udf in udf_data:
                                 sample.udf[udf] = udf_data[udf]
                             sample.put()
