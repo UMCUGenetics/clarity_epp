@@ -453,19 +453,25 @@ def from_helix_pg(lims, email_settings, input_file):
 
                         # Update sample udf fields with helix data
                         if 'Dx Monsternummer' not in sample.udf:  # check if sample is imported before
-                            for udf in udf_data:
-                                sample.udf[udf] = udf_data[udf]
-                            sample.put()
+                            # check if data imported from GLIMS is the same as from Helix
+                            if sample.udf['Dx Persoons ID'] == udf_data['Dx Persoons ID'] and \
+                               sample.udf['Dx Geboortejaar'] == udf_data['Dx Geboortejaar']:
+                                for udf in udf_data:
+                                    sample.udf[udf] = udf_data[udf]
+                                sample.put()
 
-                            # Route sample to workflow
-                            workflow = Workflow(lims, id=config.pg_workflow)
-                            lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
+                                # Route sample to workflow
+                                workflow = Workflow(lims, id=config.pg_workflow)
+                                lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
 
-                            message += "{sample}\t{project}\tAdded to workflow {workflow}\n".format(
-                                sample=sample.name,
-                                project=sample.project.name,
-                                workflow=workflow.name
-                            )
+                                message += "{sample}\t{project}\tAdded to workflow {workflow}\n".format(
+                                    sample=sample.name,
+                                    project=sample.project.name,
+                                    workflow=workflow.name
+                                )
+                            else:
+                                message += ("Sample met Dx GLIMS ID {glims_id} niet ingeladen; Glims en Helix gegevens komen "
+                                            "niet overeen\n").format(glims_id=udf_data['Dx GLIMS ID'])
 
     # Send email
     send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
