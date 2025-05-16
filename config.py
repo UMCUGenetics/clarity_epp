@@ -38,7 +38,7 @@ stoftestcode_workflow = {
 }
 
 # Import samples: fixed workflows
-pg_workflow = '2352',  # DEV Dx srWGS Callisto v1.0
+pg_workflow = '2352'  # DEV Dx srWGS Callisto v1.0
 
 # Update exome equivalent for certain indications
 indications_exome_equivalent = {'UBA1': 5, 'PID09': 5}
