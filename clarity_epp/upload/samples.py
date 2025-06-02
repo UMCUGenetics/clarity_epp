@@ -439,6 +439,13 @@ def from_helix_pg(lims, email_settings, input_file):
                         else:
                             udf_data[udf] = data[udf_column[udf]['index']].strip()
 
+                    # Set 'Dx norm. manueel' udf for samples with Dx Concentratie (ng/ul)
+                    if udf_data['Dx Concentratie (ng/ul)']:
+                        if udf_data['Dx Concentratie (ng/ul)'] <= 29.3:
+                            udf_data['Dx norm. manueel'] = True
+                        else:
+                            udf_data['Dx norm. manueel'] = False
+
                     # Setting Dx protocolomschrijving needed for filling udf Dx Fragmentlengte (bp) later in workflow
                     if "FARMACO" in line:
                         udf_data['Dx Protocolomschrijving'] = "FARMACO"
