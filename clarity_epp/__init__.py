@@ -17,7 +17,7 @@ def get_sequence_name(artifact):
     for sample in artifact.samples:
         # Use GLIMS ID for Farmacogenetics samples
         if 'Dx Onderzoeksindicatie' in sample.udf and sample.udf['Dx Onderzoeksindicatie'] == 'PG':
-            sample_numbers.append(sample.udf['Dx GLIMS ID'])
+            sample_numbers.append(str(sample.udf['Dx GLIMS ID']))
         elif 'Dx Monsternummer' in sample.udf:  # Use monsternummer for other Dx samples
             sample_numbers.append(sample.udf['Dx Monsternummer'])
 
