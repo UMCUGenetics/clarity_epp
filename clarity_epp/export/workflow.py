@@ -194,7 +194,7 @@ def helix_callisto(lims, process_id, output_file):
             if 'Dx Werklijstnummer' in sample.udf:
                 # Setup empty vars
                 meetw_zui, meetw_zui_herh, meetw_sampleprep, meetw_sampleprep_herh, meetw_seq, meetw_seq_herh = [''] * 6
-                sequence_name, gatk_vcf = [''] * 2
+                sequence_name, gatk_vcf, sample_flowcell = [''] * 3
                 # Only lookup meetw and vcf files for srWGS samples
                 if sample.udf['Dx Stoftest code'] == config.stoftestcode_srwgs:
                     sample_artifacts = lims.get_artifacts(samplelimsid=sample.id, type='Analyte')
