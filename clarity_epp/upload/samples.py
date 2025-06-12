@@ -465,6 +465,7 @@ def from_helix_pg(lims, email_settings, input_file):
                                sample.udf['Dx Geboortejaar'] == udf_data['Dx Geboortejaar']:
                                 for udf in udf_data:
                                     sample.udf[udf] = udf_data[udf]
+                                sample.name = sample.udf['Dx Monsternummer']
                                 sample.put()
 
                                 # Route sample to workflow
@@ -526,7 +527,12 @@ def from_glims(lims, email_settings, input_file):
         data = line.rstrip().split(';')
 
         if len(data) == len(header):
-            udf_data = {'Sample Type': 'DNA isolated', 'Dx Import warning': '', 'Dx Exoomequivalent': 5}  # required lims input
+            udf_data = {
+                'Sample Type': 'DNA isolated',
+                'Dx Import warning': '',
+                'Dx Exoomequivalent': 5,
+                'Dx Opslaglocatie': 'CB0000KK: 00'
+            }  # required lims input
 
             for udf in udf_column:
                 if udf == 'Dx Geboortejaar':
