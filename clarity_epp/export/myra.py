@@ -81,9 +81,6 @@ def samplesheet_callisto(lims, process_id, output_file):
         for well in wells[output_data[strip_id]["type"]]:
             if well in output_data[strip_id]:
                 output_file.write('{line}\n'.format(line=output_data[strip_id][well]))
-            else:
-                # Callisto strip well is empty
-                output_file.write('LEEG,,,,\n')
 
 
 def samplesheet_dilute(lims, process_id, output_file):
