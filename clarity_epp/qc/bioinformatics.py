@@ -75,7 +75,7 @@ def bioinf_qc_check(lims, process_id):
             family_info[input.name] = {}
             family_info[input.name]['number'] = input.samples[0].udf['Dx Familienummer']
             family_info[input.name]['status'] = input.samples[0].udf['Dx Familie status']
-            if 'ccu' in family_info[input.name]:
+            if 'Dx CCU' in input.udf:
                 family_info[input.name]['ccu'] = input.udf['Dx CCU']
 
     # Perform QC per input
