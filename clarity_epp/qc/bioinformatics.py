@@ -148,7 +148,7 @@ def bioinf_qc_check(lims, process_id):
                 # QC contamination check
                 if input.udf['Dx Contaminatie'] > config.bioinformatics_qc_requirements_srWGS['Contamination']:
                     qc_conclusion += 'Contaminatie afgekeurd. '
-                    message += 'De contaminatie waarde {qc} is te hoog (max. {req}). '.format(
+                    message += 'De contaminatie waarde {qc} is boven {req}. '.format(
                         qc=input.udf['Dx Contaminatie'],
                         req=config.bioinformatics_qc_requirements_srWGS['Contamination'],
                     )
