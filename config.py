@@ -179,3 +179,11 @@ fragment_length = {
     'SingleGeneAnaly_IL_versieVP_LP0002_srWGS': 550,
     'default': '',
 }
+
+# Bioinformatics QC requirements
+bioinformatics_qc_requirements_srWGS = {
+    'Coverage': 30,
+    'CCU': 0.5,
+    'CCU_index': 0.3,
+    'Contamination': 0.04,
+}
