@@ -163,6 +163,7 @@ sample_conversion_settings = {
 # Post sequencing workflow
 sequencing_workflow = '2052'  # DEV Dx Illumina Sequencing v1.3
 post_sequencing_workflow = '1204'  # DEV Dx Bioinformatica analyses v1.1
+post_sequencing_workflow_srwgs = '2507'  # DEV Dx srWGS Bioinformatica analyses v1.0
 post_bioinf_workflow_wes = '1803'  # DEV Dx NGS WES onderzoeken afronden v2.0
 post_bioinf_workflow_srwgs = '2306'  # DEV Dx NGS srWGS Onderzoeken Afronden v1.0
 
