@@ -171,6 +171,10 @@ def bioinf_qc_check(lims, process_id):
                 elif 'goedgekeurd' in qc_conclusion:
                     input.udf['Dx afwijkingen uitleg'] = f'Conclusie: goedgekeurd (Uitleg: {explanation})'
 
-            # QC check complete
-            input.udf['Dx QC check'] = True
+            # Set Dx QC check to true only if QC is approved
+            if 'Dx afwijkingen oorzaak' not in input.udf:
+                input.udf['Dx QC check'] = True
+            elif (input.udf['Dx afwijkingen oorzaak'] and
+                  input.udf['Dx afwijkingen uitleg'].startswith('Conclusie: goedgekeurd')):
+                input.udf['Dx QC check'] = True
             input.put()
