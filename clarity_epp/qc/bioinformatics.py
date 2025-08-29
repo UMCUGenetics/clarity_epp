@@ -80,11 +80,11 @@ def bioinf_qc_check(lims, process_id):
         udfs = ['Dx Gem. dekking', 'Dx CCU', 'Dx Contaminatie', 'Dx Gevonden geslacht']
         qc_udf_not_filled = any(udf not in input.udf for udf in udfs)
         if not qc_udf_not_filled:
-            qc_conclusion = []
+            qc_conclusion = ''
             qc_message = []
             # QC coverage check
             if input.udf['Dx Gem. dekking'] < config.bioinformatics_qc_requirements_srWGS['Coverage']:
-                qc_conclusion.append('Dekking afgekeurd.')
+                qc_conclusion += 'Dekking afgekeurd.'
                 qc_message.append('De gemiddelde dekking {qc} is onder {req}x.'.format(
                     qc=input.udf['Dx Gem. dekking'],
                     req=config.bioinformatics_qc_requirements_srWGS['Coverage'],
@@ -103,7 +103,7 @@ def bioinf_qc_check(lims, process_id):
                         child_ccu = family_info[child]["ccu"]
                         # CCU child too high
                         if child_ccu > config.bioinformatics_qc_requirements_srWGS['CCU_index']:
-                            qc_conclusion.append('CCU afgekeurd.')
+                            qc_conclusion += 'CCU afgekeurd.'
                             qc_message.append(
                                 'De CCU waarde {qc} is boven {req}.'
                                 'En de CCU waarde van kind ({child}) {qc_index} is boven {req_index}.'.format(
@@ -116,7 +116,7 @@ def bioinf_qc_check(lims, process_id):
                             )
                         # CCU child low enough
                         elif child_ccu <= config.bioinformatics_qc_requirements_srWGS['CCU_index']:
-                            qc_conclusion.append('CCU goedgekeurd.')
+                            qc_conclusion += 'CCU goedgekeurd.'
                             qc_message.append(
                                 'De CCU waarde {qc} is boven {req}.'
                                 'Maar de CCU waarde van kind ({child}) {qc_index} is onder {req_index}.'.format(
@@ -130,7 +130,7 @@ def bioinf_qc_check(lims, process_id):
                     # No child in step
                     else:
                         print(f'No child for family {family_number} in this step')
-                        qc_conclusion.append('CCU onbekend.')
+                        qc_conclusion += 'CCU onbekend.'
                         qc_message.append(
                             'De CCU waarde {qc} is boven {req}.'
                             'Het betreft een ouder, maar kind van is niet aanwezig in deze stap.'.format(
@@ -140,21 +140,21 @@ def bioinf_qc_check(lims, process_id):
                         )
                 # Child
                 else:
-                    qc_conclusion.append('CCU afgekeurd.')
+                    qc_conclusion += 'CCU afgekeurd.'
                     qc_message.append('De CCU waarde {qc} is boven {req}. Het betreft een kind.'.format(
                         qc=input.udf['Dx CCU'],
                         req=config.bioinformatics_qc_requirements_srWGS['CCU'],
                     ))
             # QC contamination check
             if input.udf['Dx Contaminatie'] > config.bioinformatics_qc_requirements_srWGS['Contamination']:
-                qc_conclusion.append('Contaminatie afgekeurd.')
+                qc_conclusion += 'Contaminatie afgekeurd.'
                 qc_message.append('De contaminatie waarde {qc} is boven {req}.'.format(
                     qc=input.udf['Dx Contaminatie'],
                     req=config.bioinformatics_qc_requirements_srWGS['Contamination'],
                 ))
             # QC sex check
             if input.udf['Dx Gevonden geslacht'] != input.samples[0].udf['Dx Geslacht']:
-                qc_conclusion.append('Geslacht afgekeurd.')
+                qc_conclusion += 'Geslacht afgekeurd.'
                 qc_message.append('Het gevonden geslacht {qc} komt niet overeen met het bekende geslacht {req}.'.format(
                     qc=input.udf['Dx Gevonden geslacht'],
                     req=input.samples[0].udf['Dx Geslacht'],
