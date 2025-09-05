@@ -129,7 +129,6 @@ def bioinf_qc_check(lims, process_id):
                             )
                     # No child in step
                     else:
-                        print(f'No child for family {family_number} in this step')
                         qc_conclusion += 'CCU onbekend.'
                         qc_message.append(
                             'De CCU waarde {qc} is boven {req}.'
