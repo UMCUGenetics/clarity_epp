@@ -20,7 +20,8 @@ def unpooling(lims, process_id):
             pool_artifact_parent_process = pool_artifact_parent_process.all_inputs()[0].parent_process
 
         run_id = pool_artifact.name  # Assume run id is set as pool name using placement/artifact/set_runid_name
-        sample_artifacts = []  # sample artifacts before pooling
+        sample_artifacts_srwgs = []  # srwgs sample artifacts before pooling
+        sample_artifacts = []  # other sample artifacts before pooling
         sample_projects = {}
 
         # Get sample projects from samplesheet
@@ -55,7 +56,11 @@ def unpooling(lims, process_id):
 
                 # Only move DX production samples to post sequencing workflow
                 if sample_artifact not in sample_artifacts and sample.project and sample.project.udf['Application'] == 'DX':
-                    sample_artifacts.append(sample_artifact)
+                    if 'SRWGS' in sample_artifact.udf['Dx Sequencing Run Project'].upper():
+                        sample_artifacts_srwgs.append(sample_artifact)
+                    else:
+                        sample_artifacts.append(sample_artifact)
+        lims.route_artifacts(sample_artifacts_srwgs, workflow_uri=Workflow(lims, id=config.post_sequencing_workflow_srwgs).uri)
         lims.route_artifacts(sample_artifacts, workflow_uri=Workflow(lims, id=config.post_sequencing_workflow).uri)
 
 
