@@ -203,6 +203,11 @@ def upload_magnis_results(args):
 
 
 # QC functions
+def qc_bioinformatics(args):
+    """Set QC check based on multiqc data."""
+    clarity_epp.qc.bioinformatics.bioinf_qc_check(lims, args.process_id)
+
+
 def qc_fragment_length(args):
     """Sets empty fragment length or QC status based on fragment length measurement."""
     if args.type == 'set_qc_flag':
@@ -436,6 +441,10 @@ if __name__ == "__main__":
     # QC
     parser_qc = subparser.add_parser('qc', help='Set QC values/flags')
     subparser_qc = parser_qc.add_subparsers()
+
+    parser_qc_bioinformatics = subparser_qc.add_parser('bioinformatics', help='Set bioinf qc flag')
+    parser_qc_bioinformatics.add_argument('process_id', help='Clarity lims process id')
+    parser_qc_bioinformatics.set_defaults(func=qc_bioinformatics)
 
     parser_qc_fragment_length = subparser_qc.add_parser('fragment_length', help='Set fragment length (qc flag)')
     parser_qc_fragment_length.add_argument('process_id', help='Clarity lims process id')

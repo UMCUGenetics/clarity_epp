@@ -163,6 +163,7 @@ sample_conversion_settings = {
 # Post sequencing workflow
 sequencing_workflow = '2052'  # DEV Dx Illumina Sequencing v1.3
 post_sequencing_workflow = '1204'  # DEV Dx Bioinformatica analyses v1.1
+post_sequencing_workflow_srwgs = '2507'  # DEV Dx srWGS Bioinformatica analyses v1.0
 post_bioinf_workflow_wes = '1803'  # DEV Dx NGS WES onderzoeken afronden v2.0
 post_bioinf_workflow_srwgs = '2306'  # DEV Dx NGS srWGS Onderzoeken Afronden v1.0
 
@@ -177,4 +178,12 @@ fragment_length = {
     'Gen.analy_IL_versieVP_LP0002_srWGS': 550,
     'SingleGeneAnaly_IL_versieVP_LP0002_srWGS': 550,
     'default': '',
+}
+
+# Bioinformatics QC requirements
+bioinformatics_qc_requirements_srWGS = {
+    'Coverage': 30,
+    'CCU': 0.5,
+    'CCU_index': 0.3,
+    'Contamination': 0.04,
 }
