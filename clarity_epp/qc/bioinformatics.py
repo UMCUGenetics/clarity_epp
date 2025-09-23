@@ -27,7 +27,8 @@ def bioinf_qc_check(lims, process_id):
         if output.name == 'Dx Data QC':
             try:
                 multiqc_file = output.files[0]
-                multiqc_file_content = lims.get_file_contents(multiqc_file.id).data.decode('utf-8').split('\n')
+                # Get multiqc file content, strip empty lines at end of file and split on newlines
+                multiqc_file_content = lims.get_file_contents(multiqc_file.id).data.decode('utf-8').rstrip().split('\n')
                 sample_qcs = {}
                 for line_index, line in enumerate(multiqc_file_content):
                     data = line.rstrip().split('\t')
