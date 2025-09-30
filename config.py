@@ -174,9 +174,9 @@ research_onderzoeksindicatie_project = {
 
 # Fragment length
 fragment_length = {
-    'Exoom.analy_IL_versieVP_LP0002_srWGS': 550,
-    'Gen.analy_IL_versieVP_LP0002_srWGS': 550,
-    'SingleGeneAnaly_IL_versieVP_LP0002_srWGS': 550,
+    'Exoom.analy_IL_versieVP_LP0002_srWGS': 600,
+    'Gen.analy_IL_versieVP_LP0002_srWGS': 600,
+    'SingleGeneAnaly_IL_versieVP_LP0002_srWGS': 600,
     'default': '',
 }
 
