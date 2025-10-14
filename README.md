@@ -33,6 +33,7 @@ The following task could be taken up during the week of refactor (in random/unde
 - [ ] Discuss package structure, currently organized by functionality and machine/process
 - [ ] Add or update unit tests (`pytest`)
 - [ ] Add or update docstrings (and type hints)
+- [ ] Add `ruff` pre-commit hook
 
 #### CLI & Configuration
 
