@@ -25,4 +25,8 @@ build-backend = "uv_build"
 dev = [
     "pytest~=8.4.0",
     "pytest-mock~=3.15.0",
+    "ruff~=0.14.0",
 ]
+
+[tool.ruff]
+line-length = 127
