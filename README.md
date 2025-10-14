@@ -16,7 +16,7 @@ To prepare for the week of code some changes have already been applied to this r
 - [x] Split out development dependencies
 - [x] Upgraded dependencies to latest versions
 - [x] Removed legacy `requirements.txt`
-- [ ] Fix GitHub Actions
+- [x] Fix GitHub Actions
 
 ### Refactor Tasks
 
