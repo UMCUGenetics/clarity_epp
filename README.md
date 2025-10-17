@@ -31,6 +31,7 @@ The following task could be taken up during the week of refactor (in random/unde
   - [ ] Split output / reporting logic
 - [ ] Move code into `src/` layout
 - [ ] Discuss package structure, currently organized by functionality and machine/process
+- [ ] Discuss [genologics](https://github.com/SciLifeLab/genologics) package usage, better maintained alternative: [s4-clarity-lib](https://s4-clarity-lib.readthedocs.io/en/stable/)
 - [ ] Add or update unit tests (`pytest`)
 - [ ] Add or update docstrings (and type hints)
 - [ ] Add `ruff` pre-commit hook
