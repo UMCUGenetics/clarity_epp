@@ -2,6 +2,12 @@
 
 Clarity LIMS epp scripts
 
+## Getting started
+
+- Install `uv`: https://docs.astral.sh/uv/getting-started/installation/
+- Edit `config.py` and set lims api connection settings.
+- Run with uv: `uv run clarity_epp.py`
+
 ## Week of Refactor
 
 This branch contains all work for the Week of Refactor.
