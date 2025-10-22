@@ -6,6 +6,15 @@ import config
 
 
 class LimsInterface:
+    _lims_interface_instance = None
+
+    @classmethod
+    def get_instance(cls):
+        """Static Access Method"""
+        if not LimsInterface._lims_interface_instance:
+            LimsInterface(config.baseuri, config.username, config.password)
+        return cls._lims_interface_instance
+
     def __init__(self, baseuri, username, password):
         self.lims = Lims(config.baseuri, config.username, config.password)
 
@@ -61,12 +70,3 @@ class LimsInterface:
 
     def get_file_contents_by_file_id(self, file_id):
         return self.lims.get_file_contents(file_id).data.decode('utf-8')
-
-# Singleton instantie
-_lims_interface_instance = None
-
-def get_lims_interface():
-    global _lims_interface_instance
-    if _lims_interface_instance is None:
-        _lims_interface_instance = LimsInterface(config.baseuri, config.username, config.password)
-    return _lims_interface_instance
