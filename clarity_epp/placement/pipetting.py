@@ -1,10 +1,15 @@
 """Pipetting  placement functions."""
 
+import typer
 from genologics.entities import Process
 
 from .. import get_mix_sample_barcode
 
 
+app = typer.Typer()
+
+
+@app.command()
 def check_nunc_input_nunc_output(lims, process_id):
     """Check nuncs."""
     process = Process(lims, id=process_id)

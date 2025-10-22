@@ -1,8 +1,13 @@
 """Barcode  placement functions."""
 
+import typer
 from genologics.entities import Process
 
 
+app = typer.Typer()
+
+
+@app.command()
 def check_family(lims, process_id):
     """Check barcodes."""
     process = Process(lims, id=process_id)

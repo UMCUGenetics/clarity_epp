@@ -1,8 +1,13 @@
 """Plate  placement functions."""
 
+import typer
 from genologics.entities import Process, Container, Containertype
 
 
+app = typer.Typer()
+
+
+@app.command()
 def copy_layout(lims, process_id):
     """Copy placement layout from previous steps."""
     process = Process(lims, id=process_id)

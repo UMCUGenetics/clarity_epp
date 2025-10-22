@@ -1,8 +1,13 @@
 """Step  placement functions."""
 
+import typer
 from genologics.entities import Process, StepActions
 
 
+app = typer.Typer()
+
+
+@app.command()
 def finish_protocol_complete(lims, process_id):
     """Finish next step after current step is finished (Dx Mark protocol complete)."""
     process = Process(lims, id=process_id)

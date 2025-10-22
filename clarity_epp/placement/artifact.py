@@ -1,5 +1,6 @@
 """Artifact placement functions."""
 
+import typer
 from genologics.entities import Process, Workflow
 
 from .. import get_sequence_name
@@ -7,6 +8,10 @@ from clarity_epp.export.utils import sort_artifact_list
 import config
 
 
+app = typer.Typer()
+
+
+@app.command()
 def set_sequence_name(lims, process_id):
     """Change artifact name to sequnece name."""
     process = Process(lims, id=process_id)
@@ -15,6 +20,7 @@ def set_sequence_name(lims, process_id):
         artifact.put()
 
 
+@app.command()
 def set_runid_name(lims, process_id):
     """Change artifact name to run id."""
     process = Process(lims, id=process_id)
@@ -37,6 +43,7 @@ def set_runid_name(lims, process_id):
                     lane.put()
 
 
+@app.command()
 def route_to_workflow(lims, process_id, workflow):
     """Route artifacts to a workflow."""
     process = Process(lims, id=process_id)
@@ -73,6 +80,7 @@ def route_to_workflow(lims, process_id, workflow):
         lims.route_artifacts(artifacts_completed, workflow_uri=Workflow(lims, id=config.sequencing_workflow).uri)
 
 
+@app.command()
 def set_norm_manual_udf(lims, process_id):
     """Combine mix sample udfs 'Dx norm. manueel'."""
     process = Process(lims, id=process_id)

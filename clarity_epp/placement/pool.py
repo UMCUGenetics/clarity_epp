@@ -1,11 +1,16 @@
 """Pool  placement functions."""
 
+import typer
 from genologics.entities import Process, Workflow, Step
 
 from .. import get_sequence_name, get_sample_artifacts_from_pool, get_unique_sample_id
 import config
 
 
+app = typer.Typer()
+
+
+@app.command()
 def unpooling(lims, process_id):
     """Unpool samples after sequencing."""
     process = Process(lims, id=process_id)
@@ -64,6 +69,7 @@ def unpooling(lims, process_id):
         lims.route_artifacts(sample_artifacts, workflow_uri=Workflow(lims, id=config.post_sequencing_workflow).uri)
 
 
+@app.command()
 def create_patient_pools(lims, process_id):
     """Create patient pools for Dx samples based on UDF 'Dx Persoons ID'."""
     step = Step(lims, id=process_id)

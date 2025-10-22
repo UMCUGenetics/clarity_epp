@@ -1,6 +1,13 @@
+""" Tecan placement functions."""
+
+import typer
 from genologics.entities import Process, Container, Containertype
 
 
+app = typer.Typer()
+
+
+@app.command()
 def get_well_location(index):
     locations = [
         'A:1', 'B:1', 'C:1', 'D:1', 'E:1', 'F:1', 'G:1', 'H:1',
@@ -19,6 +26,7 @@ def get_well_location(index):
     return locations[index]
 
 
+@app.command()
 def place_artifacts(lims, process_id):
     """Place artifacts on two containers, 2 artifacts per sample."""
     process = Process(lims, id=process_id)
