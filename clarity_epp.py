@@ -28,7 +28,7 @@ except RetryError:
     raise Exception("Could not connect to Clarity LIMS.")
 
 
-app = typer.Typer()
+app = typer.Typer(no_args_is_help=True)
 app.add_typer(export.app, name="export")
 app.add_typer(upload.app, name="upload")
 app.add_typer(qc.app, name="qc")
