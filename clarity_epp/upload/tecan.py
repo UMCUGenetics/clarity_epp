@@ -2,11 +2,16 @@
 
 import re
 
+import typer
 from genologics.entities import Process
 
 from clarity_epp.upload.utils import txt_to_bool
 
 
+app = typer.Typer()
+
+
+@app.command()
 def results_qc(lims, process_id):
     """Upload tecan results to artifacts."""
     process = Process(lims, id=process_id)
@@ -123,6 +128,7 @@ def results_qc(lims, process_id):
             artifact.put()
 
 
+@app.command()
 def results_purify_normalise(lims, process_id):
     """Upload tecan results to artifacts."""
     process = Process(lims, id=process_id)
@@ -150,6 +156,7 @@ def results_purify_normalise(lims, process_id):
         artifact.put()
 
 
+@app.command()
 def results_purify_mix(lims, process_id):
     """Upload tecan results to artifacts (mix samples)."""
     process = Process(lims, id=process_id)

@@ -1,16 +1,21 @@
 """Sample upload epp functions."""
+
 from datetime import datetime
 import re
 from requests.exceptions import ConnectionError
 import sys
 
+import typer
 from genologics.entities import Sample, Project, Containertype, Container
 
 from .. import send_email
 import clarity_epp.upload.utils
 import config
 
+app = typer.Typer()
 
+
+@app.command()
 def from_helix(lims, email_settings, input_file):
     """Upload samples from helix export file."""
     project_name = 'Dx {filename}'.format(filename=input_file.name.rstrip('.csv').split('/')[-1])

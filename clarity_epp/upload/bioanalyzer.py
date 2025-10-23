@@ -2,9 +2,13 @@
 
 import re
 
+import typer
 from genologics.entities import Process
 
+app = typer.Typer()
 
+
+@app.command()
 def results(lims, process_id):
     """Upload bioanalyzer results to artifacts."""
     process = Process(lims, id=process_id)

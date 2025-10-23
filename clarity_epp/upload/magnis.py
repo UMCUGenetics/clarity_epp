@@ -1,9 +1,13 @@
 """Magnis export upload epp functions."""
 
+import typer
 from genologics.entities import Process
 import xmltodict
 
+app = typer.Typer()
 
+
+@app.command()
 def results(lims, process_id):
     """Upload magnis export to process."""
     process = Process(lims, id=process_id)
