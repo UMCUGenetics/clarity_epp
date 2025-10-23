@@ -1,5 +1,6 @@
 """Utility functions used for creating samplesheets."""
 import re
+import string
 
 
 def sort_96_well_plate(wells):
@@ -95,3 +96,36 @@ def get_sample_sequence_index(reagent_label):
     sample_index = sample_index_search.group(1).split('-')
 
     return sample_index
+
+def plate96_wells() -> list[str]:
+    """
+    Make a list of plate96 wells, [A1, B1, C1, D1, E1, F1, G1, H1, etc.].
+
+    Returns:
+        list[str]: a list of well names.
+    """
+    wells: list[str] = []
+    for col in range(1, 13):
+        wells.extend([f"{row}{col}" for row in string.ascii_uppercase[:8]])
+    return wells
+
+def nm_from_ng_ul(concentration_ng_ul: float, fragment_bp: float) -> float:
+    """
+    Calculate ng/µl to nM (with 660 g/mol/bp).
+    Args:
+        concentration_ng_ul: a float containing the concentration in ng/ul
+        fragment_bp: a float containing the fragment length in bp
+
+    Returns:
+        float: the nM concentration
+    """
+    # nM = (ng/µl * 1e3 (pg/ng) / (660 g/mol/bp) / bp) * 1e3 (µl/L)
+    return concentration_ng_ul * 1000.0 * (1 / 660.0) * (1 / fragment_bp) * 1000.0
+
+def canonical_well(raw: str) -> str:
+    """Zet 'A:1' om naar 'A1'.
+    Remove the colon (":")
+    Args:
+        raw:
+    """
+    return "".join((raw or "").split(":"))
