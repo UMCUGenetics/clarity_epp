@@ -1,7 +1,13 @@
 """Illumina qc functions."""
+
+import typer
 from genologics.entities import Process
 
 
+app = typer.Typer()
+
+
+@app.command()
 def set_avg_q30(lims, process_id):
     """Calculate average % Bases >=Q30."""
     process = Process(lims, id=process_id)

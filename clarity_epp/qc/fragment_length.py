@@ -1,9 +1,14 @@
 """Fragment length QC epp functions."""
 
+import typer
 from genologics.entities import Process
 import config
 
 
+app = typer.Typer()
+
+
+@app.command()
 def set_qc_flag(lims, process_id):
     """Set qc flags based on Dx Fragmentlengte (bp) udf and criterea set by users."""
     process = Process(lims, id=process_id)
@@ -24,6 +29,7 @@ def set_qc_flag(lims, process_id):
             artifact.put()
 
 
+@app.command()
 def set_fragment_length_udf(lims, process_id):
     """Checks for empty udf 'Dx Fragmentlengte (bp)' and fills it if
     udf 'Dx Protocolomschrijving' contains protocol description from config.fragment_length.

@@ -2,9 +2,14 @@
 
 import re
 
+import typer
 from genologics.entities import Process
 
 
+app = typer.Typer()
+
+
+@app.command()
 def set_qc_flag(lims, process_id, cutoff=10):
     """Set qubit qc flags based on Dx Concentratie fluorescentie (ng/ul) values."""
     process = Process(lims, id=process_id)

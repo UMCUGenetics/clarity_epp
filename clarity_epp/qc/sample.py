@@ -1,10 +1,16 @@
 """Sample placement functions."""
+
+import typer
 from genologics.entities import Process
 
 import config
 from .. import get_sequence_name
 
 
+app = typer.Typer()
+
+
+@app.command()
 def set_mip_data_ready(lims, process_id):
     """Set mip data ready udf for wes samples from same person and test."""
     process = Process(lims, id=process_id)

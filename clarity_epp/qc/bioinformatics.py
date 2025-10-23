@@ -1,11 +1,16 @@
 import sys
 
+import typer
 from genologics.entities import Process
 
 from clarity_epp.qc.utils import transform_sex_multiqc
 import config
 
 
+app = typer.Typer()
+
+
+@app.command()
 def bioinf_qc_check(lims, process_id):
     """Read imported multiqc file and perform quality check
 
