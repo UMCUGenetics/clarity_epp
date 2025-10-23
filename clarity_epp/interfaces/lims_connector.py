@@ -6,17 +6,20 @@ import config
 
 
 class LimsInterface:
-    _lims_interface_instance = None
+    __lims_interface_instance = None
 
-    @classmethod
-    def get_instance(cls):
+    @staticmethod
+    def get_instance():
         """Static Access Method"""
-        if not LimsInterface._lims_interface_instance:
+        if not LimsInterface.__lims_interface_instance:
             LimsInterface(config.baseuri, config.username, config.password)
-        return cls._lims_interface_instance
+        return LimsInterface.__lims_interface_instance
 
     def __init__(self, baseuri, username, password):
-        self.lims = Lims(config.baseuri, config.username, config.password)
+        if LimsInterface.__lims_interface_instance is not None:
+            raise Exception("This class is a singleton class !")
+        else:
+            LimsInterface.__lims_interface_instance = self
 
     def get_samples_by_project_id(self, project_id: str) -> tuple[list[Any], list[dict[str, str | None]]] | list[Any]:
         """
