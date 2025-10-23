@@ -4,7 +4,7 @@ from typing import TextIO, Dict, Tuple
 
 from genologics.entities import Process
 
-from clarity_epp.export.utils import plate96_wells, nm_from_ng_ul, canonical_well
+from clarity_epp.export.utils import plate96_wells, nm_from_ng_ul, location_to_well
 
 def write_samplesheet(
     output_file: TextIO,
@@ -60,7 +60,7 @@ def samplesheet_dilute(lims, process_id: str, output_file: TextIO) -> None:
         ul_sample = (nM_pool / nM_dna) * output_ul
         ul_water = output_ul - ul_sample
 
-        well = canonical_well(artifact.location[1])
+        well = location_to_well(artifact.location[1])
         rows_by_well[well] = (artifact.name, float(ul_sample), float(ul_water))
 
     write_samplesheet(output_file, plate_id_input, plate_id_output, rows_by_well)
