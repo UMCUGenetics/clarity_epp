@@ -1,12 +1,8 @@
 from genologics.lims import Lims
 
+import config
 
-class LimsService():
-    def __init__(self, lims: Lims):
-        self._lims = lims
 
-    def get_samples(self, **kwargs):
-        return self._lims.get_samples(**kwargs)
-
-    def get_workflows(self, **kwargs):
-        return self._lims.get_workflows(**kwargs)
+class LimsService(Lims):
+    def __init__(self):
+        super().__init__(config.baseuri, config.username, config.password)

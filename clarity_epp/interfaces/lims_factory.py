@@ -10,6 +10,6 @@ class LimsFactory:
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            lims = Lims(config.baseuri, config.username, config.password)
-            cls._instance = LimsService(lims)
+            lims = LimsService()
+            cls._instance = lims
         return cls._instance
