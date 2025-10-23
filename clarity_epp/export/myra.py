@@ -1,9 +1,15 @@
 """Myra export functions."""
+
 import string
 
+import typer
 from genologics.entities import Process
 
 
+app = typer.Typer()
+
+
+@app.command()
 def samplesheet_callisto(lims, process_id, output_file):
     """Generate Myra samplesheet for step with Callisto strips as input container or output container
 
@@ -83,6 +89,7 @@ def samplesheet_callisto(lims, process_id, output_file):
                 output_file.write('{line}\n'.format(line=output_data[strip_id][well]))
 
 
+@app.command()
 def samplesheet_dilute(lims, process_id, output_file):
     """Create Myra samplesheet for diluting samples.
 

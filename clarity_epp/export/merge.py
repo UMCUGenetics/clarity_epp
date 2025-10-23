@@ -1,9 +1,15 @@
 """Export merge file functions."""
+
+import typer
 from genologics.entities import Process
 
 from .. import get_sequence_name, get_sample_artifacts_from_pool
 
 
+app = typer.Typer()
+
+
+@app.command()
 def create_file(lims, process_id, output_file):
     """Create mege file."""
     process = Process(lims, id=process_id)

@@ -1,10 +1,15 @@
 """Export label functions."""
 
+import typer
 from genologics.entities import Process
 
 from .. import get_mix_sample_barcode
 
 
+app = typer.Typer()
+
+
+@app.command()
 def container(lims, process_id, output_file, description=''):
     """Generate container label file."""
     process = Process(lims, id=process_id)
@@ -21,6 +26,7 @@ def container(lims, process_id, output_file, description=''):
             output_file.write('{container}\r\n'.format(container=container.name))
 
 
+@app.command()
 def container_sample(lims, process_id, output_file, description=''):
     """Generate container & artifact name label file."""
     process = Process(lims, id=process_id)
@@ -36,6 +42,7 @@ def container_sample(lims, process_id, output_file, description=''):
                 output_file.write('{sample}\t{container}\r\n'.format(container=container.name, sample=artifact.name))
 
 
+@app.command()
 def storage_location(lims, process_id, output_file):
     """Generate storage location label file."""
     process = Process(lims, id=process_id)
@@ -52,6 +59,7 @@ def storage_location(lims, process_id, output_file):
             ))
 
 
+@app.command()
 def nunc_mix_sample(lims, process_id, output_file):
     """Generate (mix) sample nunc label file."""
     process = Process(lims, id=process_id)
@@ -80,6 +88,7 @@ def nunc_mix_sample(lims, process_id, output_file):
             ))
 
 
+@app.command()
 def strips_callisto(lims, process_id, output_file):
     """Generate label file for strips Callisto.
 

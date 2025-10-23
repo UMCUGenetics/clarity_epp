@@ -1,10 +1,15 @@
 """Tapestation export functions."""
 
+import typer
 from genologics.entities import Process
 
 import clarity_epp.export.utils
 
 
+app = typer.Typer()
+
+
+@app.command()
 def samplesheet(lims, process_id, output_file):
     """Create Tapestation samplesheet."""
     process = Process(lims, id=process_id)

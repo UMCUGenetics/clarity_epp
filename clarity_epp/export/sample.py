@@ -1,11 +1,17 @@
 """Sample export functions."""
+
 import datetime
 
+import typer
 from genologics.entities import Process
 
 import clarity_epp.export.utils
 
 
+app = typer.Typer()
+
+
+@app.command()
 def removed_samples(lims, output_file):
     """Export table with samples that are removed from a workflow."""
     output_file.write('Datum verwijderd\tSample\tSample project\tWerklijst\tOnderzoeks nummer\tOnderzoeks indicatie\tVerwijderd uit stap\tStatus\n')
@@ -129,6 +135,7 @@ def removed_samples(lims, output_file):
                 ))
 
 
+@app.command()
 def get_artifact_samples(lims, artifact_name=None, sequencing_run=None, sequencing_run_project=None):
     """Lookup samples by artifact name or sequencing run (project)."""
     samples = {}
@@ -155,6 +162,7 @@ def get_artifact_samples(lims, artifact_name=None, sequencing_run=None, sequenci
     return samples
 
 
+@app.command()
 def sample_udf_dx(lims, output_file, artifact_name=None, sequencing_run=None, sequencing_run_project=None, udf=None, column_name=None):
     """Export table with sample udf (Dx-udf only)."""
     artifact_samples = get_artifact_samples(lims, artifact_name, sequencing_run, sequencing_run_project)
@@ -182,6 +190,7 @@ def sample_udf_dx(lims, output_file, artifact_name=None, sequencing_run=None, se
         print("no_sample_found")
 
 
+@app.command()
 def sample_related_mip(lims, process_id, output_file):
     """Export related mip samples for all samples in process."""
     process = Process(lims, id=process_id)

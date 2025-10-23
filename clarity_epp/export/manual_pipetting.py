@@ -1,12 +1,17 @@
 """Manual pipetting export functions."""
+
 import re
 
+import typer
 from genologics.entities import Process
 
 from .. import get_mix_sample_barcode, get_unique_sample_id
 import clarity_epp.export.utils
 
+app = typer.Typer()
 
+
+@app.command()
 def samplesheet_purify(lims, process_id, output_file):
     """Create manual pipetting samplesheet for purifying samples."""
     output_file.write('Fractienummer\tConcentration(ng/ul)\taantal ng te isoleren\tul gDNA\tul Water\n')
@@ -56,6 +61,7 @@ def samplesheet_purify(lims, process_id, output_file):
         ))
 
 
+@app.command()
 def samplesheet_dilute_library_pool(lims, process_id, output_file):
     """Create manual pipetting samplesheet for sequencing pools."""
     output_file.write('Sample\tContainer\tWell\tul Sample\tul EB\n')
@@ -93,6 +99,7 @@ def samplesheet_dilute_library_pool(lims, process_id, output_file):
         output_file.write(line)
 
 
+@app.command()
 def library_dilution_calculator(concentration, size, trio, pedigree, ng):
     """Calculate ul per sample needed for multiplexing."""
     if trio == 'CCC':
@@ -111,6 +118,7 @@ def library_dilution_calculator(concentration, size, trio, pedigree, ng):
     return ul_sample
 
 
+@app.command()
 def library_dilution_calculator_fixed_volume(concentration, size, ul):
     """Calculate ng per sample (based on given ul_sample) needed for multiplexing."""
     nM_DNA = (float(concentration)*(10.0**6.0))/(660*float(size))
@@ -118,6 +126,7 @@ def library_dilution_calculator_fixed_volume(concentration, size, ul):
     return ng_sample
 
 
+@app.command()
 def library_dilution_calculator_fixed_ng(concentration, size, pedigree, ng, ped_given_ul):
     """Calculate ng per sample (based on calculated ng from given ul_sample) needed for multiplexing."""
     if pedigree == ped_given_ul:
@@ -129,6 +138,7 @@ def library_dilution_calculator_fixed_ng(concentration, size, pedigree, ng, ped_
     return ng_sample
 
 
+@app.command()
 def samplesheet_multiplex_library_pool(lims, process_id, output_file):
     """Create manual pipetting samplesheet for multiplexing(pooling) samples."""
     process = Process(lims, id=process_id)
@@ -319,6 +329,7 @@ def samplesheet_multiplex_library_pool(lims, process_id, output_file):
         ))
 
 
+@app.command()
 def samplesheet_multiplex_sequence_pool(lims, process_id, output_file):
     """Create manual pipetting samplesheet for multiplex sequence pools."""
 
@@ -373,6 +384,7 @@ def samplesheet_multiplex_sequence_pool(lims, process_id, output_file):
     output_file.write('{0}\t{1:.2f}\n'.format('Tris-HCL', tris_HCL_uL))
 
 
+@app.command()
 def samplesheet_normalization(lims, process_id, output_file):
     """Create manual pipetting samplesheet for normalizing (MIP) samples."""
     output_file.write(
@@ -445,6 +457,7 @@ def samplesheet_normalization(lims, process_id, output_file):
         output_file.write(output[well])
 
 
+@app.command()
 def samplesheet_capture(lims, process_id, output_file):
     """Create manual pipetting samplesheet for capture protocol."""
     process = Process(lims, id=process_id)
@@ -477,6 +490,7 @@ def samplesheet_capture(lims, process_id, output_file):
         output_file.write('{0}\t{1:.2f}\t{2:.2f}\n'.format(item[0], item[1], item[2]))
 
 
+@app.command()
 def sammplesheet_exonuclease(lims, process_id, output_file):
     """Create manual pipetting samplesheet for Exonuclease protocol"""
     process = Process(lims, id=process_id)
@@ -507,6 +521,7 @@ def sammplesheet_exonuclease(lims, process_id, output_file):
         output_file.write('{0}\t{1:.2f}\t{2:.2f}\n'.format(item[0], item[1], item[2]))
 
 
+@app.command()
 def sammplesheet_pcr_exonuclease(lims, process_id, output_file):
     """Create manual pipetting samplesheet for PCR after Exonuclease protocol"""
     process = Process(lims, id=process_id)
@@ -536,6 +551,7 @@ def sammplesheet_pcr_exonuclease(lims, process_id, output_file):
         output_file.write('{0}\t{1:.2f}\t{2:.2f}\n'.format(item[0], item[1], item[2]))
 
 
+@app.command()
 def samplesheet_mip_multiplex_pool(lims, process_id, output_file):
     """Create manual pipetting samplesheet for smMIP multiplexing"""
     process = Process(lims, id=process_id)
@@ -615,6 +631,7 @@ def samplesheet_mip_multiplex_pool(lims, process_id, output_file):
             ))
 
 
+@app.command()
 def samplesheet_mip_pool_dilution(lims, process_id, output_file):
     """Create manual pipetting samplesheet for smMIP pool dilution"""
     process = Process(lims, id=process_id)
@@ -654,6 +671,7 @@ def samplesheet_mip_pool_dilution(lims, process_id, output_file):
         ))
 
 
+@app.command()
 def samplesheet_pool_samples(lims, process_id, output_file):
     """Create manual pipetting samplesheet for pooling samples."""
     process = Process(lims, id=process_id)
@@ -696,6 +714,7 @@ def samplesheet_pool_samples(lims, process_id, output_file):
             )
 
 
+@app.command()
 def samplesheet_pool_magnis_pools(lims, process_id, output_file):
     """Create manual pipetting samplesheet for pooling magnis pools. Correct for pools with < 8 samples"""
     process = Process(lims, id=process_id)
@@ -738,6 +757,7 @@ def samplesheet_pool_magnis_pools(lims, process_id, output_file):
         )
 
 
+@app.command()
 def samplesheet_normalization_mix(lims, process_id, output_file):
     """"Create manual pipetting samplesheet for normalizing mix fraction samples."""
     process = Process(lims, id=process_id)

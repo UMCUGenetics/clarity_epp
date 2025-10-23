@@ -1,10 +1,16 @@
 """Workflow export functions."""
+
+import typer
 from genologics.entities import Process
 
 import config
 from .. import get_sequence_name
 
 
+app = typer.Typer()
+
+
+@app.command()
 def determin_meetw(meetw_processes, sample_processes, repeat_cutoff=2):
     """Determine meetwaarde and meetwaarde herhaling (reapeat) based on list of processes and repeat cutoff."""
     meetw = 'N'
@@ -21,6 +27,7 @@ def determin_meetw(meetw_processes, sample_processes, repeat_cutoff=2):
     return meetw, meetw_herh
 
 
+@app.command()
 def helix_magnis(lims, process_id, output_file):
     """Export workflow information in helix table format (Magnis Workflow)."""
     output_file.write((
@@ -117,6 +124,7 @@ def helix_magnis(lims, process_id, output_file):
                 )
 
 
+@app.command()
 def helix_mip(lims, process_id, output_file):
     """Export workflow information in helix table format (MIP Workflow)."""
     output_file.write((
@@ -174,6 +182,7 @@ def helix_mip(lims, process_id, output_file):
                 )
 
 
+@app.command()
 def helix_callisto(lims, process_id, output_file):
     """Export workflow information in helix table format (Callisto srWGS Workflow).
 

@@ -1,8 +1,13 @@
 """Bioanalyzer export functions."""
 
+import typer
 from genologics.entities import Process
 
 
+app = typer.Typer()
+
+
+@app.command()
 def samplesheet(lims, process_id, output_file):
     """Create Bioanalyzer samplesheet."""
     process = Process(lims, id=process_id)

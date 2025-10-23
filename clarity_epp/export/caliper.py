@@ -1,11 +1,17 @@
 """Caliper export functions."""
+
 import string
 
+import typer
 from genologics.entities import Process
 
 import clarity_epp.export.utils
 
 
+app = typer.Typer()
+
+
+@app.command()
 def samplesheet_normalise(lims, process_id, output_file):
     """Create Caliper samplesheet for normalising 96 well plate."""
     output_file.write(
@@ -153,7 +159,7 @@ def samplesheet_normalise(lims, process_id, output_file):
             )
         )
 
-
+@app.command()
 def samplesheet_dilute(lims, process_id, output_file):
     """Create Caliper samplesheet for diluting samples."""
     output_file.write(

@@ -1,9 +1,15 @@
 """Export email functions."""
+
+import typer
 from genologics.entities import Process
 
 from .. import send_email
 
 
+app = typer.Typer()
+
+
+@app.command()
 def sequencing_run(lims, email_settings, process_id):
     process = Process(lims, id=process_id)
     artifact = process.all_inputs()[0]

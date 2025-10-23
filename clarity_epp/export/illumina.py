@@ -1,7 +1,9 @@
 """Illumina export functions."""
+
 import operator
 import re
 
+import typer
 from genologics.entities import Process
 
 from .. import get_sequence_name, get_sample_artifacts_from_pool
@@ -9,6 +11,10 @@ from clarity_epp.export.utils import get_sample_sequence_index, reverse_compleme
 import config
 
 
+app = typer.Typer()
+
+
+@app.command()
 def get_project(projects, urgent=False):
     """Get a project name from projects dict ({'project_name': sample_count, ...})
     If urgent is True, return the first project with < 9 samples, else return the project with the least amount of samples.
@@ -24,6 +30,7 @@ def get_project(projects, urgent=False):
     return projects_sorted[0][0]  # return project with least amount of samples.
 
 
+@app.command()
 def get_override_cycles(read_len, umi_len, index_len, max_index_len, index_2_conversion_orientation):
     """Get override cycles per sample."""
     read_cycles = ['', '']
@@ -60,6 +67,7 @@ def get_override_cycles(read_len, umi_len, index_len, max_index_len, index_2_con
     return override_cycles
 
 
+@app.command()
 def get_samplesheet_samples(sample_artifacts, process, index_2_conversion_orientation):
     families = {}
     samplesheet_samples = {}
@@ -228,6 +236,7 @@ def get_samplesheet_samples(sample_artifacts, process, index_2_conversion_orient
     return samplesheet_samples
 
 
+@app.command()
 def create_samplesheet(lims, process_id, output_file):
     """Create illumina samplesheet v2."""
     process = Process(lims, id=process_id)

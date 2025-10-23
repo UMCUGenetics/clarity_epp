@@ -1,11 +1,16 @@
 """Tecan export functions."""
 
+import typer
 from genologics.entities import Process
 
 from .. import get_mix_sample_barcode
 import clarity_epp.export.utils
 
 
+app = typer.Typer()
+
+
+@app.command()
 def samplesheet(lims, process_id, type, output_file):
     """Create Tecan samplesheet."""
     process = Process(lims, id=process_id)
