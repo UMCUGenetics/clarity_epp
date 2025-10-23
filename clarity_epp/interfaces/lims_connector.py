@@ -2,6 +2,7 @@ from typing import Any
 
 from genologics.entities import Process
 from genologics.lims import Lims
+
 import config
 
 
@@ -12,7 +13,7 @@ class LimsInterface:
     def get_instance():
         """Static Access Method"""
         if not LimsInterface.__lims_interface_instance:
-            LimsInterface(config.baseuri, config.username, config.password)
+            LimsInterface.__lims_interface_instance = Lims(config.baseuri, config.username, config.password)
         return LimsInterface.__lims_interface_instance
 
     def __init__(self, baseuri, username, password):
@@ -73,3 +74,5 @@ class LimsInterface:
 
     def get_file_contents_by_file_id(self, file_id):
         return self.lims.get_file_contents(file_id).data.decode('utf-8')
+
+
