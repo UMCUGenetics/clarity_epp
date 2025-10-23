@@ -1,0 +1,5 @@
+[clarity]
+baseuri = ''
+username = ''
+password = ''
+api_timeout = 60
