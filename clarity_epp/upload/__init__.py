@@ -9,7 +9,7 @@ import clarity_epp.upload.bioanalyzer
 import clarity_epp.upload.magnis
 
 
-app = typer.Typer()
+app = typer.Typer(no_args_is_help=True)
 app.add_typer(bioanalyzer.app, name="bioanalyzer")
 app.add_typer(magnis.app, name="magnis")
 app.add_typer(samples.app, name="samples")

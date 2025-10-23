@@ -11,7 +11,7 @@ import clarity_epp.placement.step
 import clarity_epp.placement.tecan
 
 
-app = typer.Typer()
+app = typer.Typer(no_args_is_help=True)
 app.add_typer(artifact.app, name="artifact")
 app.add_typer(barcode.app, name="barcode")
 app.add_typer(pipetting.app, name="pipetting")

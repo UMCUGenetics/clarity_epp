@@ -9,7 +9,7 @@ import clarity_epp.qc.qubit
 import clarity_epp.qc.sample
 
 
-app = typer.Typer()
+app = typer.Typer(no_args_is_help=True)
 app.add_typer(bioinformatics.app, name="bioinformatics")
 app.add_typer(fragment_length.app, name="fragment_length")
 app.add_typer(illumina.app, name="illumina")

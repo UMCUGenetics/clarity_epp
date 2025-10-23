@@ -19,7 +19,7 @@ import clarity_epp.export.tecan
 import clarity_epp.export.workflow
 
 
-app = typer.Typer()
+app = typer.Typer(no_args_is_help=True)
 app.add_typer(bioanalyzer.app, name="bioanalyzer")
 app.add_typer(caliper.app, name="caliper")
 app.add_typer(email.app, name="email")
