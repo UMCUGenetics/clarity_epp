@@ -1,3 +1,5 @@
+from typing import Any, TYPE_CHECKING
+
 import genologics.lims
 from genologics.entities import Artifact, Process
 from tenacity import Retrying, RetryError, stop_after_attempt, wait_fixed
@@ -5,12 +7,18 @@ from tenacity import Retrying, RetryError, stop_after_attempt, wait_fixed
 
 from clarity_epp.config import settings
 
+# In order to make autocomplete available in IDEs
+if TYPE_CHECKING:
+    class ClarityServiceType(genologics.lims.Lims): ...
+else:
+    ClarityServiceType = object
 
 class ClarityService(genologics.lims.Lims):
+class ClarityService(ClarityServiceType):
     def __init__(self, connector: genologics.lims.Lims):
         self._lims = connector
 
-    def __getattr__(self, name):
+    def __getattr__(self, name) -> Any:
         """
         If an attribute does not exist in ClarityService, then check whether it exists in self._lims.
         """
@@ -69,10 +77,10 @@ class ClarityService(genologics.lims.Lims):
 
 
 class ClarityFactory:
-    _instance = None
+    _instance: genologics.lims.Lims = None
 
     @classmethod
-    def get_instance(cls):
+    def get_instance(cls) -> ClarityService:
         if cls._instance is None:
             lims = genologics.lims.Lims(
                 settings.clarity.baseuri, settings.clarity.username, settings.clarity.password.get_secret_value()
@@ -85,4 +93,5 @@ class ClarityFactory:
             except RetryError:
                 raise Exception("Could not connect to Clarity LIMS.")
             cls._instance = ClarityService(lims)
+            cls._instance = lims
         return cls._instance
