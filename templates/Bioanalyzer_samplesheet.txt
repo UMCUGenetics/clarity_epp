@@ -1,0 +1,21 @@
+"Sample Name","Sample Comment","Rest. Digest","Status","Observation","Result Label","Result Color"
+{% for well in plate -%}
+{{ plate[well] }},,FALSE,1,,,
+{% endfor -%}
+Ladder,,FALSE,1,,,
+
+"Chip Lot #","Reagent Kit Lot #"
+{{ chip_lot }},{{ reagent_lot }}
+
+"QC1 Min [%]","QC1 Max [%]","QC2 Min [%]","QC2 Max [%]"
+,,,
+
+"Chip Comment"
+
+
+"Study Name","Experimenter","Laboratory","Company","Department"
+,,,,
+
+"Study Comment"
+
+
