@@ -13,7 +13,6 @@ if TYPE_CHECKING:
 else:
     ClarityServiceType = object
 
-class ClarityService(genologics.lims.Lims):
 class ClarityService(ClarityServiceType):
     def __init__(self, connector: genologics.lims.Lims):
         self._lims = connector
@@ -92,6 +91,5 @@ class ClarityFactory:
                         lims.check_version()
             except RetryError:
                 raise Exception("Could not connect to Clarity LIMS.")
-            cls._instance = ClarityService(lims)
             cls._instance = lims
         return cls._instance
