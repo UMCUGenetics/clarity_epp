@@ -47,13 +47,18 @@ def bioinf_qc_check(lims, process_id):
                                 else:
                                     udf_data[udf] = data[udf_columns[udf]['index']]
                             except (IndexError, ValueError):
-                                # Catch parsing errors
-                                message = (
-                                    'Could not correctly parse data from multiqc file.\n'
-                                    f'Row = {line_index+1} \t Column = {udf_columns[udf]["column"]} \t UDF = {udf}.\n'
-                                    'Please check the file.'
-                                )
-                                sys.exit(message)
+                                if udf == 'Dx Gevonden geslacht':
+                                    # Catch unknown sex
+                                    if 'transform' in udf_columns[udf]:
+                                        udf_data[udf] = udf_columns[udf]['transform']('')
+                                else:
+                                    # Catch parsing errors
+                                    message = (
+                                        'Could not correctly parse data from multiqc file.\n'
+                                        f'Row = {line_index+1} \t Column = {udf_columns[udf]["column"]} \t UDF = {udf}.\n'
+                                        'Please check the file.'
+                                    )
+                                    sys.exit(message)
                         sample_name = data[sample_index]
                         sample_qcs[sample_name] = udf_data
             except (IndexError):
@@ -153,7 +158,10 @@ def bioinf_qc_check(lims, process_id):
                     req=config.bioinformatics_qc_requirements_srWGS['Contamination'],
                 ))
             # QC sex check
-            if input.udf['Dx Gevonden geslacht'] != input.samples[0].udf['Dx Geslacht']:
+            if input.udf['Dx Gevonden geslacht'] == 'Onbekend':
+                qc_conclusion += 'Geslacht onbekend.'
+                qc_message.append('Het gevonden geslacht is Onbekend, omdat deze niet bepaald kon worden in de data.')
+            elif input.udf['Dx Gevonden geslacht'] != input.samples[0].udf['Dx Geslacht']:
                 qc_conclusion += 'Geslacht afgekeurd.'
                 qc_message.append('Het gevonden geslacht {qc} komt niet overeen met het bekende geslacht {req}.'.format(
                     qc=input.udf['Dx Gevonden geslacht'],

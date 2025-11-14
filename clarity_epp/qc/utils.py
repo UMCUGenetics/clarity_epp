@@ -11,4 +11,4 @@ def transform_sex_multiqc(value):
         else:
             return value
     else:
-        return value
+        return 'Onbekend'
