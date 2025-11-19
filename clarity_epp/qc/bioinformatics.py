@@ -43,7 +43,11 @@ def bioinf_qc_check(lims, process_id):
                             # Transform specific udf
                             try:
                                 if 'transform' in udf_columns[udf]:
-                                    udf_data[udf] = udf_columns[udf]['transform'](data[udf_columns[udf]['index']])
+                                    if udf_columns[udf]['transform'] == float and data[udf_columns[udf]['index']] == 'NA':
+                                        # Catch 'NA' instead of value and fill udf with -1
+                                        udf_data[udf] = udf_columns[udf]['transform']('-1')
+                                    else:
+                                        udf_data[udf] = udf_columns[udf]['transform'](data[udf_columns[udf]['index']])
                                 else:
                                     udf_data[udf] = data[udf_columns[udf]['index']]
                             except (IndexError, ValueError):
