@@ -55,7 +55,7 @@ def bioinf_qc_check(lims, process_id):
                                     # Catch parsing errors
                                     message = (
                                         'Could not correctly parse data from multiqc file. '
-                                        f'Row = {line_index+1} \t Column = {udf_columns[udf]["column"]} \t UDF = {udf}. '
+                                        f'Row = {line_index+1}, Column = {udf_columns[udf]["column"]}, UDF = {udf}. '
                                         'Please check the file.'
                                     )
                                     sys.exit(message)
