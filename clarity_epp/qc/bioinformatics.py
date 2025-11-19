@@ -94,11 +94,15 @@ def bioinf_qc_check(lims, process_id):
             qc_message = []
             # QC coverage check
             if input.udf['Dx Gem. dekking'] < config.bioinformatics_qc_requirements_srWGS['Coverage']:
-                qc_conclusion += 'Dekking afgekeurd.'
-                qc_message.append('De gemiddelde dekking {qc} is onder {req}x.'.format(
-                    qc=input.udf['Dx Gem. dekking'],
-                    req=config.bioinformatics_qc_requirements_srWGS['Coverage'],
-                ))
+                if input.udf['Dx Gem. dekking'] == -1.0:
+                    qc_conclusion += 'Dekking onbekend.'
+                    qc_message.append('De gemiddelde dekking is onbekend.')
+                else:
+                    qc_conclusion += 'Dekking afgekeurd.'
+                    qc_message.append('De gemiddelde dekking {qc} is onder {req}x.'.format(
+                        qc=input.udf['Dx Gem. dekking'],
+                        req=config.bioinformatics_qc_requirements_srWGS['Coverage'],
+                    ))
             # QC CCU check
             if input.udf['Dx CCU'] > config.bioinformatics_qc_requirements_srWGS['CCU']:
                 family_status = family_info[input.name]["status"]
@@ -154,6 +158,9 @@ def bioinf_qc_check(lims, process_id):
                         qc=input.udf['Dx CCU'],
                         req=config.bioinformatics_qc_requirements_srWGS['CCU'],
                     ))
+            elif input.udf['Dx CCU'] == -1.0:
+                qc_conclusion += 'CCU onbekend.'
+                qc_message.append('De CCU waarde is onbekend.')
             # QC contamination check
             if input.udf['Dx Contaminatie'] > config.bioinformatics_qc_requirements_srWGS['Contamination']:
                 qc_conclusion += 'Contaminatie afgekeurd.'
@@ -161,6 +168,9 @@ def bioinf_qc_check(lims, process_id):
                     qc=input.udf['Dx Contaminatie'],
                     req=config.bioinformatics_qc_requirements_srWGS['Contamination'],
                 ))
+            elif input.udf['Dx Contaminatie'] == -1.0:
+                qc_conclusion += 'Contaminatie onbekend.'
+                qc_message.append('De contaminatie waarde is onbekend.')
             # QC sex check
             if input.udf['Dx Gevonden geslacht'] == 'Onbekend':
                 qc_conclusion += 'Geslacht onbekend.'
