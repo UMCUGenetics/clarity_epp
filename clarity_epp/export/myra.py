@@ -180,7 +180,7 @@ def generate_samplesheet_barcode_plate(process):
     """
     info_dir = get_info_for_samplesheet_barcode(process)
     samplesheet_content = {"samples": info_dir}
-    samplesheet = create_samplesheet("Samplesheet_Myra_Barcode.txt", samplesheet_content)
+    samplesheet = create_samplesheet("Samplesheet_Myra_Barcode.csv", samplesheet_content)
     return samplesheet
 
 
