@@ -1,6 +1,8 @@
 """Utility functions used for creating samplesheets."""
 import re
 
+from jinja2 import Environment, FileSystemLoader
+
 
 def sort_96_well_plate(wells):
     """Sort 96 well plate wells in vertical order.
@@ -95,3 +97,37 @@ def get_sample_sequence_index(reagent_label):
     sample_index = sample_index_search.group(1).split('-')
 
     return sample_index
+
+
+def extract_well_from_reagent_label(reagent_label):
+    """Extracts and returns the well location from the given reagent label name
+    by splitting the reagent label name (spaces), taking the second string ("01A"),
+    removing the first 0 if present ("1A") and changing the order ("A1").
+
+    Args:
+        reagent_label (str): Reagent label name (format example: "Dx 01A 1057 (GAACCTGATG-AGCATATTAG)")
+
+    Returns:
+        str: Well location extracted from reagent label
+    """
+    label_location = reagent_label.split(" ")[1]
+    if label_location.startswith("0"):
+        # remove starting 0 for columns 1-9
+        label_location = label_location[1:]
+    return label_location[-1] + label_location[:-1]
+
+
+def create_samplesheet(template_file, variable_content, environment=Environment(loader=FileSystemLoader("templates/"))):
+    """Gets samplesheet template and fills with the information from the given variable content dictionary.
+
+    Args:
+        template_file (str): Samplesheet template file name
+        variable_content (dict): Dictionary (nested) with samplesheet content (first key(s) needs to be a string)
+
+    Returns:
+        str: Filled samplesheet template
+    """
+    template = environment.get_template(template_file)
+    samplesheet = template.render(variable_content)
+
+    return samplesheet

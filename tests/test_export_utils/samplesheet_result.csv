@@ -1,0 +1,6 @@
+name,input_ID,well_input_ID,output_ID,well_output_ID
+sample_1,input_container,A1,output_container,B1
+sample_2,input_container,A2,output_container,B2
+sample_3,input_container,A3,output_container,B3
+sample_4,input_container,A4,output_container,B4
+sample_5,input_container,A5,output_container,B5

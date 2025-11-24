@@ -1,5 +1,8 @@
+import pytest
+
 from genologics.lims import Lims
 from genologics.entities import Artifact
+from jinja2 import Environment, FileSystemLoader
 
 from clarity_epp.export import utils
 
@@ -35,3 +38,34 @@ def test_get_sample_sequence_index():
     assert utils.get_sample_sequence_index('Dx 10G NEXTflex custom UDI 79 (TGAGGCGC)') == ['TGAGGCGC']
     assert utils.get_sample_sequence_index('Dx 01G Agilent SureSelect XT HS2 UDI_v2 007 (GCAGGTTC)') == ['GCAGGTTC']
     assert utils.get_sample_sequence_index('Dx 02B Agilent SureSelect XT HS2 UDI_v1 010 (TAGAGCTC)') == ['TAGAGCTC']
+
+
+@pytest.fixture
+def make_info_dir1():
+    info_dir = {}
+    for i in range(1, 6, 1):
+        info_dir[i] = {
+            "name": f"sample_{i}",
+            "input": "input_container",
+            "well_input": f"A{i}",
+            "output": "output_container",
+            "well_output": f"B{i}",
+        }
+    return info_dir
+
+
+@pytest.mark.parametrize("template, expected", [("samplesheet_template.csv", "samplesheet_result.csv")])
+def test_create_samplesheet(template, make_info_dir1, expected, datadir):
+    environment = Environment(loader=FileSystemLoader(datadir))
+    expected = (datadir / expected).read_text()
+    content = {"samples": make_info_dir1}
+    result = utils.create_samplesheet(template, content, environment)
+    assert result == expected
+
+
+@pytest.mark.parametrize("label,expected", [
+    ("Dx 01A 1057 (GAACCTGATG-AGCATATTAG)", "A1"),
+    ("Dx 12H 96 (TGGTCGGCGC-GCGCCTGGAA)", "H12")
+])
+def test_extract_well_from_reagent_label(label, expected):
+    assert utils.extract_well_from_reagent_label(label) == expected

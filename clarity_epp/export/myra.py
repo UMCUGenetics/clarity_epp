@@ -3,6 +3,9 @@ import string
 
 from genologics.entities import Process
 
+from clarity_epp.export.utils import create_samplesheet, extract_well_from_reagent_label
+from clarity_epp.placement.barcode import check_plate_id_with_used_reagent_labels
+
 
 def samplesheet_callisto(lims, process_id, output_file):
     """Generate Myra samplesheet for step with Callisto strips as input container or output container
@@ -140,3 +143,56 @@ def samplesheet_dilute(lims, process_id, output_file):
                 well=well,
                 plate_id_output=plate_id_output,
             ))
+
+
+def get_info_for_samplesheet_barcode(process):
+    """Collects information for the Myra samplesheet barcode plate from the process and
+    returns a dictionary containing this information organised by analytes.
+
+    Args:
+        process (object): Lims Process object
+
+    Returns:
+        dict: Dictionary containing the information for the samplesheet in a nested dictionary per analyte
+    """
+    analytes = process.analytes()[0]
+    info_dir = {}
+    for analyte in analytes:
+        label_location = extract_well_from_reagent_label(analyte.reagent_labels[0])
+        info_dir[analyte.name] = {
+            "reagent": analyte.reagent_labels[0],
+            "input": process.udf['Twist barcode plaat ID'],
+            "well_input": label_location,
+            "output": analyte.container.name,
+            "well_output": "".join(analyte.location[1].split(":")),
+        }
+    return info_dir
+
+
+def generate_samplesheet_barcode_plate(process):
+    """Generates a Myra samplesheet for pipetting from barcode plate.
+
+    Args:
+        process (object): Lims Process object
+
+    Returns:
+        str: Myra samplesheet
+    """
+    info_dir = get_info_for_samplesheet_barcode(process)
+    samplesheet_content = {"samples": info_dir}
+    samplesheet = create_samplesheet("Samplesheet_Myra_Barcode.txt", samplesheet_content)
+    return samplesheet
+
+
+def check_plate_id_and_generate_samplesheet_barcode(lims, process_id, output_file):
+    """Performs an index plate ID check and generates a samplesheet only when check is ok.
+
+    Args:
+        lims (object): Lims connection
+        process_id (str): Process ID
+    """
+    process = Process(lims, id=process_id)
+    check_plate_id_with_used_reagent_labels(lims, process)
+    # If check_plate_id_with_used_reagent_labels did not exit with a wrong plate message samplesheet will be generated
+    samplesheet = generate_samplesheet_barcode_plate(process)
+    output_file.write(samplesheet)
