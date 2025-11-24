@@ -1,7 +1,7 @@
 """Utility functions used for creating samplesheets."""
 import re
 
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, PackageLoader
 
 
 def sort_96_well_plate(wells):
@@ -117,7 +117,7 @@ def extract_well_from_reagent_label(reagent_label):
     return label_location[-1] + label_location[:-1]
 
 
-def create_samplesheet(template_file, variable_content, environment=Environment(loader=FileSystemLoader("templates/"))):
+def create_samplesheet(template_file, variable_content, environment=Environment(loader=PackageLoader("clarity_epp"))):
     """Gets samplesheet template and fills with the information from the given variable content dictionary.
 
     Args:
