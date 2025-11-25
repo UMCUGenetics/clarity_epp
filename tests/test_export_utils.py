@@ -63,9 +63,17 @@ def test_create_samplesheet(template, make_info_dir1, expected, datadir):
     assert result == expected
 
 
-@pytest.mark.parametrize("label,expected", [
+@pytest.mark.parametrize("label, expected", [
     ("Dx 01A 1057 (GAACCTGATG-AGCATATTAG)", "A1"),
     ("Dx 12H 96 (TGGTCGGCGC-GCGCCTGGAA)", "H12")
 ])
 def test_extract_well_from_reagent_label(label, expected):
     assert utils.extract_well_from_reagent_label(label) == expected
+
+
+@pytest.mark.parametrize("input_dict, expected_dict", [
+    ({"key1": {"well": "D4"}, "key2": {"well": "B2"}, "key3": {"well": "C7"}},
+     {"key2": {"well": "B2"}, "key3": {"well": "C7"}, "key1": {"well": "D4"}})
+])
+def test_sort_dict_by_nested_well_location(input_dict, expected_dict):
+    assert utils.sort_dict_by_nested_well_location(input_dict, "well") == expected_dict

@@ -123,6 +123,8 @@ def create_samplesheet(template_file, variable_content, environment=Environment(
     Args:
         template_file (str): Samplesheet template file name
         variable_content (dict): Dictionary (nested) with samplesheet content (first key(s) needs to be a string)
+        environment (object, optional): jinja2.environment.Environment object.
+            Defaults to Environment(loader=PackageLoader("clarity_epp")).
 
     Returns:
         str: Filled samplesheet template
@@ -131,3 +133,26 @@ def create_samplesheet(template_file, variable_content, environment=Environment(
     samplesheet = template.render(variable_content)
 
     return samplesheet
+
+
+def sort_dict_by_nested_well_location(dict_to_sort, key_to_sort_by):
+    """Sorts a given dictionary (vertically) by well location stored as value in nested dictionary;
+    format dictionary: dict_to_sort[key][key_to_sort_by] = well (e.g. A1)
+
+    Args:
+        dict_to_sort (dict): Dictionary to sort by well location
+        key_to_sort_by (str): The key containing the well location value to sort by
+
+    Returns:
+        dict: Sorted dictionary
+    """
+    used_wells = []
+    for key in dict_to_sort:
+        used_wells.append(dict_to_sort[key][key_to_sort_by])
+    sorted_wells = sort_96_well_plate(used_wells)
+    sorted_dict = {}
+    for well in sorted_wells:
+        for key in dict_to_sort:
+            if well == dict_to_sort[key][key_to_sort_by]:
+                sorted_dict[key] = dict_to_sort[key]
+    return sorted_dict

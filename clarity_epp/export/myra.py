@@ -3,7 +3,7 @@ import string
 
 from genologics.entities import Process
 
-from clarity_epp.export.utils import create_samplesheet, extract_well_from_reagent_label
+from clarity_epp.export.utils import create_samplesheet, extract_well_from_reagent_label, sort_dict_by_nested_well_location
 from clarity_epp.placement.barcode import check_plate_id_with_used_reagent_labels
 
 
@@ -179,7 +179,8 @@ def generate_samplesheet_barcode_plate(process):
         str: Myra samplesheet
     """
     info_dir = get_info_for_samplesheet_barcode(process)
-    samplesheet_content = {"samples": info_dir}
+    sorted_info_dir = sort_dict_by_nested_well_location(info_dir, "well_input")
+    samplesheet_content = {"samples": sorted_info_dir}
     samplesheet = create_samplesheet("Samplesheet_Myra_Barcode.csv", samplesheet_content)
     return samplesheet
 
