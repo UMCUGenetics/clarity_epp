@@ -41,24 +41,24 @@ def test_get_sample_sequence_index():
 
 
 @pytest.fixture
-def make_info_dir1():
-    info_dir = {}
+def make_info_dictionary1():
+    info_dictionary = {}
     for i in range(1, 6, 1):
-        info_dir[i] = {
+        info_dictionary[i] = {
             "name": f"sample_{i}",
             "input": "input_container",
             "well_input": f"A{i}",
             "output": "output_container",
             "well_output": f"B{i}",
         }
-    return info_dir
+    return info_dictionary
 
 
 @pytest.mark.parametrize("template, expected", [("samplesheet_template.csv", "samplesheet_result.csv")])
-def test_create_samplesheet(template, make_info_dir1, expected, datadir):
+def test_create_samplesheet(template, make_info_dictionary1, expected, datadir):
     environment = Environment(loader=FileSystemLoader(datadir))
     expected = (datadir / expected).read_text()
-    content = {"samples": make_info_dir1}
+    content = {"samples": make_info_dictionary1}
     result = utils.create_samplesheet(template, content, environment)
     assert result == expected
 

@@ -156,17 +156,17 @@ def get_info_for_samplesheet_barcode(process):
         dict: Dictionary containing the information for the samplesheet in a nested dictionary per analyte
     """
     analytes = process.analytes()[0]
-    info_dir = {}
+    info_dictionary = {}
     for analyte in analytes:
         label_location = extract_well_from_reagent_label(analyte.reagent_labels[0])
-        info_dir[analyte.name] = {
+        info_dictionary[analyte.name] = {
             "reagent": analyte.reagent_labels[0],
             "input": process.udf['Twist barcode plaat ID'],
             "well_input": label_location,
             "output": analyte.container.name,
             "well_output": "".join(analyte.location[1].split(":")),
         }
-    return info_dir
+    return info_dictionary
 
 
 def generate_samplesheet_barcode_plate(process):
@@ -178,9 +178,9 @@ def generate_samplesheet_barcode_plate(process):
     Returns:
         str: Myra samplesheet
     """
-    info_dir = get_info_for_samplesheet_barcode(process)
-    sorted_info_dir = sort_dict_by_nested_well_location(info_dir, "well_input")
-    samplesheet_content = {"samples": sorted_info_dir}
+    info_dictionary = get_info_for_samplesheet_barcode(process)
+    sorted_info_dictionary = sort_dict_by_nested_well_location(info_dictionary, "well_input")
+    samplesheet_content = {"samples": sorted_info_dictionary}
     samplesheet = create_samplesheet("Samplesheet_Myra_Barcode.csv", samplesheet_content)
     return samplesheet
 
