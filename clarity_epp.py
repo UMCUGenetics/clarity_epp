@@ -285,6 +285,11 @@ def placement_pipetting(args):
     clarity_epp.placement.pipetting.check_nunc_input_nunc_output(lims, args.process_id)
 
 
+def placement_consumables(args):
+    """Check consumables."""
+    clarity_epp.placement.consumables.check_used_consumables(lims, args.process_id)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
@@ -513,6 +518,10 @@ if __name__ == "__main__":
     parser_placement_pipetting = subparser_placement.add_parser('pipetting', help='Check pipetting input and output')
     parser_placement_pipetting.add_argument('process_id', help='Clarity lims process id')
     parser_placement_pipetting.set_defaults(func=placement_pipetting)
+
+    parser_placement_consumables = subparser_placement.add_parser('consumables_check', help='Check consumables')
+    parser_placement_consumables.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_consumables.set_defaults(func=placement_consumables)
 
     args = parser.parse_args()
     args.func(args)
