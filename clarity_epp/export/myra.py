@@ -156,6 +156,7 @@ def get_info_for_samplesheet_barcode(process):
         dict: Dictionary containing the information for the samplesheet in a nested dictionary per analyte
     """
     analytes = process.analytes()[0]
+    output = process.udf["Index strip barcode"]
     info_dictionary = {}
     for analyte in analytes:
         label_location = extract_well_from_reagent_label(analyte.reagent_labels[0])
@@ -163,7 +164,7 @@ def get_info_for_samplesheet_barcode(process):
             "reagent": analyte.reagent_labels[0],
             "input": process.udf['Twist barcode plaat ID'],
             "well_input": label_location,
-            "output": analyte.container.name,
+            "output": output,
             "well_output": "".join(analyte.location[1].split(":")),
         }
     return info_dictionary
