@@ -236,7 +236,10 @@ def qc_sample_mip(args):
 # Placement functions
 def placement_automatic(args):
     """Copy container layout from previous step."""
-    clarity_epp.placement.plate.copy_layout(lims, args.process_id)
+    if args.type == 'copy_layout':
+        clarity_epp.placement.plate.copy_layout(lims, args.process_id)
+    elif args.type == 'transpose_layout':
+        clarity_epp.placement.plate.copy_placement_row_to_column(lims, args.process_id)
 
 
 def placement_artifact_set(args):
@@ -477,6 +480,7 @@ if __name__ == "__main__":
     subparser_placement = parser_placement.add_subparsers()
 
     parser_placement_automatic = subparser_placement.add_parser('copy', help='Copy container layout from previous step')
+    parser_placement_automatic.add_argument('type', choices=['copy_layout', 'transpose_layout'], help='Copy type')
     parser_placement_automatic.add_argument('process_id', help='Clarity lims process id')
     parser_placement_automatic.set_defaults(func=placement_automatic)
 
