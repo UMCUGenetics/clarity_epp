@@ -123,6 +123,10 @@ def export_myra(args):
         clarity_epp.export.myra.samplesheet_dilute(lims, args.process_id, args.output_file)
     elif args.type == 'barcode':
         clarity_epp.export.myra.check_plate_id_and_generate_samplesheet_barcode(lims, args.process_id, args.output_file)
+    elif args.type == 'callisto_input':
+        clarity_epp.export.myra.get_input_containers_and_generate_samplesheet(
+            lims, args.process_id, args.multiple_output_files
+        )
 
 
 def export_ped_file(args):
@@ -302,6 +306,11 @@ if __name__ == "__main__":
         '-o', '--output_file',  nargs='?', type=argparse.FileType('w'), default=sys.stdout,
         help='Output file path (default=stdout)'
     )
+    multiple_output_parser = argparse.ArgumentParser(add_help=False)
+    multiple_output_parser.add_argument(
+        '-m', '--multiple_output_files',  nargs='*', type=argparse.FileType('w'), default=sys.stdout,
+        help='Output file paths (default=stdout)'
+    )
 
     # export
     parser_export = subparser.add_parser('export', help='Export from lims')
@@ -370,8 +379,12 @@ if __name__ == "__main__":
     parser_export_merge.add_argument('process_id', help='Clarity lims process id')
     parser_export_merge.set_defaults(func=export_merge_file)
 
-    parser_export_myra = subparser_export.add_parser('myra', help='Export myra samplesheet', parents=[output_parser])
-    parser_export_myra.add_argument('type', choices=['callisto', 'dilute', 'barcode'], help='Samplesheet type')
+    parser_export_myra = subparser_export.add_parser(
+        'myra', help='Export myra samplesheet', parents=[output_parser, multiple_output_parser]
+    )
+    parser_export_myra.add_argument(
+        'type', choices=['callisto', 'dilute', 'barcode', 'callisto_input'], help='Samplesheet type'
+    )
     parser_export_myra.add_argument('process_id', help='Clarity lims process id')
     parser_export_myra.set_defaults(func=export_myra)
 

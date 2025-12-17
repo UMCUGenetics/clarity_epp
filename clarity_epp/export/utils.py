@@ -135,13 +135,14 @@ def create_samplesheet(template_file, variable_content, environment=Environment(
     return samplesheet
 
 
-def sort_dict_by_nested_well_location(dict_to_sort, key_to_sort_by):
-    """Sorts a given dictionary (vertically) by well location stored as value in nested dictionary;
+def sort_dict_by_nested_well_location(dict_to_sort, key_to_sort_by, container="96_well_plate"):
+    """Sorts a given dictionary by well location stored as value in nested dictionary;
     format dictionary: dict_to_sort[key][key_to_sort_by] = well (e.g. A1)
 
     Args:
         dict_to_sort (dict): Dictionary to sort by well location
         key_to_sort_by (str): The key containing the well location value to sort by
+        container (str): Container type for sorting ("24_well_barcoded_callisto_strip", default="96_well_plate")
 
     Returns:
         dict: Sorted dictionary
@@ -149,10 +150,49 @@ def sort_dict_by_nested_well_location(dict_to_sort, key_to_sort_by):
     used_wells = []
     for key in dict_to_sort:
         used_wells.append(dict_to_sort[key][key_to_sort_by])
-    sorted_wells = sort_96_well_plate(used_wells)
+    if container == "96_well_plate":
+        sorted_wells = sort_96_well_plate(used_wells)
+    elif container == "24_well_barcoded_callisto_strip":
+        sorted_wells = sort_24_well_barcoded_callisto_strip(used_wells)
     sorted_dict = {}
     for well in sorted_wells:
         for key in dict_to_sort:
             if well == dict_to_sort[key][key_to_sort_by]:
                 sorted_dict[key] = dict_to_sort[key]
     return sorted_dict
+
+
+def get_input_containers(process):
+    """Gets input container names for the given process
+
+    Args:
+        process (object): Lims Process object
+
+    Returns:
+        list: List of process input container names
+    """
+    input_containers = []
+    input_artifacts = process.all_inputs()
+    for input_artifact in input_artifacts:
+        container = input_artifact.container.name
+        if container not in input_containers:
+            input_containers.append(container)
+    input_containers = sorted(input_containers)
+    return input_containers
+
+
+def sort_24_well_barcoded_callisto_strip(wells):
+    """Sort 24 Wells Strip Callisto barcoded wells in horizontal order.
+
+    Args:
+        wells (list): Unordered list of wells, e.g. ['A1', 'C1', 'E1', 'B1', 'D1']
+    """
+    order = [
+        'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8',
+        'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8',
+        'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8'
+    ]
+    order = dict(zip(order, range(len(order))))
+
+    wells = sorted(wells, key=lambda val: order[val])
+    return wells

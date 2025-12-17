@@ -3,7 +3,9 @@ import string
 
 from genologics.entities import Process
 
-from clarity_epp.export.utils import create_samplesheet, extract_well_from_reagent_label, sort_dict_by_nested_well_location
+from clarity_epp.export.utils import (
+    create_samplesheet, extract_well_from_reagent_label, get_input_containers, sort_dict_by_nested_well_location
+)
 from clarity_epp.placement.barcode import check_plate_id_with_used_reagent_labels
 
 
@@ -192,9 +194,83 @@ def check_plate_id_and_generate_samplesheet_barcode(lims, process_id, output_fil
     Args:
         lims (object): Lims connection
         process_id (str): Process ID
+        output_file (file): File path for samplesheet
     """
     process = Process(lims, id=process_id)
     check_plate_id_with_used_reagent_labels(lims, process)
     # If check_plate_id_with_used_reagent_labels did not exit with a wrong plate message samplesheet will be generated
     samplesheet = generate_samplesheet_barcode_plate(process)
     output_file.write(samplesheet)
+
+
+def get_info_for_samplesheet_placement_callisto(process, input_container):
+    """Collects information for the Myra samplesheet placement Callisto from the given process input container and
+    returns a dictionary containing this information organised by analytes.
+
+    Args:
+        process (object): Lims Process object
+        input_container (str): Input container name
+
+    Returns:
+        dict: Dictionary containing the information for the samplesheet in a nested dictionary per analyte
+    """
+    analytes = process.analytes()[0]
+    info_dictionary = {}
+
+    for analyte in analytes:
+        input_artifact = analyte.input_artifact_list()[0]
+        if input_artifact.container.name == input_container:
+            info_dictionary[analyte.name] = {
+                "sample": analyte.name,
+                "input": input_container,
+                "well_input": input_artifact.location[1].replace(':', ''),
+                "output": analyte.container.name,
+                "well_output": analyte.location[1].replace(':', ''),
+                "volume": process.udf['Dx pipetteervolume (ul)']
+            }
+    return info_dictionary
+
+
+def generate_samplesheet_callisto_strip(process, input_container):
+    """Generates a Myra samplesheet for pipetting from Callisto strip.
+
+    Args:
+        process (object): Lims Process object
+        input_container (str): Input container name
+
+    Returns:
+        str: Myra samplesheets
+    """
+    info_dictionary = get_info_for_samplesheet_placement_callisto(process, input_container)
+    sorted_info_dictionary = sort_dict_by_nested_well_location(
+        info_dictionary, "well_input", "24_well_barcoded_callisto_strip"
+    )
+    samplesheet_content = {"samples": sorted_info_dictionary}
+    samplesheet = create_samplesheet("Samplesheet_Myra_Placement_Callisto.csv", samplesheet_content)
+    return samplesheet
+
+
+def get_input_containers_and_generate_samplesheet(lims, process_id, output_files):
+    """Gets all input_containers and generates a samplesheet per input container.
+
+    Args:
+        lims (object): Lims connection
+        process_id (str): Process ID
+        output_files (list): List of file paths for samplesheets
+    """
+    process = Process(lims, id=process_id)
+    input_containers = get_input_containers(process)
+
+    number_of_inputs = len(input_containers)
+    samplesheet_1 = generate_samplesheet_callisto_strip(process, input_containers[0])
+    if number_of_inputs > 1:
+        samplesheet_2 = generate_samplesheet_callisto_strip(process, input_containers[1])
+    else:
+        samplesheet_2 = "geen 2e input container"
+    if number_of_inputs > 2:
+        samplesheet_3 = generate_samplesheet_callisto_strip(process, input_containers[2])
+    else:
+        samplesheet_3 = "geen 3e input container"
+    output_files[0].write(samplesheet_1)
+    output_files[1].write(samplesheet_2)
+    output_files[2].write(samplesheet_3)

@@ -11,6 +11,10 @@ def test_sort_96_well_plate():
     assert utils.sort_96_well_plate(['B2', 'A1', 'E1']) == ['A1', 'E1', 'B2']
 
 
+def test_sort_24_well_barcoded_callisto_strip():
+    assert utils.sort_24_well_barcoded_callisto_strip(['B2', 'A1', 'A6']) == ['A1', 'A6', 'B2']
+
+
 def test_reverse_complement():
     assert utils.reverse_complement('CGTA') == 'TACG'
 
