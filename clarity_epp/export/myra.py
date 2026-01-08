@@ -4,7 +4,8 @@ import string
 from genologics.entities import Process
 
 from clarity_epp.export.utils import (
-    create_samplesheet, extract_well_from_reagent_label, get_input_containers, sort_dict_by_nested_well_location
+    create_samplesheet, extract_well_from_reagent_label, get_input_containers, get_qc_values_parent_process_artifact,
+    sort_dict_by_nested_well_location
 )
 from clarity_epp.placement.barcode import check_plate_id_with_used_reagent_labels
 
@@ -274,3 +275,89 @@ def get_input_containers_and_generate_samplesheet_callisto_strip(lims, process_i
     output_files[0].write(samplesheet_1)
     output_files[1].write(samplesheet_2)
     output_files[2].write(samplesheet_3)
+
+
+def calculate_volumes_nM_diluting(nM_pool, ul_sample, size, concentration):
+    """Calculates volume water for nM diluting given Analyte.
+
+    Args:
+        process (object): Lims Process object
+        analyte (object): Lims Analyte object
+        nM_pool (int): nM dilute value
+        ul_sample (int): Sample volume
+
+    Returns:
+        float: Volume water for pipetting
+    """
+    nM_dna = (concentration * 1000 * (1/660.0) * (1/size)) * 1000
+    output_ul = (nM_dna/nM_pool) * ul_sample
+    ul_water = output_ul - ul_sample
+    return ul_water
+
+
+def get_info_for_samplesheet_dilute(process, input_container):
+    """Collects information for the Myra samplesheet dilute from the given process input container and
+    returns a dictionary containing this information organised by analytes.
+
+    Args:
+        process (object): Lims Process object
+        input_container (str): Input container name
+
+    Returns:
+        dict: Dictionary containing the information for the samplesheet in a nested dictionary per analyte
+    """
+    analytes = process.analytes()[0]
+    info_dictionary = {}
+    nM_pool = process.udf['Dx Pool verdunning (nM)']
+    volume_sample = process.udf['Sample volume (ul)']
+
+    for analyte in analytes:
+        input_artifact = analyte.input_artifact_list()[0]
+        size, concentration = get_qc_values_parent_process_artifact(input_artifact)
+        volume_water = calculate_volumes_nM_diluting(nM_pool, volume_sample, size, concentration)
+        if input_artifact.container.name == input_container:
+            info_dictionary[analyte.name] = {
+                "sample": analyte.name,
+                "input": input_container,
+                "well_input": input_artifact.location[1].replace(':', ''),
+                "output": analyte.container.name,
+                "well_output": analyte.location[1].replace(':', ''),
+                "volume_sample": f"{volume_sample:.1f}",
+                "volume_water": f"{volume_water:.1f}"
+            }
+    return info_dictionary
+
+
+def generate_samplesheet_dilute(process, input_containers):
+    """Generates a Myra samplesheet for nM diluting.
+
+    Args:
+        process (object): Lims Process object
+        input_containers (list): List of input container names
+
+    Returns:
+        str: Myra Dilute samplesheet
+    """
+    info_dictionary = {}
+    for input_container in input_containers:
+        info_input_dictionary = get_info_for_samplesheet_dilute(process, input_container)
+        info_dictionary.update(info_input_dictionary)
+
+    sorted_info_dictionary = sort_dict_by_nested_well_location(info_dictionary, "well_output", "96_well_plate")
+    samplesheet_content = {"samples": sorted_info_dictionary}
+    samplesheet = create_samplesheet("Samplesheet_Myra_Dilute.csv", samplesheet_content)
+    return samplesheet
+
+
+def get_input_containers_and_generate_samplesheet_dilute(lims, process_id, output_file):
+    """Gets all input_containers and generates a dilute samplesheet.
+
+    Args:
+        lims (object): Lims connection
+        process_id (str): Process ID
+        output_file (file): File path for samplesheet
+    """
+    process = Process(lims, id=process_id)
+    input_containers = get_input_containers(process)
+    samplesheet = generate_samplesheet_dilute(process, input_containers)
+    output_file.write(samplesheet)

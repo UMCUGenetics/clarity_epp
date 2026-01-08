@@ -196,3 +196,25 @@ def sort_24_well_barcoded_callisto_strip(wells):
 
     wells = sorted(wells, key=lambda val: order[val])
     return wells
+
+
+def get_qc_values_parent_process_artifact(input_artifact):
+    """Gets size (fragmentlengte) and concentration (concentratie) from parent process for given artifact.
+
+    Args:
+        input_artifact (object): Lims Artifact object
+
+    Returns:
+        float: Size (fragmentlengte), None if size not found
+        float: Concentration (concentratie), None if concentration not found
+    """
+    size = None
+    concentration = None
+    parent_process = input_artifact.parent_process
+
+    for parent_artifact in parent_process.all_inputs():
+        if parent_artifact.name == input_artifact.name.split("_")[0]:
+            size = float(parent_artifact.udf['Dx Fragmentlengte (bp)'])
+            concentration = float(parent_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+
+    return size, concentration

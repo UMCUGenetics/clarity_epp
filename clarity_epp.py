@@ -120,7 +120,7 @@ def export_myra(args):
     if args.type == 'callisto':
         clarity_epp.export.myra.samplesheet_callisto(lims, args.process_id, args.output_file)
     elif args.type == 'dilute':
-        clarity_epp.export.myra.samplesheet_dilute(lims, args.process_id, args.output_file)
+        clarity_epp.export.myra.get_input_containers_and_generate_samplesheet_dilute(lims, args.process_id, args.output_file)
     elif args.type == 'barcode':
         clarity_epp.export.myra.check_plate_id_and_generate_samplesheet_barcode(lims, args.process_id, args.output_file)
     elif args.type == 'callisto_input':
