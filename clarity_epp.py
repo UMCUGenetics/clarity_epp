@@ -124,7 +124,7 @@ def export_myra(args):
     elif args.type == 'barcode':
         clarity_epp.export.myra.check_plate_id_and_generate_samplesheet_barcode(lims, args.process_id, args.output_file)
     elif args.type == 'callisto_input':
-        clarity_epp.export.myra.get_input_containers_and_generate_samplesheet(
+        clarity_epp.export.myra.get_input_containers_and_generate_samplesheet_callisto_strip(
             lims, args.process_id, args.multiple_output_files
         )
 

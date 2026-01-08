@@ -239,7 +239,7 @@ def generate_samplesheet_callisto_strip(process, input_container):
         input_container (str): Input container name
 
     Returns:
-        str: Myra samplesheets
+        str: Myra Placement Callisto samplesheet
     """
     info_dictionary = get_info_for_samplesheet_placement_callisto(process, input_container)
     sorted_info_dictionary = sort_dict_by_nested_well_location(
@@ -250,8 +250,8 @@ def generate_samplesheet_callisto_strip(process, input_container):
     return samplesheet
 
 
-def get_input_containers_and_generate_samplesheet(lims, process_id, output_files):
-    """Gets all input_containers and generates a samplesheet per input container.
+def get_input_containers_and_generate_samplesheet_callisto_strip(lims, process_id, output_files):
+    """Gets all input_containers and generates a Callisto strip samplesheet per input container.
 
     Args:
         lims (object): Lims connection
