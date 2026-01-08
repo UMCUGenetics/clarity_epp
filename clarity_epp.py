@@ -120,13 +120,15 @@ def export_myra(args):
     if args.type == 'callisto':
         clarity_epp.export.myra.samplesheet_callisto(lims, args.process_id, args.output_file)
     elif args.type == 'dilute':
-        clarity_epp.export.myra.get_input_containers_and_generate_samplesheet_dilute(lims, args.process_id, args.output_file)
+        clarity_epp.export.myra.samplesheet_dilute(lims, args.process_id, args.output_file)
     elif args.type == 'barcode':
         clarity_epp.export.myra.check_plate_id_and_generate_samplesheet_barcode(lims, args.process_id, args.output_file)
     elif args.type == 'callisto_input':
         clarity_epp.export.myra.get_input_containers_and_generate_samplesheet_callisto_strip(
             lims, args.process_id, args.multiple_output_files
         )
+    elif args.type == 'dilute_LP':
+        clarity_epp.export.myra.get_input_containers_and_generate_samplesheet_dilute(lims, args.process_id, args.output_file)
 
 
 def export_ped_file(args):
@@ -383,7 +385,7 @@ if __name__ == "__main__":
         'myra', help='Export myra samplesheet', parents=[output_parser, multiple_output_parser]
     )
     parser_export_myra.add_argument(
-        'type', choices=['callisto', 'dilute', 'barcode', 'callisto_input'], help='Samplesheet type'
+        'type', choices=['callisto', 'dilute', 'barcode', 'callisto_input', 'dilute_LP'], help='Samplesheet type'
     )
     parser_export_myra.add_argument('process_id', help='Clarity lims process id')
     parser_export_myra.set_defaults(func=export_myra)
