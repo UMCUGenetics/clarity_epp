@@ -1,12 +1,24 @@
 """Plate  placement functions."""
 
 from genologics.entities import Process, Container, Containertype
+import config
+import genologics.lims
 
 
-def copy_layout(lims, process_id):
-    """Copy placement layout from previous steps."""
+
+def copy_placement(lims, process_id):
+    """
+    Copy placement layout from previous steps.
+    
+      Args:
+        lims (object): Lims connection
+        process_id (str): Process ID
+
+    Returns:
+        dict: Sample name and placement from the parent container.
+        Container | None: The parent container the placements were copied from, or None if not found.
+    """
     process = Process(lims, id=process_id)
-    used_placements = []
     # Get parent container layout
     parent_container = None
     for parent_process in process.parent_processes():
@@ -20,9 +32,23 @@ def copy_layout(lims, process_id):
         for placement in parent_container.placements:
             sample = parent_container.placements[placement].samples[0].name
             parent_placements[sample] = placement
+    return parent_placements, parent_container
 
+def copy_layout_to_new_container(lims, process_id):
+    """
+    Creates a new container and copies sample placements previous step.
+
+    Args:
+        lims (object): Lims connection
+        process_id (str): Process ID
+
+    """
+    process = Process(lims, id=process_id)
+    parent_placements, parent_container = copy_placement(lims, process_id)
+    if parent_container:
         # Create new container and copy layout
         new_container = Container.create(lims, type=parent_container.type)
+        used_placements = []
         placement_list = []
         for artifact in process.analytes()[0]:
             sample_name = artifact.samples[0].name
@@ -31,9 +57,55 @@ def copy_layout(lims, process_id):
                 if placement not in used_placements:
                     placement_list.append([artifact, (new_container, placement)])
                     used_placements.append(placement)
-
         process.step.placements.set_placement_list(placement_list)
         process.step.placements.post()
+
+def copy_layout_to_two_new_container(lims, process_id):
+    """
+    Creates a two new containes and copies sample placements previous step.
+
+    Args:
+        lims (object): Lims connection
+        process_id (str): Process ID
+
+    """
+    process = Process(lims, id=process_id)
+    parent_placements, parent_container = copy_layout(lims, process_id)
+    if parent_container:
+        parent_placements = {}
+        for placement in parent_container.placements:
+            sample = parent_container.placements[placement].samples[0].name
+            parent_placements[sample] = placement
+
+        # Create two new container and copy layout
+        lowpass_container = Container.create(lims, type=parent_container.type)
+        srwgs_container = Container.create(lims, type=parent_container.type)
+
+        # Rename output containers
+        base_name = parent_container.name
+        lowpass_container.name = f"{base_name}_LPsrWGS"
+        srwgs_container.name = f"{base_name}_srWGS"
+        lowpass_container.put()
+        srwgs_container.put()
+        used_placements = []
+        placement_list_srwgs = []
+        placement_list_lp = []
+        for artifact in process.analytes()[0]:
+            sample_name = artifact.samples[0].name
+            if sample_name in parent_placements:
+                placement = parent_placements[sample_name]
+                if placement not in used_placements:
+                    placement_list_srwgs.append([artifact, (srwgs_container, placement)])
+                    placement_list_lp.append([artifact, (lowpass_container, placement)])  
+
+                    used_placements.append(placement)
+
+        process.step.placements.set_placement_list(placement_list_srwgs)
+        process.step.placements.post()
+
+        process.step.placements.set_placement_list(placement_list_lp)
+        process.step.placements.post()
+
 
 
 def get_layout_multiple_input_containers(process):
@@ -125,3 +197,62 @@ def copy_placement_row_to_column(lims, process_id):
     layout_input_containers = get_layout_multiple_input_containers(process)
     output_well_per_sample = transpose_placements_row_to_column(layout_input_containers)
     create_container_and_place_samples(lims, process, output_well_per_sample, '96 well plate')
+
+def copy_layout_two_times(lims, process_id):
+    """Copy placement layout from previous steps."""
+    process = Process(lims, id=process_id)
+    used_placements = []
+    # Get parent container layout
+    parent_container = None
+    for parent_process in process.parent_processes():
+        if parent_process:
+            for container in parent_process.output_containers():
+                if container.type != Containertype(lims, id='2'):  # skip tubes
+                    parent_container = container
+
+    if parent_container:
+        parent_placements = {}
+        for placement in parent_container.placements:
+            sample = parent_container.placements[placement].samples[0].name
+            parent_placements[sample] = placement
+
+        # Create two new container and copy layout
+        lowpass_container = Container.create(lims, type=parent_container.type)
+        srwgs_container = Container.create(lims, type=parent_container.type)
+
+        # Rename output containers
+        base_name = parent_container.name
+        lowpass_container.name = f"{base_name}_LPsrWGS"
+        srwgs_container.name = f"{base_name}_srWGS"
+        lowpass_container.put()
+        srwgs_container.put()
+
+        placement_list_srwgs = []
+        placement_list_lp = []
+        for artifact in process.analytes()[0]:
+            sample_name = artifact.samples[0].name
+            if sample_name in parent_placements:
+                placement = parent_placements[sample_name]
+                if placement not in used_placements:
+                    placement_list_srwgs.append([artifact, (srwgs_container, placement)])
+                    placement_list_lp.append([artifact, (lowpass_container, placement)])  
+
+                    used_placements.append(placement)
+
+        process.step.placements.set_placement_list(placement_list_srwgs)
+        process.step.placements.post()
+
+        process.step.placements.set_placement_list(placement_list_lp)
+        process.step.placements.post()
+
+
+
+
+if __name__ == "__main__":
+    #process_id = "24-283593"
+    process_id = "24-283600"
+
+    lims = genologics.lims.Lims(config.baseuri, config.username, config.password)
+    genologics.lims.TIMEOUT = config.api_timeout
+
+    create_two_container_with_copied_layout(lims, process_id)

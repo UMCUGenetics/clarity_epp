@@ -31,7 +31,7 @@ def export_bioanalyzer(args):
     """Export samplesheets for Bioanalyzer machine."""
     clarity_epp.export.bioanalyzer.samplesheet(lims, args.process_id, args.output_file)
 
-
+ƒ
 def export_caliper(args):
     """Export samplesheets for caliper machine."""
     if args.type == 'normalise':
@@ -243,10 +243,13 @@ def qc_sample_mip(args):
 def placement_automatic(args):
     """Copy container layout from previous step."""
     if args.type == 'copy_layout':
-        clarity_epp.placement.plate.copy_layout(lims, args.process_id)
+        clarity_epp.placement.plate.copy_layout_to_new_container(lims, args.process_id)
     elif args.type == 'transpose_layout':
         clarity_epp.placement.plate.copy_placement_row_to_column(lims, args.process_id)
-
+    elif args.type == 'copy_container_sample_duplicate':
+        clarity_epp.placement.plate.copy_container_sample_duplicate(lims, args.process_id)
+    elif args.type == 'copy_layout_two_times':
+        clarity_epp.placement.plate.copy_layout_to_two_new_container(lims, args.process_id)
 
 def placement_artifact_set(args):
     """Change artifact name or udf."""
@@ -495,7 +498,7 @@ if __name__ == "__main__":
     subparser_placement = parser_placement.add_subparsers()
 
     parser_placement_automatic = subparser_placement.add_parser('copy', help='Copy container layout from previous step')
-    parser_placement_automatic.add_argument('type', choices=['copy_layout', 'transpose_layout'], help='Copy type')
+    parser_placement_automatic.add_argument('type', choices=['copy_layout', 'transpose_layout', 'copy_container_sample_duplicate'], help='Copy type')
     parser_placement_automatic.add_argument('process_id', help='Clarity lims process id')
     parser_placement_automatic.set_defaults(func=placement_automatic)
 
