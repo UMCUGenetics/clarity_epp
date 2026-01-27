@@ -248,7 +248,7 @@ def placement_automatic(args):
         clarity_epp.placement.plate.copy_placement_row_to_column(lims, args.process_id)
     elif args.type == 'copy_container_sample_duplicate':
         clarity_epp.placement.plate.copy_container_sample_duplicate(lims, args.process_id)
-    elif args.type == 'copy_layout_two_times':
+    elif args.type == 'copy_two_containers':
         clarity_epp.placement.plate.copy_layout_to_two_new_container(lims, args.process_id)
 
 def placement_artifact_set(args):
