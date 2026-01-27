@@ -498,7 +498,7 @@ if __name__ == "__main__":
     subparser_placement = parser_placement.add_subparsers()
 
     parser_placement_automatic = subparser_placement.add_parser('copy', help='Copy container layout from previous step')
-    parser_placement_automatic.add_argument('type', choices=['copy_layout', 'transpose_layout', 'copy_container_sample_duplicate'], help='Copy type')
+    parser_placement_automatic.add_argument('type', choices=['copy_layout', 'transpose_layout', 'copy_container_sample_duplicate', 'copy_two_containers'], help='Copy type')
     parser_placement_automatic.add_argument('process_id', help='Clarity lims process id')
     parser_placement_automatic.set_defaults(func=placement_automatic)
 
