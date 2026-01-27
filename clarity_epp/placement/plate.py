@@ -72,7 +72,6 @@ def copy_layout_to_two_new_container(lims, process_id):
     process = Process(lims, id=process_id)
     parent_placements, parent_container = copy_placement(lims, process_id)
     if parent_container:
-        parent_placements = {}
         for placement in parent_container.placements:
             sample = parent_container.placements[placement].samples[0].name
             parent_placements[sample] = placement
@@ -87,6 +86,7 @@ def copy_layout_to_two_new_container(lims, process_id):
         srwgs_container.name = f"{base_name}_srWGS"
         lowpass_container.put()
         srwgs_container.put()
+
         used_placements = []
         placement_list_srwgs = []
         placement_list_lp = []
@@ -96,16 +96,14 @@ def copy_layout_to_two_new_container(lims, process_id):
                 placement = parent_placements[sample_name]
                 if placement not in used_placements:
                     placement_list_srwgs.append([artifact, (srwgs_container, placement)])
-                    placement_list_lp.append([artifact, (lowpass_container, placement)])  
+                    placement_list_lp.append([artifact, (lowpass_container, placement)]) 
+
 
                     used_placements.append(placement)
 
-        process.step.placements.set_placement_list(placement_list_srwgs)
+        combined = placement_list_srwgs + placement_list_lp
+        process.step.placements.set_placement_list(combined)
         process.step.placements.post()
-
-        process.step.placements.set_placement_list(placement_list_lp)
-        process.step.placements.post()
-
 
 
 def get_layout_multiple_input_containers(process):
