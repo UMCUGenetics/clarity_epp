@@ -246,8 +246,6 @@ def placement_automatic(args):
         clarity_epp.placement.plate.copy_layout_to_new_container(lims, args.process_id)
     elif args.type == 'transpose_layout':
         clarity_epp.placement.plate.copy_placement_row_to_column(lims, args.process_id)
-    elif args.type == 'copy_container_sample_duplicate':
-        clarity_epp.placement.plate.copy_container_sample_duplicate(lims, args.process_id)
     elif args.type == 'copy_two_containers':
         clarity_epp.placement.plate.copy_layout_to_two_new_container(lims, args.process_id)
 
@@ -498,7 +496,7 @@ if __name__ == "__main__":
     subparser_placement = parser_placement.add_subparsers()
 
     parser_placement_automatic = subparser_placement.add_parser('copy', help='Copy container layout from previous step')
-    parser_placement_automatic.add_argument('type', choices=['copy_layout', 'transpose_layout', 'copy_container_sample_duplicate', 'copy_two_containers'], help='Copy type')
+    parser_placement_automatic.add_argument('type', choices=['copy_layout', 'transpose_layout', 'copy_two_containers'], help='Copy type')
     parser_placement_automatic.add_argument('process_id', help='Clarity lims process id')
     parser_placement_automatic.set_defaults(func=placement_automatic)
 
