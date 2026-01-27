@@ -2,6 +2,7 @@
 from genologics.entities import Process, Container, Containertype
 
 
+
 def copy_placement(lims, process_id):
     """
     Copy placement layout from previous steps.
@@ -73,45 +74,52 @@ def copy_layout_to_two_new_container(lims, process_id):
             parent_placements[sample] = placement
 
         # Create two new container and copy layout
-        lowpass_container = Container.create(lims, type=parent_container.type)
+        lp_container = Container.create(lims, type=parent_container.type)
         srwgs_container = Container.create(lims, type=parent_container.type)
 
         # Rename output containers
         base_name = parent_container.name
-        lowpass_container.name = f"{base_name}_LPsrWGS"
+        lp_container.name = f"{base_name}_LPsrWGS"
         srwgs_container.name = f"{base_name}_srWGS"
-        lowpass_container.put()
+        lp_container.put()
         srwgs_container.put()
 
-        used_placements = []
-        placement_list_srwgs = []
-        placement_list_lp = []
-        artifacts_by_sample = {}
-        #2 Artifacts per sample (srWGS and lowpass)
-        for artifact in process.analytes()[0]:
-            sample_name = artifact.samples[0].name
+        # Collect artifacts per sample 2 per sample
+        artifacts_by_sample_name = {}
+        for analyte_artifact in process.analytes()[0]:
+            sample_name = analyte_artifact.samples[0].name
+            if sample_name not in artifacts_by_sample_name:
+                artifacts_by_sample_name[sample_name] = []
 
-            if sample_name not in artifacts_by_sample:
-                artifacts_by_sample[sample_name] = []
+            artifacts_by_sample_name[sample_name].append(analyte_artifact)
 
-            artifacts_by_sample[sample_name].append(artifact)
-        # Place samples in both containers
-        for artifact in process.analytes()[0]:
-            sample_name = artifact.samples[0].name
+        # Build placement lists for both containers
+        srwgs_container_placement_list = []
+        lp_srwgs_container_placement_list = []
 
-            if sample_name in parent_placements:
-                placement = parent_placements[sample_name]
-                if placement not in used_placements:
-                    placement_list_srwgs.append([artifacts_by_sample[sample_name][0], (srwgs_container, placement)])
-                    placement_list_lp.append([artifacts_by_sample[sample_name][1], (lowpass_container, placement)]) 
+        for sample_name, analyte_artifacts_for_sample in artifacts_by_sample_name.items():
+            if sample_name not in parent_placements:
+                continue
 
+            well_position = parent_placements[sample_name]
 
-                    used_placements.append(placement)
+            srwgs_analyte_artifact = None
+            lowpass_srwgs_analyte_artifact = None
 
-        combined = placement_list_srwgs + placement_list_lp
-        process.step.placements.set_placement_list(combined)
+            # Pick correct artifact for each container based on artifact name suffix
+            for analyte_artifact in analyte_artifacts_for_sample:
+                analyte_artifact_name = analyte_artifact.name
+                if analyte_artifact_name.endswith("_srWGS"):
+                    srwgs_analyte_artifact = analyte_artifact
+                elif analyte_artifact_name.endswith("_LPsrWGS"):
+                    lowpass_srwgs_analyte_artifact = analyte_artifact
+
+            srwgs_container_placement_list.append([srwgs_analyte_artifact, (srwgs_container, well_position)])
+            lp_srwgs_container_placement_list.append([lowpass_srwgs_analyte_artifact, (lp_container, well_position)])
+
+        combined_placement_list = srwgs_container_placement_list + lp_srwgs_container_placement_list
+        process.step.placements.set_placement_list(combined_placement_list)
         process.step.placements.post()
-
 
 def get_layout_multiple_input_containers(process):
     """Gets layout from multiple input containers
