@@ -70,7 +70,7 @@ def copy_layout_to_two_new_container(lims, process_id):
 
     """
     process = Process(lims, id=process_id)
-    parent_placements, parent_container = copy_layout(lims, process_id)
+    parent_placements, parent_container = copy_placement(lims, process_id)
     if parent_container:
         parent_placements = {}
         for placement in parent_container.placements:
