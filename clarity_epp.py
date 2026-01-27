@@ -31,7 +31,7 @@ def export_bioanalyzer(args):
     """Export samplesheets for Bioanalyzer machine."""
     clarity_epp.export.bioanalyzer.samplesheet(lims, args.process_id, args.output_file)
 
-ƒ
+
 def export_caliper(args):
     """Export samplesheets for caliper machine."""
     if args.type == 'normalise':
