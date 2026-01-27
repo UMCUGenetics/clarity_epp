@@ -244,15 +244,3 @@ def copy_layout_two_times(lims, process_id):
 
         process.step.placements.set_placement_list(placement_list_lp)
         process.step.placements.post()
-
-
-
-
-if __name__ == "__main__":
-    #process_id = "24-283593"
-    process_id = "24-283600"
-
-    lims = genologics.lims.Lims(config.baseuri, config.username, config.password)
-    genologics.lims.TIMEOUT = config.api_timeout
-
-    create_two_container_with_copied_layout(lims, process_id)
