@@ -129,6 +129,8 @@ def export_myra(args):
         )
     elif args.type == 'dilute_LP':
         clarity_epp.export.myra.get_input_containers_and_generate_samplesheet_dilute(lims, args.process_id, args.output_file)
+    elif args.type == 'redilute_DX':
+        clarity_epp.export.myra.get_input_containers_and_generate_samplesheet_redilute(lims, args.process_id, args.output_file)
 
 
 def export_ped_file(args):
@@ -248,6 +250,7 @@ def placement_automatic(args):
         clarity_epp.placement.plate.copy_placement_row_to_column(lims, args.process_id)
     elif args.type == 'copy_two_containers':
         clarity_epp.placement.plate.copy_layout_to_two_new_container(lims, args.process_id)
+
 
 def placement_artifact_set(args):
     """Change artifact name or udf."""
@@ -386,7 +389,9 @@ if __name__ == "__main__":
         'myra', help='Export myra samplesheet', parents=[output_parser, multiple_output_parser]
     )
     parser_export_myra.add_argument(
-        'type', choices=['callisto', 'dilute', 'barcode', 'callisto_input', 'dilute_LP'], help='Samplesheet type'
+        'type',
+        choices=['callisto', 'dilute', 'barcode', 'callisto_input', 'dilute_LP', 'redilute_DX'],
+        help='Samplesheet type'
     )
     parser_export_myra.add_argument('process_id', help='Clarity lims process id')
     parser_export_myra.set_defaults(func=export_myra)
@@ -496,7 +501,9 @@ if __name__ == "__main__":
     subparser_placement = parser_placement.add_subparsers()
 
     parser_placement_automatic = subparser_placement.add_parser('copy', help='Copy container layout from previous step')
-    parser_placement_automatic.add_argument('type', choices=['copy_layout', 'transpose_layout', 'copy_two_containers'], help='Copy type')
+    parser_placement_automatic.add_argument(
+        'type', choices=['copy_layout', 'transpose_layout', 'copy_two_containers'], help='Copy type'
+    )
     parser_placement_automatic.add_argument('process_id', help='Clarity lims process id')
     parser_placement_automatic.set_defaults(func=placement_automatic)
 

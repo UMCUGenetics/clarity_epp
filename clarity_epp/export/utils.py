@@ -205,8 +205,9 @@ def get_qc_values_parent_process_artifact(input_artifact):
         input_artifact (object): Lims Artifact object
 
     Returns:
-        float: Size (fragmentlengte), None if size not found
-        float: Concentration (concentratie), None if concentration not found
+        tuple[float,float]:
+        Size (fragmentlengte), None if size not found &
+        Concentration (concentratie), None if concentration not found
     """
     size = None
     concentration = None
