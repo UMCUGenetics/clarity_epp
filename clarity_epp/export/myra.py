@@ -656,9 +656,7 @@ def generate_samplesheet_redilute(lims, process, input_containers):
     for input_container in input_containers:
         info_input_dictionary, missing_samples = get_info_for_samplesheet_redilute(lims, process, input_container)
         info_dictionary.update(info_input_dictionary)
-    sorted_info_dictionary = sort_dict_by_nested_well_location(
-        info_dictionary, "well_output", "96_well_plate"
-    )
+    sorted_info_dictionary = sort_dict_by_nested_well_location(info_dictionary, "well_output", "96_well_plate")
     samplesheet_content = {"samples": sorted_info_dictionary}
     samplesheet = create_samplesheet("Samplesheet_Myra_Dilute.csv", samplesheet_content)
 
@@ -685,3 +683,94 @@ def get_input_containers_and_generate_samplesheet_redilute(lims, process_id, out
             f'maar zijn niet aanwezig in deze stap (clusters niet meegenomen in de berekening): {missing_samples}'
         )
         sys.exit(message)
+
+
+def get_sample_volume(input_artifact, volume_sample):
+    """Gets sample volume by multiplying the given sample volume with the udf 'Dx Exoomequivalent' if present
+
+    Args:
+        input_artifact (object): Process input artifact object
+        volume_sample (int): content CF 'Dx sample volume (ul)'
+
+    Returns:
+        int: Adjusted sample volume
+    """
+    sample = input_artifact.samples[0]
+    if 'Dx Exoomequivalent' in sample.udf:
+        volume = volume_sample * sample.udf['Dx Exoomequivalent']
+    else:
+        volume = volume_sample
+    return volume
+
+
+def get_info_for_samplesheet_callisto_pools(process, input_container):
+    """Collects information for the Myra samplesheet Callisto pools from the given process input container and
+    returns a dictionary containing this information organised by input artifacts
+
+    Args:
+        lims (object): Lims connection
+        process (object): Lims Process object
+        input_container (str): Input container name
+
+    Returns:
+        dict: Dictionary containing the information for the samplesheet in a nested dictionary per input artifact
+    """
+    analytes = process.analytes()[0]
+    info_dictionary = {}
+    try:
+        volume_sample = process.udf['Dx sample volume (ul)']
+    except (KeyError):
+        message = ('Error: Geen volume gekozen bij CF Dx sample volume (ul), kies volume en probeer opnieuw')
+        sys.exit(message)
+
+    for analyte in analytes:
+        input_artifacts = analyte.input_artifact_list()
+        for input_artifact in input_artifacts:
+            volume = get_sample_volume(input_artifact, volume_sample)
+            if input_artifact.container.name == input_container:
+                info_dictionary[input_artifact.name] = {
+                    "sample": input_artifact.name,
+                    "input": input_container,
+                    "well_input": input_artifact.location[1].replace(':', ''),
+                    "output": analyte.name,
+                    "volume": volume
+                }
+
+    return info_dictionary
+
+
+def generate_samplesheet_callisto_pools(process, input_containers):
+    """Generates a Myra samplesheet for multiplexing Callisto pools.
+
+    Args:
+        lims (object): Lims connection
+        process (object): Lims Process object
+        input_containers (list): List of input container names
+
+    Returns:
+        str: Myra Callisto pools samplesheet
+    """
+    info_dictionary = {}
+    for input_container in input_containers:
+        info_input_dictionary = get_info_for_samplesheet_callisto_pools(process, input_container)
+        info_dictionary.update(info_input_dictionary)
+    sorted_info_dictionary = sort_dict_by_nested_well_location(info_dictionary, "well_input", "96_well_plate")
+    samplesheet_content = {"samples": sorted_info_dictionary}
+    samplesheet = create_samplesheet("Samplesheet_Myra_Pools.csv", samplesheet_content)
+
+    return samplesheet
+
+
+def get_input_containers_and_generate_samplesheet_callisto_pools(lims, process_id, output_file):
+    """Gets all input_containers and generates a Callisto pools samplesheet.
+
+    Args:
+        lims (object): Lims connection
+        process_id (str): Process ID
+        output_file (file): File path for samplesheet
+    """
+    process = Process(lims, id=process_id)
+    input_containers = get_input_containers(process)
+    samplesheet = generate_samplesheet_callisto_pools(process, input_containers)
+
+    output_file.write(samplesheet)

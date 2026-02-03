@@ -131,6 +131,10 @@ def export_myra(args):
         clarity_epp.export.myra.get_input_containers_and_generate_samplesheet_dilute(lims, args.process_id, args.output_file)
     elif args.type == 'redilute_DX':
         clarity_epp.export.myra.get_input_containers_and_generate_samplesheet_redilute(lims, args.process_id, args.output_file)
+    elif args.type == 'callisto_pools':
+        clarity_epp.export.myra.get_input_containers_and_generate_samplesheet_callisto_pools(
+            lims, args.process_id, args.output_file
+        )
 
 
 def export_ped_file(args):
@@ -390,7 +394,7 @@ if __name__ == "__main__":
     )
     parser_export_myra.add_argument(
         'type',
-        choices=['callisto', 'dilute', 'barcode', 'callisto_input', 'dilute_LP', 'redilute_DX'],
+        choices=['callisto', 'dilute', 'barcode', 'callisto_input', 'dilute_LP', 'redilute_DX', 'callisto_pools'],
         help='Samplesheet type'
     )
     parser_export_myra.add_argument('process_id', help='Clarity lims process id')

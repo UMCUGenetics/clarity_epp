@@ -1,0 +1,4 @@
+Sample,Container,Well,Pool,Volume (ul)
+{% for sample in samples -%}
+{{ samples[sample]["sample"] }},{{ samples[sample]["input"] }},{{ samples[sample]["well_input"] }},{{ samples[sample]["output"] }},{{ samples[sample]["volume"] }}
+{% endfor -%}
