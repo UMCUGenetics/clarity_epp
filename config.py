@@ -187,3 +187,10 @@ bioinformatics_qc_requirements_srWGS = {
     'CCU_index': 0.3,
     'Contamination': 0.04,
 }
+
+# Volumes per lane (uL)
+flowcell_volumes = {
+    '1.5B': {'sample_ul': 34, 'phix_ul': 1, 'naoh_ul': 8.5, 'preload_ul': 127.5},
+    '10B': {'sample_ul': 34, 'phix_ul': 1, 'naoh_ul': 8.5, 'preload_ul': 127.5},
+    '25B': {'sample_ul': 56, 'phix_ul': 1.6, 'naoh_ul': 14.0, 'preload_ul': 210.0},
+}
