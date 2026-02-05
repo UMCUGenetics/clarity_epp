@@ -869,46 +869,35 @@ def samplesheet_sequence_pool_verdunnen(lims, process_id, output_file):
         lims (Lims):Lims artifact
         process_id (str): process ID for sequence pool verdunnen
         output_file (str): filename of output samplesheet
-
-    Returns:
-        None: The function writes the samplesheet directly to the output file and does not return any value.
     """
     process = Process(lims, id=process_id)
     flowcell_type = process.udf.get('Flowcell type')
-    flow_cell_config = config.flowcell_volumes[flowcell_type]
-    
-    lines = []
-    
+    flow_cell_config = config.flowcell_volumes[flowcell_type]  
+    lines = []   
     for input_pool in process.all_inputs():
         out_artifacts = [artifact for artifact in process.outputs_per_input(input_pool.id) if artifact.type == 'Analyte']
         number_of_derivates = len(out_artifacts)  # Number of derivates based on artifacts
-
-        # Calculations per pool
         sample_total = flow_cell_config['sample_ul'] * number_of_derivates * 1.10  # 10% excess
         phix_total = flow_cell_config['phix_ul'] * number_of_derivates * 1.10
         naoh_total = flow_cell_config['naoh_ul'] * number_of_derivates * 1.10
         preload_total = flow_cell_config['preload_ul'] * number_of_derivates * 1.10
-
-
+        
         # Add empty line between different pools
         if lines:
-            lines.append(('\n',))
+            lines.append(["", "", "", ""]) 
 
-        # Format the line for the output with actual pool name and sample name
         pool_lines = [
             f"Poolnaam\t{input_pool.name}",
             f"Aantal derivates\t{number_of_derivates}",
             f"Flowcell Type\t{flowcell_type}",
-            "",  # Blank line after Flowcell Type
+            "",  # Add empty line
             f"volume sample (ul)\t{sample_total:.2f}",
             f"volume PhiX (ul)\t{phix_total:.2f}",
-            "",  # Blank line after volume PhiX
+            "",  # Add empty line
             f"volume NaOH (ul)\t{naoh_total:.2f}",
             f"volume Pre-load buffer (ul)\t{preload_total:.2f}"
         ]
-        
         lines.append(pool_lines)
-    
-    # Write each line to the output file, ensuring blank lines between sections.
     for pool_lines in lines:
         output_file.write("\n".join(pool_lines) + "\n\n") 
+
