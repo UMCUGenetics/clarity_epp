@@ -884,16 +884,16 @@ def samplesheet_sequence_pool_verdunnen(lims, process_id, output_file):
         
         # Add empty line between different pools
         if lines:
-            lines.append(["", "", "", ""]) 
+            lines.append([" ", " ", " ", " "]) 
 
         pool_lines = [
             f"Poolnaam\t{input_pool.name}",
             f"Aantal derivates\t{number_of_derivates}",
             f"Flowcell Type\t{flowcell_type}",
-            "",  # Add empty line
+            " ",  # Add empty line
             f"volume sample (ul)\t{sample_total:.2f}",
             f"volume PhiX (ul)\t{phix_total:.2f}",
-            "",  # Add empty line
+            " ",  # Add empty line
             f"volume NaOH (ul)\t{naoh_total:.2f}",
             f"volume Pre-load buffer (ul)\t{preload_total:.2f}"
         ]
