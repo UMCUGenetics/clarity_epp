@@ -874,7 +874,6 @@ def samplesheet_sequence_pool_verdunnen(lims, process_id, output_file):
         None: The function writes the samplesheet directly to the output file and does not return any value.
     """
     process = Process(lims, id=process_id)
-    print(process.udf)
     flowcell_type = process.udf.get('Flowcell type')
     flow_cell_config = config.flowcell_volumes[flowcell_type]
     
