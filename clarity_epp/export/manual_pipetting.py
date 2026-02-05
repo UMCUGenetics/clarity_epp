@@ -5,6 +5,8 @@ from genologics.entities import Process
 
 from .. import get_mix_sample_barcode, get_unique_sample_id
 import clarity_epp.export.utils
+import config
+
 
 
 def samplesheet_purify(lims, process_id, output_file):
@@ -858,3 +860,43 @@ def samplesheet_normalization_mix(lims, process_id, output_file):
         for well in clarity_epp.export.utils.sort_96_well_plate(output.keys()):
             for sample in output[well]:
                 output_file.write(output[well][sample])
+
+def samplesheet_sequence_pool_verdunnen(lims, process_id, output_file):
+    """
+    Generate a pipetting samplesheet for sequencing pool dilution.
+
+    Args:
+        lims (Lims):Lims artifact
+        process_id (str): process ID for sequence pool verdunnen
+        output_file (str): filename of output samplesheet
+
+    """
+    process = Process(lims, id=process_id)
+    flowcell_type = process.udf.get('Flowcell type')
+    flow_cell_config = config.flowcell_volumes[flowcell_type]
+    
+    lines = []
+    
+    for input_pool in process.all_inputs():
+        out_artifacts = [artifact for artifact in process.outputs_per_input(input_pool.id) if artifact.type == 'Analyte']
+        number_of_derivates = len(out_artifacts)  # Number of derivates based on artifacts
+
+        sample_total = flow_cell_config['sample_ul'] * number_of_derivates * 1.10  # 10% excess
+        phix_total = flow_cell_config['phix_ul'] * number_of_derivates * 1.10
+        naoh_total = flow_cell_config['naoh_ul'] * number_of_derivates * 1.10
+        preload_total = flow_cell_config['preload_ul'] * number_of_derivates * 1.10
+        # Add empty line between different pools
+        if lines:
+            lines.append(('\n',))
+        line = (
+            f"Poolnaam\t{input_pool.name}\n"
+            f"Aantal derivates\t{number_of_derivates}\n"
+            f"Flowcell Type\t{flowcell_type}\n\n"
+            f"volume sample (ul)\t{sample_total:.2f}\n"
+            f"volume PhiX (ul)\t{phix_total:.2f}\n\n"
+            f"volume NaOH (ul)\t{naoh_total:.2f}\n"
+            f"volume Pre-load buffer (ul)\t{preload_total:.2f}\n"
+        )
+        lines.append((line,))
+    for line in lines:
+        output_file.write(line[0])
