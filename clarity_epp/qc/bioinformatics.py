@@ -21,17 +21,33 @@ def bioinf_qc_check(lims, process_id):
         'Dx Contaminatie': {'column': 'Contamination', 'transform': float},
         'Dx Gevonden geslacht': {'column': 'Sex', 'transform': transform_sex_multiqc},
     }
+    sample_qcs = parse_file(process, lims, udf_columns)
+    family_information = get_family_info(process, sample_qcs, udf_columns)
+    qc_check(process, udf_columns, family_information)
 
-    # Parse file
+
+def parse_file(process, lims, udf_columns):
+    """Import multiqc file 
+
+    Args:
+        process: Lims process
+        lims (object): Lims connection
+        udf_columns (dict): Dictonary with udf columns to parse
+
+    Returns:
+        dict: Dictonary with sample qcs
+    """
+    sample_qcs = {}
     for output in process.all_outputs(unique=True):
         if output.name == 'Dx Data QC':
             try:
                 multiqc_file = output.files[0]
                 # Get multiqc file content, strip empty lines at end of file and split on newlines
                 multiqc_file_content = lims.get_file_contents(multiqc_file.id).data.decode('utf-8').rstrip().split('\n')
-                sample_qcs = {}
                 for line_index, line in enumerate(multiqc_file_content):
                     data = line.rstrip().split('\t')
+                    if len(data) < 5: # if no value for sex assigned add None
+                        data.append(None)
                     if line.startswith('Sample'):
                         sample_index = data.index('Sample')
                         for udf in udf_columns:
@@ -40,12 +56,15 @@ def bioinf_qc_check(lims, process_id):
                         # Parse samples
                         udf_data = {}
                         for udf in udf_columns:
-                            # Transform specific udf
                             try:
-                                if 'transform' in udf_columns[udf]:
-                                    udf_data[udf] = udf_columns[udf]['transform'](data[udf_columns[udf]['index']])
-                                else:
+                                if data[udf_columns[udf]['index']] in ['NA', None, '']:
+                                    data[udf_columns[udf]['index']] = None
                                     udf_data[udf] = data[udf_columns[udf]['index']]
+                                if data[udf_columns[udf]['index']]: 
+                                    if 'transform' in udf_columns[udf]:
+                                        udf_data[udf] = udf_columns[udf]['transform'](data[udf_columns[udf]['index']])
+                                    else:
+                                        udf_data[udf] = data[udf_columns[udf]['index']]
                             except (IndexError, ValueError):
                                 # Catch parsing errors
                                 message = (
@@ -60,14 +79,28 @@ def bioinf_qc_check(lims, process_id):
                 # Catch no file error
                 message = ('It seems there is no multiqc file uploaded. Upload the multiqc file and try again.')
                 sys.exit(message)
+    return sample_qcs
+    
 
-    # Fill sample udfs and safe family info
+def get_family_info(process, sample_qcs, udf_columns):
+    """Retrieve family information
+
+    Args:
+        process (object): Lims process/step
+        sample_qcs (dict): Dictonary with sample qcs
+        udf_columns (dict): Dictonary with udf columns
+
+    Returns:
+        dict: Dictonary with family information
+    """   
     family_info = {}
     for input in process.analytes()[0]:
         flowcell = input.udf['Dx Sequencing Run ID'].split('_')[-1]
         sample_flowcell = f'{input.name}_{flowcell}'
         for udf in udf_columns:
             if sample_flowcell in sample_qcs:
+                if sample_qcs[sample_flowcell][udf] is None:
+                    input.udf[udf] = "NA" 
                 input.udf[udf] = sample_qcs[sample_flowcell][udf]
         input.put()
         family_info[input.name] = {}
@@ -75,106 +108,169 @@ def bioinf_qc_check(lims, process_id):
         family_info[input.name]['status'] = input.samples[0].udf['Dx Familie status']
         if 'Dx CCU' in input.udf:
             family_info[input.name]['ccu'] = input.udf['Dx CCU']
+    return family_info
 
-    # Perform QC per input
+
+def qc_check(process, udf_columns, family_info):
+    """Perform QC check on samples in process
+
+    Args:
+        process (object): Lims process/step 
+        udf_columns (dict): Dictonary with udf columns
+        family_info (dict): Dictonary with family information
+    """
     for input in process.analytes()[0]:
-        udfs = ['Dx Gem. dekking', 'Dx CCU', 'Dx Contaminatie', 'Dx Gevonden geslacht']
-        qc_udf_not_filled = any(udf not in input.udf for udf in udfs)
-        if not qc_udf_not_filled:
-            qc_conclusion = ''
-            qc_message = []
-            # QC coverage check
-            if input.udf['Dx Gem. dekking'] < config.bioinformatics_qc_requirements_srWGS['Coverage']:
-                qc_conclusion += 'Dekking afgekeurd.'
-                qc_message.append('De gemiddelde dekking {qc} is onder {req}x.'.format(
-                    qc=input.udf['Dx Gem. dekking'],
-                    req=config.bioinformatics_qc_requirements_srWGS['Coverage'],
-                ))
-            # QC CCU check
-            if input.udf['Dx CCU'] > config.bioinformatics_qc_requirements_srWGS['CCU']:
-                family_status = family_info[input.name]["status"]
-                # Parent
-                if family_status == 'Ouder':
-                    family_number = family_info[input.name]['number']
-                    child = None
-                    for fraction in family_info:
-                        if family_info[fraction]['number'] == family_number and family_info[fraction]['status'] == 'Kind':
-                            child = fraction
-                    if child:
-                        child_ccu = family_info[child]["ccu"]
-                        # CCU child too high
-                        if child_ccu > config.bioinformatics_qc_requirements_srWGS['CCU_index']:
-                            qc_conclusion += 'CCU afgekeurd.'
-                            qc_message.append(
-                                'De CCU waarde {qc} is boven {req}.'
-                                'En de CCU waarde van kind ({child}) {qc_index} is boven {req_index}.'.format(
-                                    qc=input.udf['Dx CCU'],
-                                    req=config.bioinformatics_qc_requirements_srWGS['CCU'],
-                                    child=child,
-                                    qc_index=child_ccu,
-                                    req_index=config.bioinformatics_qc_requirements_srWGS['CCU_index'],
-                                )
-                            )
-                        # CCU child low enough
-                        elif child_ccu <= config.bioinformatics_qc_requirements_srWGS['CCU_index']:
-                            qc_conclusion += 'CCU goedgekeurd.'
-                            qc_message.append(
-                                'De CCU waarde {qc} is boven {req}.'
-                                'Maar de CCU waarde van kind ({child}) {qc_index} is onder {req_index}.'.format(
-                                    qc=input.udf['Dx CCU'],
-                                    req=config.bioinformatics_qc_requirements_srWGS['CCU'],
-                                    child=child,
-                                    qc_index=child_ccu,
-                                    req_index=config.bioinformatics_qc_requirements_srWGS['CCU_index'],
-                                )
-                            )
-                    # No child in step
-                    else:
-                        qc_conclusion += 'CCU onbekend.'
-                        qc_message.append(
-                            'De CCU waarde {qc} is boven {req}.'
-                            'Het betreft een ouder, maar kind van is niet aanwezig in deze stap.'.format(
-                                qc=input.udf['Dx CCU'],
-                                req=config.bioinformatics_qc_requirements_srWGS['CCU'],
-                            )
-                        )
-                # Child
-                else:
-                    qc_conclusion += 'CCU afgekeurd.'
-                    qc_message.append('De CCU waarde {qc} is boven {req}. Het betreft een kind.'.format(
-                        qc=input.udf['Dx CCU'],
-                        req=config.bioinformatics_qc_requirements_srWGS['CCU'],
-                    ))
-            # QC contamination check
-            if input.udf['Dx Contaminatie'] > config.bioinformatics_qc_requirements_srWGS['Contamination']:
-                qc_conclusion += 'Contaminatie afgekeurd.'
-                qc_message.append('De contaminatie waarde {qc} is boven {req}.'.format(
-                    qc=input.udf['Dx Contaminatie'],
-                    req=config.bioinformatics_qc_requirements_srWGS['Contamination'],
-                ))
-            # QC sex check
-            if input.udf['Dx Gevonden geslacht'] != input.samples[0].udf['Dx Geslacht']:
-                qc_conclusion += 'Geslacht afgekeurd.'
-                qc_message.append('Het gevonden geslacht {qc} komt niet overeen met het bekende geslacht {req}.'.format(
-                    qc=input.udf['Dx Gevonden geslacht'],
-                    req=input.samples[0].udf['Dx Geslacht'],
-                ))
+        udfs = list(udf_columns.keys())
+        if any(udf not in input.udf for udf in udfs):
+            continue
+        qc_requirements = config.bioinformatics_qc_requirements_srWGS
+        qc_message = []
+        qc_conclusion = ''
+        if input.udf['Dx Gem. dekking'] < qc_requirements['Coverage'] or input.udf['Dx Gem. dekking'] is None:
+            qc_message, qc_conclusion = qc_coverage_fail(input, qc_conclusion, qc_message, qc_requirements)
+        qc_message, qc_conclusion = qc_ccu_check(input, qc_conclusion, qc_message, family_info, qc_requirements)
+        if input.udf['Dx Contaminatie'] > qc_requirements['Contamination'] or input.udf['Dx Contaminatie'] is None: 
+            qc_message, qc_conclusion = qc_contamination_fail(input, qc_conclusion, qc_message, qc_requirements) 
+        if input.udf.get('Dx Foetus') is True and input.samples[0].udf.get('Dx Geslacht') == 'Onbekend':
+            qc_message, qc_conclusion = no_check_foetus(input, qc_conclusion, qc_message)
+        else:
+            if input.udf['Dx Gevonden geslacht'] != input.samples[0].udf['Dx Geslacht'] or input.udf['Dx Gevonden geslacht'] is None:
+                qc_message, qc_conclusion = qc_sex_fail(input, qc_conclusion, qc_message)
+        if qc_conclusion:
+            input = qc_mark_failed(input, qc_conclusion, qc_message)
+        if 'Dx afwijkingen oorzaak' not in input.udf:
+            input.udf['Dx QC check'] = True
+        elif (input.udf['Dx afwijkingen oorzaak'] and
+                input.udf['Dx afwijkingen uitleg'].startswith('Conclusie: goedgekeurd')):
+            input.udf['Dx QC check'] = True
+        input.put()
 
-            # If any qc does not meet qc requirement fill 'Afwijkingen' udfs
-            if qc_conclusion:
-                explanation = ' '.join(qc_message)
-                input.udf['Dx afwijkingen oorzaak'] = 'Data'
-                if 'afgekeurd' in qc_conclusion:
-                    input.udf['Dx afwijkingen uitleg'] = f'Conclusie: afgekeurd (Uitleg: {explanation})'
-                elif 'onbekend' in qc_conclusion:
-                    input.udf['Dx afwijkingen uitleg'] = f'Conclusie: onbekend (Uitleg: {explanation})'
-                elif 'goedgekeurd' in qc_conclusion:
-                    input.udf['Dx afwijkingen uitleg'] = f'Conclusie: goedgekeurd (Uitleg: {explanation})'
 
-            # Set Dx QC check to true only if QC is approved
-            if 'Dx afwijkingen oorzaak' not in input.udf:
-                input.udf['Dx QC check'] = True
-            elif (input.udf['Dx afwijkingen oorzaak'] and
-                  input.udf['Dx afwijkingen uitleg'].startswith('Conclusie: goedgekeurd')):
-                input.udf['Dx QC check'] = True
-            input.put()
+def qc_coverage_fail(input, qc_conclusion, qc_message, qc_requirements):
+    """Add conclusion and message for low coverage QC
+
+    Args:
+        input (Artifact): Lims artifact
+        qc_conclusion (str): QC conclusion
+        qc_message (list): QC message 
+        qc_requirements (dict): Dictonary with qc requirements
+
+    Returns:
+        list: qc_message for low coverage
+        str: Updated QC conclusion 
+    """
+    qc_conclusion += 'Dekking afgekeurd.'
+    qc_message.append(
+        f"De gemiddelde dekking {input.udf['Dx Gem. dekking']} is onder "
+        f"{qc_requirements['Coverage']}x.")
+    return qc_message, qc_conclusion 
+
+
+def qc_ccu_check(input, qc_conclusion, qc_message, family_info, qc_requirements):
+    """Check CCU QC and write conclusion and message if failed
+
+    Args:
+        input (Artificat): Lims artifact
+        qc_conclusion (str):: QC conclusion
+        qc_message (list): QC message 
+        family_info (dict): Dictonary with family information
+
+    Returns:
+        list: qc_message for high CCU
+        str: Updated QC conclusion
+    """
+    family_status = family_info[input.name]["status"]
+    ccu = input.udf['Dx CCU']
+    if family_status == 'Ouder':
+        threshold = qc_requirements['CCU_parent']
+        label = 'ouder'
+    elif family_status == 'Kind':
+        threshold = qc_requirements['CCU_child']
+        label = 'kind'
+    else:
+        return qc_conclusion, qc_message
+    if ccu is None or ccu > threshold:
+        qc_conclusion += 'CCU afgekeurd.'
+        qc_message.append(
+            f"De CCU waarde {ccu} is boven {threshold}. Het betreft een {label}."
+        )
+
+    return qc_message, qc_conclusion
+
+            
+def qc_contamination_fail(input, qc_conclusion, qc_message, qc_requirements):
+    """Add conclusion and message for high contamination QC
+
+    Args:
+        input (Artificat): Lims artifact
+        qc_conclusion (str): QC conclusion
+        qc_message (list): QC message 
+
+    Returns:
+        list: qc_message for high contamination
+        str: Updated QC conclusion
+    """    
+    qc_conclusion += 'Contaminatie afgekeurd.'
+    qc_message.append(
+        f"De contaminatie waarde {input.udf['Dx Contaminatie']} is boven "
+        f"{qc_requirements['Contamination']}.")
+    return qc_message, qc_conclusion
+
+
+def qc_sex_fail(input, qc_conclusion, qc_message):
+    """Add conclusion and message for gender fail 
+
+    Args:
+        input (Artificat): Lims artifact
+        qc_conclusion (str): QC conclusion
+        qc_message (list): QC message 
+    Returns:
+        list: qc_message for gender fail
+        str: Updated QC conclusion
+    """    
+    qc_conclusion += 'Geslacht afgekeurd.'
+    qc_message.append(
+        f"Het gevonden geslacht {input.udf['Dx Gevonden geslacht']} komt niet overeen met het bekende geslacht "
+        f"{input.samples[0].udf['Dx Geslacht']}.")
+    return qc_message, qc_conclusion
+
+
+def no_check_foetus(input, qc_conclusion, qc_message):
+    """Add conclusion and message when gender check is skipped for feutus samples
+
+    Args:
+        input (Artificat): Lims artifact
+        qc_conclusion (str): QC conclusion
+        qc_message (list): QC message 
+
+    Returns:
+        Updated QC conclusion and message when feutus gender check is skipped
+    """
+    qc_conclusion += 'Goedgekeurd; geslacht foetus niet gecontroleerd. '
+    qc_message.append(
+        "Prenataal sample (Dx Foetus = True) met onbekend geslacht,"
+        "geslachtscontrole is niet uitgevoerd."
+    )
+    return qc_message, qc_conclusion
+          
+            
+def qc_mark_failed(input, qc_conclusion, qc_message):      
+    """Fill in 'Afwijkingen' udfs for failed qc
+    
+    Args:
+        input (Artificat): Lims artifact
+        qc_conclusion (str): QC conclusion
+        qc_message (list): QC message 
+        
+    Returns:
+        Artifact: with updated 'Afwijkingen' udfs
+    """      
+    explanation = ' '.join(qc_message)
+    input.udf['Dx afwijkingen oorzaak'] = 'Data'
+    if 'afgekeurd' in qc_conclusion:
+        input.udf['Dx afwijkingen uitleg'] = f'Conclusie: afgekeurd (Uitleg: {explanation})'
+    elif 'onbekend' in qc_conclusion:
+        input.udf['Dx afwijkingen uitleg'] = f'Conclusie: onbekend (Uitleg: {explanation})'
+    elif 'goedgekeurd' in qc_conclusion:
+        input.udf['Dx afwijkingen uitleg'] = f'Conclusie: goedgekeurd (Uitleg: {explanation})'
+    return input
