@@ -2,7 +2,7 @@ import sys
 
 from genologics.entities import Process
 
-from clarity_epp.qc.utils import transform_sex_multiqc
+from utils import transform_sex_multiqc
 import config
 
 
@@ -60,6 +60,9 @@ def parse_file(process, lims, udf_columns):
                                 if data[udf_columns[udf]['index']] in ['NA', None, '']:
                                     data[udf_columns[udf]['index']] = None
                                     udf_data[udf] = data[udf_columns[udf]['index']]
+                                if udf == 'Dx CCU' and data[udf_columns[udf]['index']] is None:
+                                    data[udf_columns[udf]['index']] = -1
+                                    udf_data[udf] = data[udf_columns[udf]['index']]
                                 if data[udf_columns[udf]['index']]: 
                                     if 'transform' in udf_columns[udf]:
                                         udf_data[udf] = udf_columns[udf]['transform'](data[udf_columns[udf]['index']])
@@ -99,9 +102,8 @@ def get_family_info(process, sample_qcs, udf_columns):
         sample_flowcell = f'{input.name}_{flowcell}'
         for udf in udf_columns:
             if sample_flowcell in sample_qcs:
-                if sample_qcs[sample_flowcell][udf] is None:
-                    input.udf[udf] = "NA" 
-                input.udf[udf] = sample_qcs[sample_flowcell][udf]
+                if sample_qcs[sample_flowcell][udf] is not None:   
+                    input.udf[udf] = sample_qcs[sample_flowcell][udf]
         input.put()
         family_info[input.name] = {}
         family_info[input.name]['number'] = input.samples[0].udf['Dx Familienummer']
@@ -194,6 +196,11 @@ def qc_ccu_check(input, qc_conclusion, qc_message, family_info, qc_requirements)
         qc_message.append(
             f"De CCU waarde {ccu} is boven {threshold}. Het betreft een {label}."
         )
+    if ccu == -1:
+        qc_conclusion += 'CCU afgekeurd.'
+        qc_message.append(
+            f"De CCU waarde is NA. Het betreft een {label}."
+        )
 
     return qc_message, qc_conclusion
 
@@ -252,8 +259,8 @@ def no_check_foetus(input, qc_conclusion, qc_message):
         "geslachtscontrole is niet uitgevoerd."
     )
     return qc_message, qc_conclusion
-          
-            
+
+
 def qc_mark_failed(input, qc_conclusion, qc_message):      
     """Fill in 'Afwijkingen' udfs for failed qc
     
