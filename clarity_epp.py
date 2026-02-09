@@ -44,6 +44,9 @@ def export_email(args):
     """Export emails"""
     if args.type == 'sequencing_run':
         clarity_epp.export.email.sequencing_run(lims, config.email, args.process_id)
+    if args.type == 'manager_review':
+        clarity_epp.export.email.send_mail_manager_review(lims, config.email, args.process_id)
+
 
 
 def export_hamilton(args):
