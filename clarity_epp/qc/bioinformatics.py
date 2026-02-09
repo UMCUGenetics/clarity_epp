@@ -2,7 +2,7 @@ import sys
 
 from genologics.entities import Process
 
-from utils import transform_sex_multiqc
+from clarity_epp.qc.utils import transform_sex_multiqc
 import config
 
 
