@@ -33,23 +33,13 @@ def sequencing_run(lims, email_settings, process_id):
     )
 
 
-
 def send_mail_manager_review(lims, email_settings, process_id):
     process = Process(lims, id=process_id)
-    artifact = process.all_inputs()[0]
-
-    run_id = process.udf.get('Dx Sequencing Run ID')
-
     if process.step.actions.escalation:
         escalation = process.step.actions.escalation
 
-        manager_subject = "Manager review aangevraagd - Sample: {0} Run: {1}".format(
-            artifact.name, run_id
-        )
-
-        manager_message = "Sequencing Run: {0}\n".format(run_id)
-        manager_message += "\nManager Review voor Sample: {0}\n".format(artifact.name)
-        manager_message += "Door: {0}\n".format(escalation['author'].name)
+        manager_subject = f"Manager review aangevraagd - Dx srWGS Bioinformatica analyses"
+        manager_message = f"Manager review aangevraagd voor Dx srWGS Bioinformatica analyses door {escalation['author'].name}"
 
         send_email(
             email_settings['server'],
@@ -58,4 +48,3 @@ def send_mail_manager_review(lims, email_settings, process_id):
             manager_subject,
             manager_message
         )
-    
