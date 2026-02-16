@@ -30,29 +30,30 @@ def sequencing_run(lims, email_settings, process_id):
     send_email(
         email_settings['server'], email_settings['from'], email_settings['to_sequencing_run_complete'],
         subject, message
-    )
+
 
 
 def send_mail_manager_review(lims, email_settings, process_id):
-        process = Process(lims, id=process_id)
-        artifact = process.all_inputs()[0]
+    process = Process(lims, id=process_id)
+    artifact = process.all_inputs()[0]
 
-        if process.step.actions.escalation:
-                escalation = process.step.actions.escalation
+    run_id = process.udf.get('Dx Sequencing Run ID')
 
-                manager_subject = "Manager review aangevraagd - {0}".format(artifact.name)
+    if process.step.actions.escalation:
+        escalation = process.step.actions.escalation
 
-                manager_message = "Sequencing Run: {0}\n".format(artifact.name)
-                manager_message += "\nManager Review LIMS:\n"
-                manager_message += "{0}: {1}\n".format(
-                    escalation['author'].name,
-                    escalation['request']
-                )
+        manager_subject = "Manager review aangevraagd - Sample: {0} Run: {1}".format(
+            artifact.name, run_id
+        )
 
-                send_email(
-                    email_settings['server'],
-                    email_settings['from'],
-                    email_settings['to_manager_review'],
-                    manager_subject,
-                    manager_message
-            )
+        manager_message = "Sequencing Run: {0}\n".format(run_id)
+        manager_message += "\nManager Review voor Sample: {0}\n".format(artifact.name)
+        manager_message += "Door: {0}\n".format(escalation['author'].name)
+
+        send_email(
+            email_settings['server'],
+            email_settings['from'],
+            email_settings['to_manager_review'],
+            manager_subject,
+            manager_message
+        )
