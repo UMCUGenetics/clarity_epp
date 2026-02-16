@@ -133,7 +133,7 @@ def qc_check(process, udf_columns, family_info):
         qc_message, qc_conclusion = qc_ccu_check(input, qc_conclusion, qc_message, family_info, qc_requirements)
         if input.udf['Dx Contaminatie'] > qc_requirements['Contamination'] or input.udf['Dx Contaminatie'] is None: 
             qc_message, qc_conclusion = qc_contamination_fail(input, qc_conclusion, qc_message, qc_requirements) 
-        if input.udf.get('Dx Foetus') is True and input.samples[0].udf.get('Dx Geslacht') == 'Onbekend':
+        if input.samples[0].udf.get("Dx Foetus") is True and input.samples[0].udf.get('Dx Geslacht') == 'Onbekend':
             qc_message, qc_conclusion = no_check_foetus(input, qc_conclusion, qc_message)
         else:
             if input.udf['Dx Gevonden geslacht'] != input.samples[0].udf['Dx Geslacht'] or input.udf['Dx Gevonden geslacht'] is None:
