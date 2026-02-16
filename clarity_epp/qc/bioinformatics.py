@@ -6,6 +6,8 @@ from clarity_epp.qc.utils import transform_sex_multiqc
 import config
 
 
+
+from genologics.entities import Process
 def bioinf_qc_check(lims, process_id):
     """Read imported multiqc file and perform quality check
 
@@ -134,7 +136,7 @@ def qc_check(process, udf_columns, family_info):
         if input.udf['Dx Contaminatie'] > qc_requirements['Contamination'] or input.udf['Dx Contaminatie'] is None: 
             qc_message, qc_conclusion = qc_contamination_fail(input, qc_conclusion, qc_message, qc_requirements) 
         if input.samples[0].udf.get("Dx Foetus") is True and input.samples[0].udf.get('Dx Geslacht') == 'Onbekend':
-            qc_message, qc_conclusion = no_check_foetus(input, qc_conclusion, qc_message)
+            qc_message, qc_conclusion = no_check_foetus(qc_message, qc_conclusion)
         else:
             if input.udf['Dx Gevonden geslacht'] != input.samples[0].udf['Dx Geslacht'] or input.udf['Dx Gevonden geslacht'] is None:
                 qc_message, qc_conclusion = qc_sex_fail(input, qc_conclusion, qc_message)
@@ -242,21 +244,20 @@ def qc_sex_fail(input, qc_conclusion, qc_message):
     return qc_message, qc_conclusion
 
 
-def no_check_foetus(input, qc_conclusion, qc_message):
+def no_check_foetus(qc_message, qc_conclusion):
     """Add conclusion and message when gender check is skipped for feutus samples
 
     Args:
-        input (Artificat): Lims artifact
         qc_conclusion (str): QC conclusion
         qc_message (list): QC message 
 
     Returns:
         Updated QC conclusion and message when feutus gender check is skipped
     """
-    qc_conclusion += 'Goedgekeurd; geslacht foetus niet gecontroleerd. '
+    qc_conclusion += 'Geslacht goedgekeurd.'
     qc_message.append(
         "Prenataal sample (Dx Foetus = True) met onbekend geslacht,"
-        "geslachtscontrole is niet uitgevoerd."
+        " geslachtscontrole is niet uitgevoerd."
     )
     return qc_message, qc_conclusion
 
