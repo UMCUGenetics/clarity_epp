@@ -14,9 +14,13 @@ email = {
         'to_1@mail.nl',
     ],
     'to_sequencing_run_complete': [
+        'to_1@mail.nl', 
+    ],
+    'to_manager_review': [
         'to_1@mail.nl',
-    ]
+    ],
 }
+
 
 # Import samples: stoftestcode to workflow
 stoftestcode_wes = 'NGS_025'
