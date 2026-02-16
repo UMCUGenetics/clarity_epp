@@ -6,8 +6,6 @@ from clarity_epp.qc.utils import transform_sex_multiqc
 import config
 
 
-
-from genologics.entities import Process
 def bioinf_qc_check(lims, process_id):
     """Read imported multiqc file and perform quality check
 
