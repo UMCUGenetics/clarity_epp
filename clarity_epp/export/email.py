@@ -30,6 +30,7 @@ def sequencing_run(lims, email_settings, process_id):
     send_email(
         email_settings['server'], email_settings['from'], email_settings['to_sequencing_run_complete'],
         subject, message
+    )
 
 
 
@@ -57,3 +58,4 @@ def send_mail_manager_review(lims, email_settings, process_id):
             manager_subject,
             manager_message
         )
+    
