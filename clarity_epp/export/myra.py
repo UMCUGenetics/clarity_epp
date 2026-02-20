@@ -411,6 +411,24 @@ def check_for_missing_samples_in_process(cluster_dict, process_samples):
     return missing_samples, cluster_dict
 
 
+def exclude_samples_with_zero_clusters(process, cluster_dict):
+    """Checks for zero clusters and exclude sample
+
+    Args:
+        process (object): Lims Process object
+        cluster_dict (dict): Dictionary containing per sample: 'clusters' (number of clusters) and 'project'
+
+    Returns:
+        dict: Updated dictionary, exlclusions added
+    """
+    for analyte in process.analytes()[0]:
+        if cluster_dict[analyte.name.split("_")[0]]["clusters"] == 0.0:
+            analyte.udf["Dx Geëxcludeerd LP"] = True
+            analyte.put()
+            cluster_dict[analyte.name.split("_")[0]]["excluded"] = True
+    return cluster_dict
+
+
 def get_LP_QC_stats(lims, process):
     """Gets number of clusters for LPsrWGS (project) samples from uploaded QC stats LowPass file and checks samples in
     file with samples in process, exiting with message if error in parsing file, else returning dictionary and list
@@ -446,6 +464,7 @@ def get_LP_QC_stats(lims, process):
             message = (f'Error parsing file: line {line_index}')
             sys.exit(message)
 
+    cluster_dict = exclude_samples_with_zero_clusters(process, cluster_dict)
     process_samples = check_for_missing_samples_in_file(process, cluster_dict)
     missing_samples, cluster_dict = check_for_missing_samples_in_process(cluster_dict, process_samples)
 
