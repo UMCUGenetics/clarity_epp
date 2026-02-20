@@ -224,7 +224,11 @@ def upload_magnis_results(args):
 # QC functions
 def qc_bioinformatics(args):
     """Set QC check based on multiqc data."""
-    clarity_epp.qc.bioinformatics.bioinf_qc_check(lims, args.process_id)
+    if args.type == 'qc_check':
+        clarity_epp.qc.bioinformatics.bioinf_qc_check(lims, args.process_id)
+    if args.type == 'fill_next_step_and_send_mail':
+        clarity_epp.qc.bioinformatics.fill_next_step_and_send_mail(lims, args.process_id)
+
 
 
 def qc_fragment_length(args):
