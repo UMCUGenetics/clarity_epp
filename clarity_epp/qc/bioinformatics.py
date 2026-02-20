@@ -320,5 +320,4 @@ def fill_next_step_and_send_mail(lims, process_id):
     actions.put()
     if any(action.get("action") == "review" for action in new_next_actions):
         email_settings = config.email_settings
-        send_mail_manager_review(lims, email_settings, process_id)
-
+        send_mail_manager_review(email_settings)
