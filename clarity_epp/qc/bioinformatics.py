@@ -1,6 +1,6 @@
 import sys
 
-from genologics.entities import Process
+from genologics.entities import Process, Step
 
 from clarity_epp.qc.utils import transform_sex_multiqc
 from clarity_epp.export.email import send_mail_manager_review
