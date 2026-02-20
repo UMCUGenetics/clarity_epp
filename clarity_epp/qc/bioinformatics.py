@@ -3,6 +3,8 @@ import sys
 from genologics.entities import Process
 
 from clarity_epp.qc.utils import transform_sex_multiqc
+from clarity_epp.export.email import send_mail_manager_review
+
 import config
 
 
@@ -280,3 +282,43 @@ def qc_mark_failed(input, qc_conclusion, qc_message):
     elif 'goedgekeurd' in qc_conclusion:
         input.udf['Dx afwijkingen uitleg'] = f'Conclusie: goedgekeurd (Uitleg: {explanation})'
     return input
+
+
+def fill_next_step_and_send_mail(lims, process_id):
+    """
+    Fill in values for Next step either request manager review or mark protocol as complete.
+    Send email to manager if review is requested.
+
+    Args:
+        lims (object): Lims connection
+        process_id (str): Process ID:
+
+    """
+    step = Step(lims,  id=process_id)
+    review_trigger = "conclusie: afgekeurd"
+    actions = step.actions
+    new_next_actions = []
+    for action in actions.next_actions:
+        artifact = action["artifact"]
+        artifact.get()
+        text = (artifact.udf.get("Dx afwijkingen uitleg", "") or "").lower().strip()
+        needs_review = review_trigger.lower() in text
+
+        if needs_review:
+            new_next_actions.append({
+                "artifact": artifact,
+                "action": "review",
+            })
+        else:
+            new_next_actions.append({
+                "artifact": artifact,
+                "action": "complete",
+                "escalation": False    
+    })
+
+    actions.set_next_actions(new_next_actions)
+    actions.put()
+    if any(action.get("action") == "review" for action in new_next_actions):
+        email_settings = config.email_settings
+        send_mail_manager_review(lims, email_settings, process_id)
+
