@@ -258,7 +258,7 @@ def qc_sample_mip(args):
 def placement_automatic(args):
     """Copy container layout from previous step."""
     if args.type == 'copy_layout':
-        clarity_epp.placement.plate.copy_layout_to_new_container(lims, args.process_id)
+        clarity_epp.placement.plate.copy_layout(lims, args.process_id)
     elif args.type == 'transpose_layout':
         clarity_epp.placement.plate.copy_placement_row_to_column(lims, args.process_id)
     elif args.type == 'copy_two_containers':
