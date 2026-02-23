@@ -282,7 +282,6 @@ def qc_mark_failed(input, qc_conclusion, qc_message):
         input.udf['Dx afwijkingen uitleg'] = f'Conclusie: goedgekeurd (Uitleg: {explanation})'
     return input
 
-
 def fill_next_step_and_send_mail(lims, process_id):
     """
     Fill in values for Next step either request manager review or mark protocol as complete.
@@ -312,8 +311,9 @@ def fill_next_step_and_send_mail(lims, process_id):
             new_next_actions.append({
                 "artifact": artifact,
                 "action": "complete",
-    })
+            })
 
-    actions.set_next_actions(new_next_actions)
+    actions.next_actions = new_next_actions
     actions.put()
+    return
 
