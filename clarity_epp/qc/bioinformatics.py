@@ -313,11 +313,10 @@ def fill_next_step_and_send_mail(lims, process_id):
             new_next_actions.append({
                 "artifact": artifact,
                 "action": "complete",
-                "escalation": False    
     })
 
     actions.set_next_actions(new_next_actions)
     actions.put()
     if any(action.get("action") == "review" for action in new_next_actions):
-        email_settings = config.email_settings
+        email_settings = config.email
         send_mail_manager_review(email_settings)
