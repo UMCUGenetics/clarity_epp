@@ -33,13 +33,9 @@ def sequencing_run(lims, email_settings, process_id):
     )
 
 
-def send_mail_manager_review(lims, email_settings, process_id):
-    process = Process(lims, id=process_id)
-    if process.step.actions.escalation:
-        escalation = process.step.actions.escalation
-
+def send_mail_manager_review(email_settings):
         manager_subject = f"Manager review aangevraagd - Dx srWGS Bioinformatica analyses"
-        manager_message = f"Manager review aangevraagd voor Dx srWGS Bioinformatica analyses door {escalation['author'].name}"
+        manager_message = f"Manager review aangevraagd voor Dx srWGS Bioinformatica analyses."
 
         send_email(
             email_settings['server'],
