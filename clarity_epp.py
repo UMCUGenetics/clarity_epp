@@ -487,6 +487,7 @@ if __name__ == "__main__":
     subparser_qc = parser_qc.add_subparsers()
 
     parser_qc_bioinformatics = subparser_qc.add_parser('bioinformatics', help='Set bioinf qc flag')
+    parser_qc_bioinformatics.add_argument('type', choices=['qc_check', 'fill_next_step_and_send_mail'], help='Bioinformatics QC action')
     parser_qc_bioinformatics.add_argument('process_id', help='Clarity lims process id')
     parser_qc_bioinformatics.set_defaults(func=qc_bioinformatics)
 
