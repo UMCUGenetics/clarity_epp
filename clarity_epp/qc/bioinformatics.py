@@ -3,7 +3,6 @@ import sys
 from genologics.entities import Process, Step
 
 from clarity_epp.qc.utils import transform_sex_multiqc
-from clarity_epp.export.email import send_mail_manager_review
 
 import config
 
@@ -317,6 +316,4 @@ def fill_next_step_and_send_mail(lims, process_id):
 
     actions.set_next_actions(new_next_actions)
     actions.put()
-    if any(action.get("action") == "review" for action in new_next_actions):
-        email_settings = config.email
-        send_mail_manager_review(email_settings)
+
