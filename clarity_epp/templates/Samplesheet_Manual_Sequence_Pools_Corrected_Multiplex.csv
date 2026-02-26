@@ -1,0 +1,5 @@
+Pipetteerschema multiplex pool
+Sample,Pipetteervolume Flowcell
+{% for sample in samples -%}
+{{ samples[sample]["sample"] }},{{ samples[sample]["flowcell_volume"] }},{{ samples[sample]["message"] }}
+{% endfor -%}

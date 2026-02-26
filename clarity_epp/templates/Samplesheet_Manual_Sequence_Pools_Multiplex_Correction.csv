@@ -1,0 +1,5 @@
+Pipetteerschema correctie externe multiplex pool
+Sample,Pipetteervolume Flowcell,Correctie Factor (1 ul),Pipetteervolume Gecorrigeerd
+{% for sample in samples -%}
+{{ samples[sample]["sample"] }},{{ samples[sample]["flowcell_volume"] }},{{ samples[sample]["correction_factor"] }},{{ samples[sample]["corrected_volume"] }}
+{% endfor -%}
