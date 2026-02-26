@@ -48,7 +48,6 @@ def export_email(args):
         clarity_epp.export.email.send_mail_manager_review(lims, config.email, args.process_id)
 
 
-
 def export_hamilton(args):
     """Export samplesheets for hamilton machine."""
     if args.type == 'filling_out':
@@ -113,6 +112,10 @@ def export_manual_pipetting(args):
         clarity_epp.export.manual_pipetting.samplesheet_normalization_mix(lims, args.process_id, args.output_file)
     elif args.type == 'sequence_pool_verdunnen':
         clarity_epp.export.manual_pipetting.samplesheet_sequence_pool_verdunnen(lims, args.process_id, args.output_file)
+    elif args.type == 'sequence_pools':
+        clarity_epp.export.manual_pipetting.calculate_volumes_and_generate_samplesheet_sequence_pool(
+            lims, args.process_id, args.output_file
+        )
 
 
 def export_merge_file(args):
@@ -228,7 +231,6 @@ def qc_bioinformatics(args):
         clarity_epp.qc.bioinformatics.bioinf_qc_check(lims, args.process_id)
     if args.type == 'fill_next_step_and_send_mail':
         clarity_epp.qc.bioinformatics.fill_next_step_and_send_mail(lims, args.process_id)
-
 
 
 def qc_fragment_length(args):
@@ -387,7 +389,7 @@ if __name__ == "__main__":
         choices=[
             'purify', 'dilute_library_pool', 'multiplex_library_pool', 'multiplex_sequence_pool', 'normalization',
             'capture', 'exonuclease', 'pcr_exonuclease', 'mip_multiplex_pool', 'mip_dilute_pool', 'pool_samples',
-            'pool_magnis_pools', 'normalization_mix', 'sequence_pool_verdunnen'
+            'pool_magnis_pools', 'normalization_mix', 'sequence_pool_verdunnen', 'sequence_pools'
         ],
         help='Samplesheet type'
     )
@@ -487,7 +489,9 @@ if __name__ == "__main__":
     subparser_qc = parser_qc.add_subparsers()
 
     parser_qc_bioinformatics = subparser_qc.add_parser('bioinformatics', help='Set bioinf qc flag')
-    parser_qc_bioinformatics.add_argument('type', choices=['qc_check', 'fill_next_step_and_send_mail'], help='Bioinformatics QC action')
+    parser_qc_bioinformatics.add_argument(
+        'type', choices=['qc_check', 'fill_next_step_and_send_mail'], help='Bioinformatics QC action'
+    )
     parser_qc_bioinformatics.add_argument('process_id', help='Clarity lims process id')
     parser_qc_bioinformatics.set_defaults(func=qc_bioinformatics)
 

@@ -14,7 +14,7 @@ email = {
         'to_1@mail.nl',
     ],
     'to_sequencing_run_complete': [
-        'to_1@mail.nl', 
+        'to_1@mail.nl',
     ],
     'to_manager_review': [
         'to_1@mail.nl',
@@ -198,3 +198,6 @@ flowcell_volumes = {
     '10B': {'sample_ul': 34, 'phix_ul': 1, 'naoh_ul': 8.5, 'preload_ul': 127.5},
     '25B': {'sample_ul': 56, 'phix_ul': 1.6, 'naoh_ul': 14.0, 'preload_ul': 210.0},
 }
+
+# Number of clusters/sample
+clusters_per_sample = 4.5

@@ -219,3 +219,22 @@ def get_qc_values_parent_process_artifact(input_artifact):
             concentration = float(parent_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
 
     return size, concentration
+
+
+def get_info_from_LP_process(lims, lowpass_processes, analyte):
+    """Gets calculation information from udfs in LowPass process.
+
+    Args:
+        lims (object): Lims connection
+        lowpass_processes (list): List of LowPass processtypes (Dx nM verdunning Myra LP)
+        analyte (object): Artifact object from LowPass parent process (processtype: Dx sample duplicate)
+
+    Returns:
+        tuple[float,float]:
+        nM dilution factor &
+        Volume sample (ul)
+    """
+    lowpass_process = lims.get_processes(type=lowpass_processes, inputartifactlimsid=analyte.id)[0]
+    nM_pool = float(lowpass_process.udf['Dx Pool verdunning (nM)'])
+    volume_sample = float(lowpass_process.udf['Sample volume (ul)'])
+    return nM_pool, volume_sample

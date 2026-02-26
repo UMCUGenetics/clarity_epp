@@ -5,8 +5,8 @@ from genologics.entities import Process
 
 from .. import get_mix_sample_barcode, get_unique_sample_id
 import clarity_epp.export.utils
+from clarity_epp.export.utils import create_samplesheet, get_info_from_LP_process, get_process_types
 import config
-
 
 
 def samplesheet_purify(lims, process_id, output_file):
@@ -855,11 +855,12 @@ def samplesheet_normalization_mix(lims, process_id, output_file):
             output_file.write(output['11'][sample])
     elif len(output.keys()) > 1 and '11' in output:
         output_file.write("Verwachte input is een 96-wells plaat of tubes, niet beide.")
-    else:  
+    else:
         # Write output file per sample sorted for well if samples in plate
         for well in clarity_epp.export.utils.sort_96_well_plate(output.keys()):
             for sample in output[well]:
                 output_file.write(output[well][sample])
+
 
 def samplesheet_sequence_pool_verdunnen(lims, process_id, output_file):
     """
@@ -872,8 +873,8 @@ def samplesheet_sequence_pool_verdunnen(lims, process_id, output_file):
     """
     process = Process(lims, id=process_id)
     flowcell_type = process.udf.get('Flowcell type')
-    flow_cell_config = config.flowcell_volumes[flowcell_type]  
-    lines = []   
+    flow_cell_config = config.flowcell_volumes[flowcell_type]
+    lines = []
     for input_pool in process.all_inputs():
         out_artifacts = [artifact for artifact in process.outputs_per_input(input_pool.id) if artifact.type == 'Analyte']
         number_of_derivates = len(out_artifacts)  # Number of derivates based on artifacts
@@ -881,10 +882,10 @@ def samplesheet_sequence_pool_verdunnen(lims, process_id, output_file):
         phix_total = flow_cell_config['phix_ul'] * number_of_derivates * 1.10
         naoh_total = flow_cell_config['naoh_ul'] * number_of_derivates * 1.10
         preload_total = flow_cell_config['preload_ul'] * number_of_derivates * 1.10
-        
+
         # Add empty line between different pools
         if lines:
-            lines.append([" ", " ", " ", " "]) 
+            lines.append([" ", " ", " ", " "])
 
         pool_lines = [
             f"Poolnaam\t{input_pool.name}",
@@ -899,5 +900,470 @@ def samplesheet_sequence_pool_verdunnen(lims, process_id, output_file):
         ]
         lines.append(pool_lines)
     for pool_lines in lines:
-        output_file.write("\n".join(pool_lines) + "\n\n") 
+        output_file.write("\n".join(pool_lines) + "\n\n")
 
+
+def get_nm_pool(lims, lowpass_processes, input_pool):
+    """Gets nm dilution factor used in LowPass process.
+
+    Args:
+        lims (object): Lims connection
+        lowpass_processes (list): List of LowPass processtypes (Dx nM verdunning Myra LP)
+        input_pool (dict): Dictionary containing information per input pool
+
+    Returns:
+        float: nm dilution factor
+    """
+    nm_dilute_process = input_pool.parent_process.parent_processes()[0]
+    if "Dx nM verdunning Myra LP" in nm_dilute_process.type.name:
+        nm_pool = float(nm_dilute_process.udf['Dx Pool verdunning (nM)'])
+    elif "Dx nM verdunning Myra DX" in nm_dilute_process.type.name:
+        input_artifact = nm_dilute_process.all_inputs()[0]
+        duplicate_process = nm_dilute_process.parent_processes()[0]
+        for duplicate_analyte in duplicate_process.analytes()[0]:
+            if (input_artifact.name.split("_")[0] == duplicate_analyte.name.split("_")[0] and
+                    input_artifact.id != duplicate_analyte.id):  # _LPsrWGS fraction for same sample
+                nm_pool = get_info_from_LP_process(lims, lowpass_processes, duplicate_analyte)[0]
+    return nm_pool
+
+
+def get_udf_info_wes_pool(process, input_pools, wes_pool):
+    """Gets information about WES input pool from udfs
+
+    Args:
+        process (object): Lims Process object
+        input_pools (dict): Dictionary containing information per input pool
+        wes_pool (str): Name of WES input pool
+
+    Returns:
+        dict: Updated dictionary containing information per input pool
+    """
+    for input_pool in process.all_inputs():
+        if input_pool.name == wes_pool:
+            exoomequivalenten = 0
+            for sample in input_pool.samples:
+                exoomequivalenten += sample.udf["Dx Exoomequivalent"]
+            input_pools[wes_pool]["exoomequivalenten"] = exoomequivalenten
+            input_pools[wes_pool]["conc"] = input_pool.udf["Dx Concentratie fluorescentie (ng/ul)"]
+            input_pools[wes_pool]["size"] = input_pool.udf["Dx Fragmentlengte (bp)"]
+    return input_pools
+
+
+def get_udf_info_lpsrwgs_pool(lims, process, lowpass_processes, input_pools, lpsrwgs_pool):
+    """Gets information about LPsrWGS input pool from udfs
+
+    Args:
+        lims (object): Lims connection
+        process (object): Lims Process object
+        lowpass_processes (list): List of LowPass processtypes (Dx nM verdunning Myra LP)
+        input_pools (dict): Dictionary containing information per input pool
+        lpsrwgs_pool (str): Name of LPsrWGS input pool
+
+    Returns:
+        dict: Updated dictionary containing information per input pool
+    """
+    for input_pool in process.all_inputs():
+        if input_pool.name == lpsrwgs_pool:
+            clusters = 0
+            for sample in input_pool.samples:
+                clusters += sample.udf["Dx # clusters/sample"]
+            input_pools[lpsrwgs_pool]["clusters"] = clusters
+            input_pools[lpsrwgs_pool]["nm_pool"] = get_nm_pool(lims, lowpass_processes, input_pool)
+    return input_pools
+
+
+def get_udf_info_srwgs_pool(lims, process, lowpass_processes, input_pools, output_pools, srwgs_pool):
+    """Gets information about srWGS input pool from udfs
+
+    Args:
+        lims (object): Lims connection
+        process (object): Lims Process object
+        lowpass_processes (list): List of LowPass processtypes (Dx nM verdunning Myra LP)
+        input_pools (dict): Dictionary containing information per input pool
+        output_pools (dict): Dictionary containing information per output pool
+        srwgs_pool (str): Name of srWGS input pool
+
+    Returns:
+        tuple[dict,dict]:
+        Updated dictionary containing information per input pool &
+        Updated dictionary containing information per output pool
+    """
+    for input_pool in process.all_inputs():
+        if input_pool.name == srwgs_pool:
+            input_pools[srwgs_pool]["nm_pool"] = get_nm_pool(lims, lowpass_processes, input_pool)
+    for output_pool in process.analytes()[0]:
+        if srwgs_pool in output_pool.name:
+            output_pools[output_pool.name]["clusters_per_srwgs"] = process.udf["Dx # clusters/srWGS"]
+    return input_pools, output_pools
+
+
+def get_udf_info_external_pool(process, input_pools, external_pool):
+    """Gets information about external input pool from udfs
+
+    Args:
+        process (object): Lims Process object
+        input_pools (dict): Dictionary containing information per input pool
+        external_pool (str): Name of external input pool
+
+    Returns:
+        dict: Updated dictionary containing information per input pool
+    """
+    for input_pool in process.all_inputs():
+        if input_pool.name == external_pool:
+            clusters = 0
+            for sample in input_pool.samples:
+                clusters += sample.udf["Dx Exoomequivalent"]
+            input_pools[external_pool]["clusters"] = clusters
+            input_pools[external_pool]["conc"] = input_pool.udf["Dx Concentratie fluorescentie (ng/ul)"]
+            input_pools[external_pool]["size"] = input_pool.udf["Dx Fragmentlengte (bp)"]
+    return input_pools
+
+
+def collect_information_for_calculations(lims, process):
+    """Collects the needed information for the calculations per input pool and output pool
+
+    Args:
+        lims (object): Lims connection
+        process (object): Lims Process object
+
+    Returns:
+        tuple[dict,dict]:
+        Dictionary containing information per input pool &
+        Dictionary containing information per output pool
+    """
+    input_pools = {}
+    output_pools = {}
+    lowpass_processes = get_process_types(lims, ["Dx nM verdunning Myra LP"])
+    for input_pool in process.all_inputs():
+        input_pools[input_pool.name] = {}
+    for output_pool in process.analytes()[0]:
+        output_pools[output_pool.name] = {
+            "input_pools": output_pool.name.split(" + "),
+            "nr_lane": output_pool.udf["Dx # laantjes flowcell"],
+            "final_volume_per_lane": float(process.udf["Final volume"].split(" ul ")[0]),
+            "load_conc": process.udf["Dx Laadconcentratie (pM)"]
+        }
+        if "WES" not in output_pool.name:  # all but WES output_pool
+            output_pools[output_pool.name]["clusters_per_lane"] = (
+                float(process.udf["Dx # clusters flowcell/laantje (10^6)"].split("(")[-1].strip(")"))
+            )
+
+    for output_pool in output_pools:
+        for input_pool in output_pools[output_pool]["input_pools"]:
+            if "WES" in output_pool:  # only WES output_pool
+                input_pools = get_udf_info_wes_pool(process, input_pools, input_pool)
+            elif "LPsrWGS" in input_pool:  # only LPsrWGS input_pool
+                input_pools[input_pool]["external"] = True
+                input_pools = get_udf_info_lpsrwgs_pool(lims, process, lowpass_processes, input_pools, input_pool)
+            elif "srWGS" in input_pool:  # only srWGS input_pool
+                input_pools[input_pool]["external"] = False
+                input_pools, output_pools = get_udf_info_srwgs_pool(
+                    lims, process, lowpass_processes, input_pools, output_pools, input_pool
+                )
+            else:  # only external input_pool
+                input_pools[input_pool]["external"] = True
+                input_pools = get_udf_info_external_pool(process, input_pools, input_pool)
+    return input_pools, output_pools
+
+
+def calculate_clusters(input_pools, output_pools):
+    """Performs first part of the calculations
+
+    Args:
+        input_pools (dict): Dictionary containing information per input pool
+        output_pools (dict): Dictionary containing information per output pool
+
+    Returns:
+        tuple[dict,dict]:
+        Updated dictionary containing information per input pool &
+        Updated dictionary containing information per output pool
+    """
+    for output_pool in output_pools:
+        nr_lane = output_pools[output_pool]["nr_lane"]
+        output_pools[output_pool]["final_volume_output_pool"] = output_pools[output_pool]["final_volume_per_lane"] * nr_lane
+        if "WES" in output_pool:  # only WES output_pool
+            exoomequivalenten_total = 0
+            for input_pool in output_pools[output_pool]["input_pools"]:
+                exoomequivalenten_total += input_pools[input_pool]["exoomequivalenten"]
+            output_pools[output_pool]["exoomequivalenten_total"] = exoomequivalenten_total
+            output_pools[output_pool]["load_per_exoomequivalent"] = (
+                output_pools[output_pool]["load_conc"] / exoomequivalenten_total
+            )
+            for input_pool in output_pools[output_pool]["input_pools"]:
+                input_pools[input_pool]["pm_input_pool"] = (
+                    output_pools[output_pool]["load_per_exoomequivalent"] * input_pools[input_pool]["exoomequivalenten"]
+                )
+        else:  # all but WES output pool
+            clusters_available = nr_lane * output_pools[output_pool]["clusters_per_lane"]
+            load_clusters = (output_pools[output_pool]["load_conc"] / clusters_available)
+            clusters_external_pools = 0
+            for input_pool in output_pools[output_pool]["input_pools"]:
+                if "LPsrWGS" in input_pool or "srWGS" not in input_pool:  # all but WES output_pool and srWGS input_pool
+                    pm_input_pool = load_clusters * input_pools[input_pool]["clusters"]
+                    input_pools[input_pool]["pm_input_pool"] = pm_input_pool
+                    clusters_external_pools += input_pools[input_pool]["clusters"]
+            for input_pool in output_pools[output_pool]["input_pools"]:
+                if "srWGS" in input_pool and "LPsrWGS" not in input_pool:  # only srWGS input_pool
+                    clusters_srwgs_pool = clusters_available - clusters_external_pools
+                    if clusters_srwgs_pool < output_pools[output_pool]["clusters_per_srwgs"]:
+                        input_pools[input_pool]["cluster_message"] = "Aantal benodigde clusters niet voldoende"
+                    input_pools[input_pool]["pm_input_pool"] = load_clusters * clusters_srwgs_pool
+    return input_pools, output_pools
+
+
+def calculate_load_concentration(input_pools, output_pools):
+    """Performs second part of the calculations
+
+    Args:
+        input_pools (dict): Dictionary containing information per input pool
+        output_pools (dict): Dictionary containing information per output pool
+
+    Returns:
+        dict: Updated dictionary containing information per input pool
+    """
+    for output_pool in output_pools:
+        for input_pool in output_pools[output_pool]["input_pools"]:
+            if "WES" in output_pool or "srWGS" not in input_pool:  # only WES output_pool and external input_ppol
+                conc = input_pools[input_pool]["conc"]
+                size = input_pools[input_pool]["size"]
+                nm = (conc * 1000) * ((1 / 660) * (1 / size)) * 1000
+            else:  # only (LPsrWGS) input_pools
+                nm = input_pools[input_pool]["nm_pool"]
+            input_pools[input_pool]["load_conc_input_pool"] = ((nm * 1000) / 5) / input_pools[input_pool]["pm_input_pool"]
+    return input_pools
+
+
+def correct_pipetting_volumes(input_pools, output_pools, output_pool, lowest_volume_external_input_pool):
+    """Corrects pipetting volumes for output pool that needs correction (lowest volume external input pool < 1)
+
+    Args:
+        input_pools (dict): Dictionary containing information per input pool
+        output_pools (dict): Dictionary containing information per output pool
+        output_pool (str): Name of the output pool that needs correcting
+        lowest_volume_external_input_pool (float): Lowest volume of the external input pools
+
+    Returns:
+        tuple[dict,dict]:
+        Updated dictionary containing information per input pool &
+        Updated dictionary containing information per output pool
+    """
+    correction_factor = 1 / lowest_volume_external_input_pool
+    output_pools[output_pool]["correction_factor"] = correction_factor
+    total_corrected_volumes = 0
+    for input_pool in output_pools[output_pool]["input_pools"]:
+        input_pools[input_pool]["lowest_volume"] = False
+        if input_pools[input_pool]["external"]:
+            corrected_volume = input_pools[input_pool]["flowcell_volume_input_pool"] * correction_factor
+            input_pools[input_pool]["corrected_flowcell_volume_external_input_pool"] = corrected_volume
+            total_corrected_volumes += corrected_volume
+            if input_pools[input_pool]["flowcell_volume_input_pool"] == lowest_volume_external_input_pool:
+                input_pools[input_pool]["lowest_volume"] = True
+    output_pools[output_pool]["corrected_flowcell_volume_external_input_pools"] = total_corrected_volumes
+    return input_pools, output_pools
+
+
+def calculate_pipetting_volumes(input_pools, output_pools):
+    """Performs third part of the calculations
+
+    Args:
+        input_pools (dict): Dictionary containing information per input pool
+        output_pools (dict): Dictionary containing information per output pool
+
+    Returns:
+        tuple[dict,dict]:
+        Updated dictionary containing information per input pool &
+        Updated dictionary containing information per output pool
+    """
+    for output_pool in output_pools:
+        final_volume_output_pool = output_pools[output_pool]["final_volume_output_pool"]
+        flowcell_volume_input_pools = 0
+        flowcell_volume_external_input_pools = 0
+        volumes_for_correction_check = []
+        for input_pool in output_pools[output_pool]["input_pools"]:
+            flowcell_volume_input_pool = (
+                output_pools[output_pool]["final_volume_output_pool"] / input_pools[input_pool]["load_conc_input_pool"]
+            )
+            input_pools[input_pool]["flowcell_volume_input_pool"] = flowcell_volume_input_pool
+            flowcell_volume_input_pools += flowcell_volume_input_pool
+            # only LPsrWGS input_pool or external input_pool in srWGS output_pool
+            if "WES" not in output_pool and ("LPsrWGS" in input_pool or "srWGS" not in input_pool):
+                flowcell_volume_external_input_pools += flowcell_volume_input_pool
+                volumes_for_correction_check.append(flowcell_volume_input_pool)
+        output_pools[output_pool]["flowcell_volume_external_input_pools"] = flowcell_volume_external_input_pools
+        output_pools[output_pool]["flowcell_volume_tris"] = final_volume_output_pool - flowcell_volume_input_pools
+        output_pools[output_pool]["corrected_volumes"] = False
+        if "WES" not in output_pool:  # all but WES output_pools
+            if volumes_for_correction_check:
+                lowest_volume_external_input_pool = min(volumes_for_correction_check)
+                if lowest_volume_external_input_pool < 1:
+                    output_pools[output_pool]["corrected_volumes"] = True
+                    input_pools, output_pools = correct_pipetting_volumes(
+                        input_pools, output_pools, output_pool, lowest_volume_external_input_pool
+                    )
+    return input_pools, output_pools
+
+
+def generate_samplesheet_multiplex_correction(input_pools, output_pools, output_pool):
+    """Generates first part of the samplesheet for a corrected multiplex output pool
+
+    Args:
+        input_pools (dict): Dictionary containing information per input pool
+        output_pools (dict): Dictionary containing information per output pool
+        output_pool (str): Name of output pool wherefore samplesheet is generated
+
+    Returns:
+        str: Generated samplesheet
+    """
+    samplesheet_dictionary = {}
+    for input_pool in output_pools[output_pool]["input_pools"]:
+        if input_pools[input_pool]["lowest_volume"]:
+            samplesheet_dictionary[input_pool] = {
+                "sample": input_pool,
+                "flowcell_volume": f"{input_pools[input_pool]['flowcell_volume_input_pool']:.2f}",
+                "correction_factor": output_pools[output_pool]["correction_factor"],
+                "corrected_volume": f"{input_pools[input_pool]['corrected_flowcell_volume_external_input_pool']:.2f}"
+            }
+    for input_pool in output_pools[output_pool]["input_pools"]:
+        if input_pools[input_pool]["external"]:
+            if not input_pools[input_pool]["lowest_volume"]:
+                samplesheet_dictionary[input_pool] = {
+                    "sample": input_pool,
+                    "flowcell_volume": f"{input_pools[input_pool]['flowcell_volume_input_pool']:.2f}",
+                    "correction_factor": "",
+                    "corrected_volume": f"{input_pools[input_pool]['corrected_flowcell_volume_external_input_pool']:.2f}"
+                }
+    samplesheet_dictionary["Totaal"] = {
+        "sample": "Totaal",
+        "flowcell_volume": f"{output_pools[output_pool]['flowcell_volume_external_input_pools']:.2f}",
+        "correction_factor": "",
+        "corrected_volume": f"{output_pools[output_pool]['corrected_flowcell_volume_external_input_pools']:.2f}"
+    }
+    samplesheet_content = {"samples": samplesheet_dictionary}
+    samplesheet = (
+        f"{create_samplesheet('Samplesheet_Manual_Sequence_Pools_Multiplex_Correction.csv', samplesheet_content)}\n"
+    )
+    return samplesheet
+
+
+def generate_samplesheet_corrected_multiplex(input_pools, output_pools, output_pool):
+    """Generates second part of the samplesheet for a corrected multiplex output pool
+
+    Args:
+        input_pools (dict): Dictionary containing information per input pool
+        output_pools (dict): Dictionary containing information per output pool
+        output_pool (str): Name of output pool wherefore samplesheet is generated
+
+    Returns:
+        str: Generated samplesheet
+    """
+    samplesheet_dictionary = {}
+    samplesheet_dictionary["Externe multiplex pool"] = {
+        "sample": "Externe multiplex pool",
+        "flowcell_volume": f"{output_pools[output_pool]['flowcell_volume_external_input_pools']:.2f}",
+        "message": ""
+    }
+    for input_pool in output_pools[output_pool]["input_pools"]:
+        if not input_pools[input_pool]["external"]:
+            if "cluster_message" in input_pools[input_pool]:
+                message = input_pools[input_pool]["cluster_message"]
+            else:
+                message = ""
+            samplesheet_dictionary[input_pool] = {
+                "sample": input_pool,
+                "flowcell_volume": f"{input_pools[input_pool]['flowcell_volume_input_pool']:.2f}",
+                "message": message
+            }
+    samplesheet_dictionary["Tris-HCl"] = {
+        "sample": "Tris-HCl",
+        "flowcell_volume": f"{output_pools[output_pool]['flowcell_volume_tris']:.2f}",
+        "message": ""
+    }
+    samplesheet_dictionary["Totaal"] = {
+        "sample": "Totaal",
+        "flowcell_volume": f"{output_pools[output_pool]['final_volume_output_pool']:.2f}",
+        "message": ""
+    }
+    samplesheet_content = {"samples": samplesheet_dictionary}
+    samplesheet = (
+        f"{create_samplesheet('Samplesheet_Manual_Sequence_Pools_Corrected_Multiplex.csv', samplesheet_content)}\n\n\n"
+    )
+    return samplesheet
+
+
+def generate_samplesheet_other_pools(input_pools, output_pools, output_pool):
+    """Generates samplesheet for a not corrected output pool
+
+    Args:
+        input_pools (dict): Dictionary containing information per input pool
+        output_pools (dict): Dictionary containing information per output pool
+        output_pool (str): Name of output pool wherefore samplesheet is generated
+
+    Returns:
+        str: Generated samplesheet
+    """
+    samplesheet_dictionary = {}
+    for input_pool in output_pools[output_pool]["input_pools"]:
+        if "cluster_message" in input_pools[input_pool]:
+            message = input_pools[input_pool]["cluster_message"]
+        else:
+            message = ""
+        samplesheet_dictionary[input_pool] = {
+            "sample": input_pool,
+            "flowcell_volume": f"{input_pools[input_pool]['flowcell_volume_input_pool']:.2f}",
+            "message": message
+        }
+    samplesheet_dictionary["Tris-HCl"] = {
+        "sample": "Tris-HCl",
+        "flowcell_volume": f"{output_pools[output_pool]['flowcell_volume_tris']:.2f}",
+        "message": ""
+    }
+    samplesheet_dictionary["Totaal"] = {
+        "sample": "Totaal",
+        "flowcell_volume": f"{output_pools[output_pool]['final_volume_output_pool']:.2f}",
+        "message": ""
+    }
+    samplesheet_content = {"samples": samplesheet_dictionary}
+    samplesheet = (
+        f"{create_samplesheet('Samplesheet_Manual_Sequence_Pools.csv', samplesheet_content)}\n\n\n"
+    )
+    return samplesheet
+
+
+def generate_samplesheet_sequence_pools(input_pools, output_pools):
+    """Generates samplesheet for all output pools
+
+    Args:
+        input_pools (dict): Dictionary containing information per input pool
+        output_pools (dict): Dictionary containing information per output pool
+
+    Returns:
+        str: Generated samplesheet
+    """
+    samplesheet_squence_pool = ""
+    for output_pool in output_pools:
+        if output_pools[output_pool]["corrected_volumes"]:  # only output_pools with corrected volumes
+            samplesheet_correction = generate_samplesheet_multiplex_correction(input_pools, output_pools, output_pool)
+            samplesheet_squence_pool += samplesheet_correction
+            samplesheet_multiplex = generate_samplesheet_corrected_multiplex(input_pools, output_pools, output_pool)
+            samplesheet_squence_pool += samplesheet_multiplex
+        else:
+            samplesheet_not_corrected_pools = generate_samplesheet_other_pools(input_pools, output_pools, output_pool)
+            samplesheet_squence_pool += samplesheet_not_corrected_pools
+    return samplesheet_squence_pool
+
+
+def calculate_volumes_and_generate_samplesheet_sequence_pool(lims, process_id, output_file):
+    """Calculates pipetting volumes and generates samplesheet for sequence pools
+
+    Args:
+        lims (object): Lims connection
+        process_id (str): Process ID
+        output_file (file): File path for samplesheet
+    """
+    process = Process(lims, id=process_id)
+    input_pools, output_pools = collect_information_for_calculations(lims, process)
+    input_pools, output_pools = calculate_clusters(input_pools, output_pools)
+    input_pools = calculate_load_concentration(input_pools, output_pools)
+    input_pools, output_pools = calculate_pipetting_volumes(input_pools, output_pools)
+    samplesheet = generate_samplesheet_sequence_pools(input_pools, output_pools)
+    output_file.write(samplesheet)

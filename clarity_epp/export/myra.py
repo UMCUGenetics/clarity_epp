@@ -5,7 +5,7 @@ import sys
 from genologics.entities import Process
 
 from clarity_epp.export.utils import (
-    create_samplesheet, extract_well_from_reagent_label, get_input_containers, get_process_types,
+    create_samplesheet, extract_well_from_reagent_label, get_info_from_LP_process, get_input_containers, get_process_types,
     get_qc_values_parent_process_artifact, sort_dict_by_nested_well_location
 )
 from clarity_epp.placement.barcode import check_plate_id_with_used_reagent_labels
@@ -536,25 +536,6 @@ def get_excluded_samples(process):
         if 'Dx Geëxcludeerd LP' in analyte.udf and analyte.udf['Dx Geëxcludeerd LP']:
             excluded_samples.append(analyte)
     return excluded_samples
-
-
-def get_info_from_LP_process(lims, lowpass_processes, analyte):
-    """Gets calculation information from udfs in LowPass process.
-
-    Args:
-        lims (object): Lims connection
-        lowpass_processes (list): List of LowPass processtypes (Dx nM verdunning Myra LP)
-        analyte (object): Artifact object from LowPass parent process (processtype: Dx sample duplicate)
-
-    Returns:
-        tuple[float,float]:
-        nM dilution factor &
-        Volume sample (ul)
-    """
-    lowpass_process = lims.get_processes(type=lowpass_processes, inputartifactlimsid=analyte.id)[0]
-    nM_pool = float(lowpass_process.udf['Dx Pool verdunning (nM)'])
-    volume_sample = float(lowpass_process.udf['Sample volume (ul)'])
-    return nM_pool, volume_sample
 
 
 def check_excluding_sample(dx_analyte, volume_water, performances_dict, new_samples_excluded):
