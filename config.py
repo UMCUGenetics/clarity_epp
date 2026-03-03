@@ -140,6 +140,13 @@ sequencer_conversion_settings = {
         'software_version': '4.1.7',
         'fastq_compression_format': 'gzip',
     },
+    'Dx Library pool denatureren en laden (NovaSeqXPlus) v1.1': {
+        'index_2_conversion_orientation': 'F',
+        'instrument_platform': 'NovaSeqXSeries',
+        'index_orientation': 'Forward',
+        'software_version': '4.1.7',
+        'fastq_compression_format': 'gzip',
+    },
 }
 sample_conversion_settings = {
     'default': {
