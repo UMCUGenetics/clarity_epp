@@ -1217,28 +1217,37 @@ def generate_samplesheet_multiplex_correction(input_pools, output_pools, output_
         str: Generated samplesheet
     """
     samplesheet_dictionary = {}
+    total_excess_corrected_volume = 0
     for input_pool in output_pools[output_pool]["input_pools"]:
         if input_pools[input_pool]["lowest_volume"]:
+            lowest_input_pool_corrected_volume_10_percent_excess = (
+                input_pools[input_pool]['corrected_flowcell_volume_external_input_pool'] * 1.1
+            )
+            total_excess_corrected_volume += lowest_input_pool_corrected_volume_10_percent_excess
             samplesheet_dictionary[input_pool] = {
                 "sample": input_pool,
                 "flowcell_volume": f"{input_pools[input_pool]['flowcell_volume_input_pool']:.2f}",
                 "correction_factor": output_pools[output_pool]["correction_factor"],
-                "corrected_volume": f"{input_pools[input_pool]['corrected_flowcell_volume_external_input_pool']:.2f}"
+                "corrected_volume": f"{lowest_input_pool_corrected_volume_10_percent_excess:.2f}"
             }
     for input_pool in output_pools[output_pool]["input_pools"]:
         if input_pools[input_pool]["external"]:
             if not input_pools[input_pool]["lowest_volume"]:
+                input_pool_corrected_volume_10_percent_excess = (
+                    input_pools[input_pool]['corrected_flowcell_volume_external_input_pool'] * 1.1
+                )
+                total_excess_corrected_volume += input_pool_corrected_volume_10_percent_excess
                 samplesheet_dictionary[input_pool] = {
                     "sample": input_pool,
                     "flowcell_volume": f"{input_pools[input_pool]['flowcell_volume_input_pool']:.2f}",
                     "correction_factor": "",
-                    "corrected_volume": f"{input_pools[input_pool]['corrected_flowcell_volume_external_input_pool']:.2f}"
+                    "corrected_volume": f"{input_pool_corrected_volume_10_percent_excess:.2f}"
                 }
     samplesheet_dictionary["Totaal"] = {
         "sample": "Totaal",
         "flowcell_volume": f"{output_pools[output_pool]['flowcell_volume_external_input_pools']:.2f}",
         "correction_factor": "",
-        "corrected_volume": f"{output_pools[output_pool]['corrected_flowcell_volume_external_input_pools']:.2f}"
+        "corrected_volume": f"{total_excess_corrected_volume:.2f}"
     }
     samplesheet_content = {"samples": samplesheet_dictionary}
     samplesheet = (
@@ -1259,30 +1268,37 @@ def generate_samplesheet_corrected_multiplex(input_pools, output_pools, output_p
         str: Generated samplesheet
     """
     samplesheet_dictionary = {}
+    total_excess_volume = 0
+    external_input_pools_volume_10_percent_excess = output_pools[output_pool]['flowcell_volume_external_input_pools'] * 1.1
+    total_excess_volume += external_input_pools_volume_10_percent_excess
     samplesheet_dictionary["Externe multiplex pool"] = {
         "sample": "Externe multiplex pool",
-        "flowcell_volume": f"{output_pools[output_pool]['flowcell_volume_external_input_pools']:.2f}",
+        "flowcell_volume": f"{external_input_pools_volume_10_percent_excess:.2f}",
         "message": ""
     }
     for input_pool in output_pools[output_pool]["input_pools"]:
         if not input_pools[input_pool]["external"]:
+            srwgs_input_pool_volume_10_percent_excess = input_pools[input_pool]['flowcell_volume_input_pool'] * 1.1
+            total_excess_volume += srwgs_input_pool_volume_10_percent_excess
             if "cluster_message" in input_pools[input_pool]:
                 message = input_pools[input_pool]["cluster_message"]
             else:
                 message = ""
             samplesheet_dictionary[input_pool] = {
                 "sample": input_pool,
-                "flowcell_volume": f"{input_pools[input_pool]['flowcell_volume_input_pool']:.2f}",
+                "flowcell_volume": f"{srwgs_input_pool_volume_10_percent_excess:.2f}",
                 "message": message
             }
+    tris_volume_10_percent_excess = output_pools[output_pool]['flowcell_volume_tris'] * 1.1
+    total_excess_volume += tris_volume_10_percent_excess
     samplesheet_dictionary["Tris-HCl"] = {
         "sample": "Tris-HCl",
-        "flowcell_volume": f"{output_pools[output_pool]['flowcell_volume_tris']:.2f}",
+        "flowcell_volume": f"{tris_volume_10_percent_excess:.2f}",
         "message": ""
     }
     samplesheet_dictionary["Totaal"] = {
         "sample": "Totaal",
-        "flowcell_volume": f"{output_pools[output_pool]['final_volume_output_pool']:.2f}",
+        "flowcell_volume": f"{total_excess_volume:.2f}",
         "message": ""
     }
     samplesheet_content = {"samples": samplesheet_dictionary}
@@ -1304,24 +1320,29 @@ def generate_samplesheet_other_pools(input_pools, output_pools, output_pool):
         str: Generated samplesheet
     """
     samplesheet_dictionary = {}
+    total_excess_volume = 0
     for input_pool in output_pools[output_pool]["input_pools"]:
         if "cluster_message" in input_pools[input_pool]:
             message = input_pools[input_pool]["cluster_message"]
         else:
             message = ""
+        input_pool_volume_10_percent_excess = input_pools[input_pool]['flowcell_volume_input_pool'] * 1.1
+        total_excess_volume += input_pool_volume_10_percent_excess
         samplesheet_dictionary[input_pool] = {
             "sample": input_pool,
-            "flowcell_volume": f"{input_pools[input_pool]['flowcell_volume_input_pool']:.2f}",
+            "flowcell_volume": f"{input_pool_volume_10_percent_excess:.2f}",
             "message": message
         }
+    tris_volume_10_percent_excess = output_pools[output_pool]['flowcell_volume_tris'] * 1.1
+    total_excess_volume += tris_volume_10_percent_excess
     samplesheet_dictionary["Tris-HCl"] = {
         "sample": "Tris-HCl",
-        "flowcell_volume": f"{output_pools[output_pool]['flowcell_volume_tris']:.2f}",
+        "flowcell_volume": f"{tris_volume_10_percent_excess:.2f}",
         "message": ""
     }
     samplesheet_dictionary["Totaal"] = {
         "sample": "Totaal",
-        "flowcell_volume": f"{output_pools[output_pool]['final_volume_output_pool']:.2f}",
+        "flowcell_volume": f"{total_excess_volume:.2f}",
         "message": ""
     }
     samplesheet_content = {"samples": samplesheet_dictionary}
