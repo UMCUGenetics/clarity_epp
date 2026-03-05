@@ -990,6 +990,7 @@ def get_udf_info_srwgs_pool(lims, process, lowpass_processes, input_pools, outpu
     """
     for input_pool in process.all_inputs():
         if input_pool.name == srwgs_pool:
+            input_pools[srwgs_pool]["nr_samples"] = len(input_pool.samples)
             input_pools[srwgs_pool]["nm_pool"] = get_nm_pool(lims, lowpass_processes, input_pool)
     for output_pool in process.analytes()[0]:
         if srwgs_pool in output_pool.name:
