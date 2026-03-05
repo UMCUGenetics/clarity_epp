@@ -1104,10 +1104,11 @@ def calculate_clusters(input_pools, output_pools):
                     clusters_external_pools += input_pools[input_pool]["clusters"]
             for input_pool in output_pools[output_pool]["input_pools"]:
                 if "srWGS" in input_pool and "LPsrWGS" not in input_pool:  # only srWGS input_pool
-                    clusters_srwgs_pool = clusters_available - clusters_external_pools
-                    if clusters_srwgs_pool < output_pools[output_pool]["clusters_per_srwgs"]:
+                    needed_clusters_srwgs_pool = clusters_available - clusters_external_pools
+                    needed_clusters_srwgs_pool_per_sample = needed_clusters_srwgs_pool / input_pools[input_pool]["nr_samples"]
+                    if needed_clusters_srwgs_pool_per_sample < output_pools[output_pool]["clusters_per_srwgs"]:
                         input_pools[input_pool]["cluster_message"] = "Aantal benodigde clusters niet voldoende"
-                    input_pools[input_pool]["pm_input_pool"] = load_clusters * clusters_srwgs_pool
+                    input_pools[input_pool]["pm_input_pool"] = load_clusters * needed_clusters_srwgs_pool
     return input_pools, output_pools
 
 
