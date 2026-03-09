@@ -927,6 +927,34 @@ def get_nm_pool(lims, lowpass_processes, input_pool):
     return nm_pool
 
 
+def get_sample_info_input_pool(input_pool):
+    """Gets sample information for all unique samples in DX input pool
+
+    Args:
+        input_pool (object): Lims Artifact object
+
+    Returns:
+        tuple[list,int,int]:
+        List containing unique sample (persoons/foetus)IDs in DX input pool &
+        Sum of "Dx # clusters/sample" of all unique samples in DX input_pool &
+        Sum of "Dx Exoomequivalent" of all unique samples in DX input_pool
+    """
+    input_pool_sample_ids = []
+    clusters = 0
+    exoomequivalenten = 0
+    for sample in input_pool.samples:
+        sample_id = get_unique_sample_id(sample)
+        # Check unique sample ID to skip duplicate samples
+        if sample_id:
+            if sample_id in input_pool_sample_ids:
+                continue  # skip to next sample
+            else:
+                clusters += sample.udf["Dx # clusters/sample"]
+                exoomequivalenten += sample.udf["Dx Exoomequivalent"]
+                input_pool_sample_ids.append(sample_id)
+    return input_pool_sample_ids, clusters, exoomequivalenten
+
+
 def get_udf_info_wes_pool(process, input_pools, wes_pool):
     """Gets information about WES input pool from udfs
 
@@ -940,9 +968,7 @@ def get_udf_info_wes_pool(process, input_pools, wes_pool):
     """
     for input_pool in process.all_inputs():
         if input_pool.name == wes_pool:
-            exoomequivalenten = 0
-            for sample in input_pool.samples:
-                exoomequivalenten += sample.udf["Dx Exoomequivalent"]
+            exoomequivalenten = get_sample_info_input_pool(input_pool)[2]
             input_pools[wes_pool]["exoomequivalenten"] = exoomequivalenten
             input_pools[wes_pool]["conc"] = input_pool.udf["Dx Concentratie fluorescentie (ng/ul)"]
             input_pools[wes_pool]["size"] = input_pool.udf["Dx Fragmentlengte (bp)"]
@@ -964,9 +990,7 @@ def get_udf_info_lpsrwgs_pool(lims, process, lowpass_processes, input_pools, lps
     """
     for input_pool in process.all_inputs():
         if input_pool.name == lpsrwgs_pool:
-            clusters = 0
-            for sample in input_pool.samples:
-                clusters += sample.udf["Dx # clusters/sample"]
+            clusters = get_sample_info_input_pool(input_pool)[1]
             input_pools[lpsrwgs_pool]["clusters"] = clusters
             input_pools[lpsrwgs_pool]["nm_pool"] = get_nm_pool(lims, lowpass_processes, input_pool)
     return input_pools
@@ -990,7 +1014,8 @@ def get_udf_info_srwgs_pool(lims, process, lowpass_processes, input_pools, outpu
     """
     for input_pool in process.all_inputs():
         if input_pool.name == srwgs_pool:
-            input_pools[srwgs_pool]["nr_samples"] = len(input_pool.samples)
+            input_pool_sample_ids = get_sample_info_input_pool(input_pool)[0]
+            input_pools[srwgs_pool]["nr_samples"] = len(input_pool_sample_ids)
             input_pools[srwgs_pool]["nm_pool"] = get_nm_pool(lims, lowpass_processes, input_pool)
     for output_pool in process.analytes()[0]:
         if srwgs_pool in output_pool.name:
