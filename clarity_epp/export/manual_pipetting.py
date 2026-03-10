@@ -1053,26 +1053,33 @@ def collect_information_for_calculations(lims, process):
         process (object): Lims Process object
 
     Returns:
-        tuple[dict,dict]:
+        tuple[dict,dict,str]:
         Dictionary containing information per input pool &
-        Dictionary containing information per output pool
+        Dictionary containing information per output pool &
+        Error message or empty string
     """
     input_pools = {}
     output_pools = {}
     lowpass_processes = get_process_types(lims, ["Dx nM verdunning Myra LP"])
+    error_message = ""
     for input_pool in process.all_inputs():
         input_pools[input_pool.name] = {}
     for output_pool in process.analytes()[0]:
+        udf_final_volume = process.udf["Final volume"]
         output_pools[output_pool.name] = {
             "input_pools": output_pool.name.split(" + "),
             "nr_lane": output_pool.udf["Dx # laantjes flowcell"],
-            "final_volume_per_lane": float(process.udf["Final volume"].split(" ul ")[0]),
+            "final_volume_per_lane": float(udf_final_volume.split(" ul ")[0]),
             "load_conc": process.udf["Dx Laadconcentratie (pM)"]
         }
         if "WES" not in output_pool.name:  # all but WES output_pool
-            output_pools[output_pool.name]["clusters_per_lane"] = (
-                float(process.udf["Dx # clusters flowcell/laantje (10^6)"].split("(")[-1].strip(")"))
-            )
+            udf_clusters_per_lane = process.udf["Dx # clusters flowcell/laantje (10^6)"]
+            output_pools[output_pool.name]["clusters_per_lane"] = float(udf_clusters_per_lane.split("(")[-1].strip(")"))
+            # udf check: same kit in both udfs
+            kit_udf_final_volume = udf_final_volume.split("(")[-1].strip(")").split("/")
+            kit_udf_clusters_per_lane = udf_clusters_per_lane.split(" (")[0]
+            if kit_udf_clusters_per_lane not in kit_udf_final_volume:
+                error_message = "Kit in CF Dx # clusters flowcell/laantje (10^6) komt niet overeen met kit in CF Final volume"
 
     for output_pool in output_pools:
         for input_pool in output_pools[output_pool]["input_pools"]:
@@ -1089,7 +1096,7 @@ def collect_information_for_calculations(lims, process):
             else:  # only external input_pool
                 input_pools[input_pool]["external"] = True
                 input_pools = get_udf_info_external_pool(process, input_pools, input_pool)
-    return input_pools, output_pools
+    return input_pools, output_pools, error_message
 
 
 def calculate_clusters(input_pools, output_pools):
@@ -1387,9 +1394,12 @@ def calculate_volumes_and_generate_samplesheet_sequence_pool(lims, process_id, o
         output_file (file): File path for samplesheet
     """
     process = Process(lims, id=process_id)
-    input_pools, output_pools = collect_information_for_calculations(lims, process)
-    input_pools, output_pools = calculate_clusters(input_pools, output_pools)
-    input_pools = calculate_load_concentration(input_pools, output_pools)
-    input_pools, output_pools = calculate_pipetting_volumes(input_pools, output_pools)
-    samplesheet = generate_samplesheet_sequence_pools(input_pools, output_pools)
-    output_file.write(samplesheet)
+    input_pools, output_pools, error = collect_information_for_calculations(lims, process)
+    if error:
+        output_file.write(error)
+    else:
+        input_pools, output_pools = calculate_clusters(input_pools, output_pools)
+        input_pools = calculate_load_concentration(input_pools, output_pools)
+        input_pools, output_pools = calculate_pipetting_volumes(input_pools, output_pools)
+        samplesheet = generate_samplesheet_sequence_pools(input_pools, output_pools)
+        output_file.write(samplesheet)
