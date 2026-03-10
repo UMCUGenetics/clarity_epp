@@ -1178,13 +1178,10 @@ def correct_pipetting_volumes(input_pools, output_pools, output_pool, lowest_vol
     output_pools[output_pool]["correction_factor"] = correction_factor
     total_corrected_volumes = 0
     for input_pool in output_pools[output_pool]["input_pools"]:
-        input_pools[input_pool]["lowest_volume"] = False
         if input_pools[input_pool]["external"]:
-            corrected_volume = input_pools[input_pool]["flowcell_volume_input_pool"] * correction_factor
+            corrected_volume = input_pools[input_pool]["flowcell_volume_input_pool_with_excess"] * correction_factor
             input_pools[input_pool]["corrected_flowcell_volume_external_input_pool"] = corrected_volume
             total_corrected_volumes += corrected_volume
-            if input_pools[input_pool]["flowcell_volume_input_pool"] == lowest_volume_external_input_pool:
-                input_pools[input_pool]["lowest_volume"] = True
     output_pools[output_pool]["corrected_flowcell_volume_external_input_pools"] = total_corrected_volumes
     return input_pools, output_pools
 
@@ -1210,14 +1207,18 @@ def calculate_pipetting_volumes(input_pools, output_pools):
             flowcell_volume_input_pool = (
                 output_pools[output_pool]["final_volume_output_pool"] / input_pools[input_pool]["load_conc_input_pool"]
             )
+            flowcell_volume_input_pool_with_excess = flowcell_volume_input_pool * 1.1
             input_pools[input_pool]["flowcell_volume_input_pool"] = flowcell_volume_input_pool
+            input_pools[input_pool]["flowcell_volume_input_pool_with_excess"] = flowcell_volume_input_pool_with_excess
             flowcell_volume_input_pools += flowcell_volume_input_pool
             # only LPsrWGS input_pool or external input_pool in srWGS output_pool
             if "WES" not in output_pool and ("LPsrWGS" in input_pool or "srWGS" not in input_pool):
                 flowcell_volume_external_input_pools += flowcell_volume_input_pool
-                volumes_for_correction_check.append(flowcell_volume_input_pool)
-        output_pools[output_pool]["flowcell_volume_external_input_pools"] = flowcell_volume_external_input_pools
-        output_pools[output_pool]["flowcell_volume_tris"] = final_volume_output_pool - flowcell_volume_input_pools
+                volumes_for_correction_check.append(flowcell_volume_input_pool_with_excess)
+        output_pools[output_pool]["flowcell_volume_external_input_pools"] = flowcell_volume_external_input_pools * 1.1
+        flowcell_volume_tris = final_volume_output_pool - flowcell_volume_input_pools
+        output_pools[output_pool]["flowcell_volume_tris"] = flowcell_volume_tris
+        output_pools[output_pool]["flowcell_volume_tris_with_excess"] = flowcell_volume_tris * 1.1
         output_pools[output_pool]["corrected_volumes"] = False
         if "WES" not in output_pool:  # all but WES output_pools
             if volumes_for_correction_check:
@@ -1242,37 +1243,15 @@ def generate_samplesheet_multiplex_correction(input_pools, output_pools, output_
         str: Generated samplesheet
     """
     samplesheet_dictionary = {}
-    total_excess_corrected_volume = 0
-    for input_pool in output_pools[output_pool]["input_pools"]:
-        if input_pools[input_pool]["lowest_volume"]:
-            lowest_input_pool_corrected_volume_10_percent_excess = (
-                input_pools[input_pool]['corrected_flowcell_volume_external_input_pool'] * 1.1
-            )
-            total_excess_corrected_volume += lowest_input_pool_corrected_volume_10_percent_excess
-            samplesheet_dictionary[input_pool] = {
-                "sample": input_pool,
-                "flowcell_volume": f"{input_pools[input_pool]['flowcell_volume_input_pool']:.2f}",
-                "correction_factor": output_pools[output_pool]["correction_factor"],
-                "corrected_volume": f"{lowest_input_pool_corrected_volume_10_percent_excess:.2f}"
-            }
     for input_pool in output_pools[output_pool]["input_pools"]:
         if input_pools[input_pool]["external"]:
-            if not input_pools[input_pool]["lowest_volume"]:
-                input_pool_corrected_volume_10_percent_excess = (
-                    input_pools[input_pool]['corrected_flowcell_volume_external_input_pool'] * 1.1
-                )
-                total_excess_corrected_volume += input_pool_corrected_volume_10_percent_excess
-                samplesheet_dictionary[input_pool] = {
-                    "sample": input_pool,
-                    "flowcell_volume": f"{input_pools[input_pool]['flowcell_volume_input_pool']:.2f}",
-                    "correction_factor": "",
-                    "corrected_volume": f"{input_pool_corrected_volume_10_percent_excess:.2f}"
-                }
+            samplesheet_dictionary[input_pool] = {
+                "sample": input_pool,
+                "corrected_volume": f"{input_pools[input_pool]['corrected_flowcell_volume_external_input_pool']:.2f}"
+            }
     samplesheet_dictionary["Totaal"] = {
         "sample": "Totaal",
-        "flowcell_volume": f"{output_pools[output_pool]['flowcell_volume_external_input_pools']:.2f}",
-        "correction_factor": "",
-        "corrected_volume": f"{total_excess_corrected_volume:.2f}"
+        "corrected_volume": f"{output_pools[output_pool]['corrected_flowcell_volume_external_input_pools']:.2f}"
     }
     samplesheet_content = {"samples": samplesheet_dictionary}
     samplesheet = (
@@ -1294,31 +1273,30 @@ def generate_samplesheet_corrected_multiplex(input_pools, output_pools, output_p
     """
     samplesheet_dictionary = {}
     total_excess_volume = 0
-    external_input_pools_volume_10_percent_excess = output_pools[output_pool]['flowcell_volume_external_input_pools'] * 1.1
-    total_excess_volume += external_input_pools_volume_10_percent_excess
+    total_excess_volume += output_pools[output_pool]['flowcell_volume_external_input_pools']
     samplesheet_dictionary["Externe multiplex pool"] = {
         "sample": "Externe multiplex pool",
-        "flowcell_volume": f"{external_input_pools_volume_10_percent_excess:.2f}",
+        "flowcell_volume": f"{output_pools[output_pool]['flowcell_volume_external_input_pools']:.2f}",
         "message": ""
     }
     for input_pool in output_pools[output_pool]["input_pools"]:
         if not input_pools[input_pool]["external"]:
-            srwgs_input_pool_volume_10_percent_excess = input_pools[input_pool]['flowcell_volume_input_pool'] * 1.1
-            total_excess_volume += srwgs_input_pool_volume_10_percent_excess
             if "cluster_message" in input_pools[input_pool]:
                 message = input_pools[input_pool]["cluster_message"]
             else:
                 message = ""
+            srwgs_input_pool_volume_with_excess = input_pools[input_pool]['flowcell_volume_input_pool_with_excess']
+            total_excess_volume += srwgs_input_pool_volume_with_excess
             samplesheet_dictionary[input_pool] = {
                 "sample": input_pool,
-                "flowcell_volume": f"{srwgs_input_pool_volume_10_percent_excess:.2f}",
+                "flowcell_volume": f"{srwgs_input_pool_volume_with_excess:.2f}",
                 "message": message
             }
-    tris_volume_10_percent_excess = output_pools[output_pool]['flowcell_volume_tris'] * 1.1
-    total_excess_volume += tris_volume_10_percent_excess
+    tris_volume_with_excess = output_pools[output_pool]['flowcell_volume_tris_with_excess']
+    total_excess_volume += tris_volume_with_excess
     samplesheet_dictionary["Tris-HCl"] = {
         "sample": "Tris-HCl",
-        "flowcell_volume": f"{tris_volume_10_percent_excess:.2f}",
+        "flowcell_volume": f"{tris_volume_with_excess:.2f}",
         "message": ""
     }
     samplesheet_dictionary["Totaal"] = {
@@ -1351,18 +1329,18 @@ def generate_samplesheet_other_pools(input_pools, output_pools, output_pool):
             message = input_pools[input_pool]["cluster_message"]
         else:
             message = ""
-        input_pool_volume_10_percent_excess = input_pools[input_pool]['flowcell_volume_input_pool'] * 1.1
-        total_excess_volume += input_pool_volume_10_percent_excess
+        input_pool_volume_with_excess = input_pools[input_pool]['flowcell_volume_input_pool_with_excess']
+        total_excess_volume += input_pool_volume_with_excess
         samplesheet_dictionary[input_pool] = {
             "sample": input_pool,
-            "flowcell_volume": f"{input_pool_volume_10_percent_excess:.2f}",
+            "flowcell_volume": f"{input_pool_volume_with_excess:.2f}",
             "message": message
         }
-    tris_volume_10_percent_excess = output_pools[output_pool]['flowcell_volume_tris'] * 1.1
-    total_excess_volume += tris_volume_10_percent_excess
+    tris_volume_with_excess = output_pools[output_pool]['flowcell_volume_tris_with_excess']
+    total_excess_volume += tris_volume_with_excess
     samplesheet_dictionary["Tris-HCl"] = {
         "sample": "Tris-HCl",
-        "flowcell_volume": f"{tris_volume_10_percent_excess:.2f}",
+        "flowcell_volume": f"{tris_volume_with_excess:.2f}",
         "message": ""
     }
     samplesheet_dictionary["Totaal"] = {

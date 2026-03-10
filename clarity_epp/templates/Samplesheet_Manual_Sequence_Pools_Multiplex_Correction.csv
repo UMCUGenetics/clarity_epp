@@ -1,6 +1,6 @@
-Pipetteerschema correctie externe multiplex pool,,{# extra columns needed for not deleting last 2 columns by csv2xlsx tool #}
-Sample,Pipetteervolume Flowcell,Correctie Factor (1 ul),Pipetteervolume Gecorrigeerd
+Pipetteerschema correctie externe multiplex pool
+Sample,Pipetteervolume Gecorrigeerd
 {% for sample in samples -%}
-{{ samples[sample]["sample"] }},{{ samples[sample]["flowcell_volume"] }},{{ samples[sample]["correction_factor"] }},{{ samples[sample]["corrected_volume"] }}
+{{ samples[sample]["sample"] }},{{ samples[sample]["corrected_volume"] }}
 {% endfor -%}
 ,{# column needed for not deleting empty row by csv2xlsx tool #}
