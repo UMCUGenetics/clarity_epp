@@ -464,8 +464,8 @@ def get_LP_QC_stats(lims, process):
             message = (f'Error parsing file: line {line_index}')
             sys.exit(message)
 
-    cluster_dict = exclude_samples_with_zero_clusters(process, cluster_dict)
     process_samples = check_for_missing_samples_in_file(process, cluster_dict)
+    cluster_dict = exclude_samples_with_zero_clusters(process, cluster_dict)
     missing_samples, cluster_dict = check_for_missing_samples_in_process(cluster_dict, process_samples)
 
     return cluster_dict, missing_samples
