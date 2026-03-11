@@ -3,3 +3,5 @@ Sample,Pipetteervolume Flowcell
 {% for sample in samples -%}
 {{ samples[sample]["sample"] }},{{ samples[sample]["flowcell_volume"] }},{{ samples[sample]["message"] }}
 {% endfor -%}
+,{# column needed for not deleting empty rows by csv2xlsx tool #}
+,
