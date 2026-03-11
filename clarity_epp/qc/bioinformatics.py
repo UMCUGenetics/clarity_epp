@@ -317,7 +317,7 @@ def fill_next_step_and_send_mail(lims, process_id):
     actions.put()
     if any(action.get("action") == "review" for action in new_next_actions):
         step_url = get_step_url(process_id)
-        send_mail_manager_review(config.email, step_url=step_url)
+        send_mail_manager_review(config.email, step_url)
     return
 
 
