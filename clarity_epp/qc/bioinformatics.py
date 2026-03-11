@@ -316,5 +316,21 @@ def fill_next_step_and_send_mail(lims, process_id):
     actions.next_actions = new_next_actions
     actions.put()
     if any(action.get("action") == "review" for action in new_next_actions):
-        send_mail_manager_review(config.email)
+        step_url = build_step_url(process_id)
+        send_mail_manager_review(config.email, step_url=step_url)
     return
+
+
+def build_step_url(process_id):
+    """
+    Build the Clarity 'work-complete' URL for a step.
+
+    Args:
+        process_or_step_id (str|int): Step id or process id-like value.
+
+    Returns:
+        str: Fully qualified URL such as
+    """
+    step_id = process_id.split("-")[1]
+    return f"https://usf-lims-test.op.umcutrecht.nl/clarity/work-complete/{step_id}"
+
