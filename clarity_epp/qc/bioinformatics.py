@@ -289,7 +289,7 @@ def fill_next_step_and_send_mail(lims, process_id):
 
     Args:
         lims (object): Lims connection
-        process_id (str): Process ID:
+        process_id (str): Process ID
 
     """
     step = Step(lims,  id=process_id)
@@ -316,21 +316,22 @@ def fill_next_step_and_send_mail(lims, process_id):
     actions.next_actions = new_next_actions
     actions.put()
     if any(action.get("action") == "review" for action in new_next_actions):
-        step_url = build_step_url(process_id)
+        step_url = get_step_url(process_id)
         send_mail_manager_review(config.email, step_url=step_url)
     return
 
 
-def build_step_url(process_id):
+def get_step_url(process_id):
     """
-    Build the Clarity 'work-complete' URL for a step.
+    Get clarity 'work-complete' URL for step.
 
     Args:
-        process_or_step_id (str|int): Step id or process id-like value.
+        process_id (str): Process ID
 
     Returns:
-        str: Fully qualified URL such as
+        str: url
     """
     step_id = process_id.split("-")[1]
+    #To do adjust to not test server
     return f"https://usf-lims-test.op.umcutrecht.nl/clarity/work-complete/{step_id}"
 
