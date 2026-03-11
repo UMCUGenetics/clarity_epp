@@ -332,6 +332,5 @@ def get_step_url(process_id):
         str: url
     """
     step_id = process_id.split("-")[1]
-    #To do adjust to not test server
-    return f"https://usf-lims-test.op.umcutrecht.nl/clarity/work-complete/{step_id}"
-
+    clarity_url = f"{config.baseuri}/clarity"
+    return f"{clarity_url}/work-complete/{step_id}"
