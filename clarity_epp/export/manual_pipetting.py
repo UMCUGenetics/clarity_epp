@@ -1091,6 +1091,10 @@ def collect_information_for_calculations(lims, process):
             kit_udf_clusters_per_lane = udf_clusters_per_lane.split(" (")[0]
             if kit_udf_clusters_per_lane not in kit_udf_final_volume:
                 error_message = "Kit in CF Dx # clusters flowcell/laantje (10^6) komt niet overeen met kit in CF Final volume"
+        else:
+            for input_pool in output_pools[output_pool.name]["input_pools"]:
+                if "WES" not in input_pool:
+                    error_message = "Een WES input pool kan niet gecombineerd worden met andere input pools"
 
     for output_pool in output_pools:
         for input_pool in output_pools[output_pool]["input_pools"]:
