@@ -100,7 +100,7 @@ def get_family_info(process, sample_qcs, udf_columns):
     family_info = {}
     for input in process.analytes()[0]:
         flowcell = input.udf['Dx Sequencing Run ID'].split('_')[-1]
-        sample_flowcell = f'{input.name}_{flowcell}'
+        sample_flowcell = f'{input.name.rsplit("_", 1)[0]}_{flowcell}'
         for udf in udf_columns:
             if sample_flowcell in sample_qcs:
                 if sample_qcs[sample_flowcell][udf] is not None:   
