@@ -1,4 +1,4 @@
-Pipetteerschema multiplex pool
+Pipetteerschema multiplex pool,{# extra column needed for not deleting message column by csv2xlsx tool #}
 Sample,Pipetteervolume Flowcell
 {% for sample in samples -%}
 {{ samples[sample]["sample"] }},{{ samples[sample]["flowcell_volume"] }},{{ samples[sample]["message"] }}
