@@ -12,7 +12,7 @@ import clarity_epp.export
 import clarity_epp.qc
 import clarity_epp.placement
 
-import config
+import clarity_epp.qc.config as config
 
 # Setup lims connection and try connection twice
 lims = genologics.lims.Lims(config.baseuri, config.username, config.password)
@@ -44,8 +44,6 @@ def export_email(args):
     """Export emails"""
     if args.type == 'sequencing_run':
         clarity_epp.export.email.sequencing_run(lims, config.email, args.process_id)
-    if args.type == 'manager_review':
-        clarity_epp.export.email.send_mail_manager_review(lims, config.email, args.process_id)
 
 
 def export_hamilton(args):
