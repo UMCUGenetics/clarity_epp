@@ -12,7 +12,7 @@ import clarity_epp.export
 import clarity_epp.qc
 import clarity_epp.placement
 
-import clarity_epp.qc.config as config
+import config
 
 # Setup lims connection and try connection twice
 lims = genologics.lims.Lims(config.baseuri, config.username, config.password)
