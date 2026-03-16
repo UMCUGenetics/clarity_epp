@@ -232,6 +232,7 @@ def qc_sex_fail(input, qc_conclusion, qc_message):
         input (Artificat): Lims artifact
         qc_conclusion (str): QC conclusion
         qc_message (list): QC message 
+        
     Returns:
         list: qc_message for gender fail
         str: Updated QC conclusion
@@ -290,7 +291,6 @@ def fill_next_step_and_send_mail(lims, process_id):
     Args:
         lims (object): Lims connection
         process_id (str): Process ID
-
     """
     step = Step(lims,  id=process_id)
     review_trigger = "conclusie: afgekeurd"
@@ -329,7 +329,7 @@ def get_step_url(process_id):
         process_id (str): Process ID
 
     Returns:
-        str: url
+        str: URL of step
     """
     step_id = process_id.split("-")[1]
     clarity_url = f"{config.baseuri}/clarity"
