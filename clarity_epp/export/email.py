@@ -40,7 +40,7 @@ def send_mail_manager_review(email_settings, link):
         email_settings (dict): Mail settings with sender and recipient settings
         link (str): URL to the Clarity step where the manager review is requested
     """
-    manager_subject = f"Manager review aangevraagd in Clarity - Dx srWGS Bioinformatica analyses"
+    manager_subject = "Manager review aangevraagd in Clarity - Dx srWGS Bioinformatica analyses"
     manager_message  = (
         "Manager review aangevraagd voor Clarity stap: Dx srWGS Bioinformatica analyses.\n\n"
     )
