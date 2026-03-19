@@ -208,3 +208,6 @@ flowcell_volumes = {
 
 # Number of clusters/sample
 clusters_per_sample = 4.5
+
+# Non DX indications via Dx srWGS Callisto v2.0 flow
+lpsrwgsindicaties = ["PG"]
