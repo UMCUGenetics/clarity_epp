@@ -486,6 +486,12 @@ def get_samplesheet_information(sample_artifacts, process, index_2_conversion_or
                         'deviating': False
                     }
 
+                # Change project for non DX LowPass srWGS samples
+                if "Dx Onderzoeksindicatie" in sample.udf:
+                    if sample.udf["Dx Onderzoeksindicatie"] in config.lpsrwgsindicaties and "_LPsrWGS" in sample_artifact.name:
+                        project = f"LPsrWGS_{family}"
+                        families[family]['project_type'] = project
+
                 # Setup override cycles
                 if 'Dx Override Cycles' in list(sample.udf) and sample.udf['Dx Override Cycles']:
                     sample_override_cycles = sample.udf['Dx Override Cycles']
