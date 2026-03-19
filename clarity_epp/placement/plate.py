@@ -1,5 +1,5 @@
 """Plate  placement functions."""
-from genologics.entities import Process, Container, Containertype
+from genologics.entities import Container, Containertype, Process
 
 
 def copy_layout(lims, process_id):
@@ -34,12 +34,12 @@ def copy_layout(lims, process_id):
         process.step.placements.set_placement_list(placement_list)
         process.step.placements.post()
 
-        
+
 def copy_placement(lims, process_id):
     """
     Copy placement layout from previous steps.
-    
-      Args:
+
+    Args:
         lims (object): Lims connection
         process_id (str): Process ID
 
@@ -62,6 +62,7 @@ def copy_placement(lims, process_id):
             sample = parent_container.placements[placement].samples[0].name
             parent_placements[sample] = placement
     return parent_placements, parent_container
+
 
 def copy_layout_to_new_container(lims, process_id):
     """
@@ -88,6 +89,7 @@ def copy_layout_to_new_container(lims, process_id):
                     used_placements.append(placement)
         process.step.placements.set_placement_list(placement_list)
         process.step.placements.post()
+
 
 def copy_layout_to_two_new_container(lims, process_id):
     """
@@ -152,6 +154,7 @@ def copy_layout_to_two_new_container(lims, process_id):
         combined_placement_list = srwgs_container_placement_list + lp_srwgs_container_placement_list
         process.step.placements.set_placement_list(combined_placement_list)
         process.step.placements.post()
+
 
 def get_layout_multiple_input_containers(process):
     """Gets layout from multiple input containers
@@ -242,4 +245,3 @@ def copy_placement_row_to_column(lims, process_id):
     layout_input_containers = get_layout_multiple_input_containers(process)
     output_well_per_sample = transpose_placements_row_to_column(layout_input_containers)
     create_container_and_place_samples(lims, process, output_well_per_sample, '96 well plate')
-

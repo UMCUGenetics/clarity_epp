@@ -1,10 +1,10 @@
 import sys
 
 from genologics.entities import Process, Step
-from clarity_epp.export.email import send_mail_manager_review
-from clarity_epp.qc.utils import transform_sex_multiqc
 
 import config
+from clarity_epp.export.email import send_mail_manager_review
+from clarity_epp.qc.utils import transform_sex_multiqc
 
 
 def bioinf_qc_check(lims, process_id):
@@ -28,7 +28,7 @@ def bioinf_qc_check(lims, process_id):
 
 
 def parse_file(process, lims, udf_columns):
-    """Import multiqc file 
+    """Import multiqc file
 
     Args:
         process: Lims process
@@ -47,7 +47,7 @@ def parse_file(process, lims, udf_columns):
                 multiqc_file_content = lims.get_file_contents(multiqc_file.id).data.decode('utf-8').rstrip().split('\n')
                 for line_index, line in enumerate(multiqc_file_content):
                     data = line.rstrip().split('\t')
-                    if len(data) < 5: # if no value for sex assigned add None
+                    if len(data) < 5:  # if no value for sex assigned add None
                         data.append(None)
                     if line.startswith('Sample'):
                         sample_index = data.index('Sample')
@@ -64,7 +64,7 @@ def parse_file(process, lims, udf_columns):
                                 if udf == 'Dx CCU' and data[udf_columns[udf]['index']] is None:
                                     data[udf_columns[udf]['index']] = -1
                                     udf_data[udf] = data[udf_columns[udf]['index']]
-                                if data[udf_columns[udf]['index']]: 
+                                if data[udf_columns[udf]['index']]:
                                     if 'transform' in udf_columns[udf]:
                                         udf_data[udf] = udf_columns[udf]['transform'](data[udf_columns[udf]['index']])
                                     else:
@@ -84,7 +84,7 @@ def parse_file(process, lims, udf_columns):
                 message = ('It seems there is no multiqc file uploaded. Upload the multiqc file and try again.')
                 sys.exit(message)
     return sample_qcs
-    
+
 
 def get_family_info(process, sample_qcs, udf_columns):
     """Retrieve family information
@@ -96,14 +96,14 @@ def get_family_info(process, sample_qcs, udf_columns):
 
     Returns:
         dict: Dictonary with family information
-    """   
+    """
     family_info = {}
     for input in process.analytes()[0]:
         flowcell = input.udf['Dx Sequencing Run ID'].split('_')[-1]
         sample_flowcell = f'{input.name.rsplit("_", 1)[0]}_{flowcell}'
         for udf in udf_columns:
             if sample_flowcell in sample_qcs:
-                if sample_qcs[sample_flowcell][udf] is not None:   
+                if sample_qcs[sample_flowcell][udf] is not None:
                     input.udf[udf] = sample_qcs[sample_flowcell][udf]
         input.put()
         family_info[input.name] = {}
@@ -118,7 +118,7 @@ def qc_check(process, udf_columns, family_info):
     """Perform QC check on samples in process
 
     Args:
-        process (object): Lims process/step 
+        process (object): Lims process/step
         udf_columns (dict): Dictonary with udf columns
         family_info (dict): Dictonary with family information
     """
@@ -132,12 +132,15 @@ def qc_check(process, udf_columns, family_info):
         if input.udf['Dx Gem. dekking'] < qc_requirements['Coverage'] or input.udf['Dx Gem. dekking'] is None:
             qc_message, qc_conclusion = qc_coverage_fail(input, qc_conclusion, qc_message, qc_requirements)
         qc_message, qc_conclusion = qc_ccu_check(input, qc_conclusion, qc_message, family_info, qc_requirements)
-        if input.udf['Dx Contaminatie'] > qc_requirements['Contamination'] or input.udf['Dx Contaminatie'] is None: 
-            qc_message, qc_conclusion = qc_contamination_fail(input, qc_conclusion, qc_message, qc_requirements) 
+        if input.udf['Dx Contaminatie'] > qc_requirements['Contamination'] or input.udf['Dx Contaminatie'] is None:
+            qc_message, qc_conclusion = qc_contamination_fail(input, qc_conclusion, qc_message, qc_requirements)
         if input.samples[0].udf.get("Dx Foetus") is True and input.samples[0].udf.get('Dx Geslacht') == 'Onbekend':
             qc_message, qc_conclusion = no_check_foetus(qc_message, qc_conclusion)
         else:
-            if input.udf['Dx Gevonden geslacht'] != input.samples[0].udf['Dx Geslacht'] or input.udf['Dx Gevonden geslacht'] is None:
+            if (
+                input.udf['Dx Gevonden geslacht'] != input.samples[0].udf['Dx Geslacht']
+                or input.udf['Dx Gevonden geslacht'] is None
+            ):
                 qc_message, qc_conclusion = qc_sex_fail(input, qc_conclusion, qc_message)
         if qc_conclusion:
             input = qc_mark_failed(input, qc_conclusion, qc_message)
@@ -155,18 +158,18 @@ def qc_coverage_fail(input, qc_conclusion, qc_message, qc_requirements):
     Args:
         input (Artifact): Lims artifact
         qc_conclusion (str): QC conclusion
-        qc_message (list): QC message 
+        qc_message (list): QC message
         qc_requirements (dict): Dictonary with qc requirements
 
     Returns:
         list: qc_message for low coverage
-        str: Updated QC conclusion 
+        str: Updated QC conclusion
     """
     qc_conclusion += 'Dekking afgekeurd.'
     qc_message.append(
         f"De gemiddelde dekking {input.udf['Dx Gem. dekking']} is onder "
         f"{qc_requirements['Coverage']}x.")
-    return qc_message, qc_conclusion 
+    return qc_message, qc_conclusion
 
 
 def qc_ccu_check(input, qc_conclusion, qc_message, family_info, qc_requirements):
@@ -175,7 +178,7 @@ def qc_ccu_check(input, qc_conclusion, qc_message, family_info, qc_requirements)
     Args:
         input (Artificat): Lims artifact
         qc_conclusion (str):: QC conclusion
-        qc_message (list): QC message 
+        qc_message (list): QC message
         family_info (dict): Dictonary with family information
 
     Returns:
@@ -205,19 +208,19 @@ def qc_ccu_check(input, qc_conclusion, qc_message, family_info, qc_requirements)
 
     return qc_message, qc_conclusion
 
-            
+
 def qc_contamination_fail(input, qc_conclusion, qc_message, qc_requirements):
     """Add conclusion and message for high contamination QC
 
     Args:
         input (Artificat): Lims artifact
         qc_conclusion (str): QC conclusion
-        qc_message (list): QC message 
+        qc_message (list): QC message
 
     Returns:
         list: qc_message for high contamination
         str: Updated QC conclusion
-    """    
+    """
     qc_conclusion += 'Contaminatie afgekeurd.'
     qc_message.append(
         f"De contaminatie waarde {input.udf['Dx Contaminatie']} is boven "
@@ -226,17 +229,17 @@ def qc_contamination_fail(input, qc_conclusion, qc_message, qc_requirements):
 
 
 def qc_sex_fail(input, qc_conclusion, qc_message):
-    """Add conclusion and message for gender fail 
+    """Add conclusion and message for gender fail
 
     Args:
         input (Artificat): Lims artifact
         qc_conclusion (str): QC conclusion
-        qc_message (list): QC message 
-        
+        qc_message (list): QC message
+
     Returns:
         list: qc_message for gender fail
         str: Updated QC conclusion
-    """    
+    """
     qc_conclusion += 'Geslacht afgekeurd.'
     qc_message.append(
         f"Het gevonden geslacht {input.udf['Dx Gevonden geslacht']} komt niet overeen met het bekende geslacht "
@@ -249,7 +252,7 @@ def no_check_foetus(qc_message, qc_conclusion):
 
     Args:
         qc_conclusion (str): QC conclusion
-        qc_message (list): QC message 
+        qc_message (list): QC message
 
     Returns:
         Updated QC conclusion and message when feutus gender check is skipped
@@ -262,17 +265,17 @@ def no_check_foetus(qc_message, qc_conclusion):
     return qc_message, qc_conclusion
 
 
-def qc_mark_failed(input, qc_conclusion, qc_message):      
+def qc_mark_failed(input, qc_conclusion, qc_message):
     """Fill in 'Afwijkingen' udfs for failed qc
-    
+
     Args:
         input (Artificat): Lims artifact
         qc_conclusion (str): QC conclusion
-        qc_message (list): QC message 
-        
+        qc_message (list): QC message
+
     Returns:
         Artifact: with updated 'Afwijkingen' udfs
-    """      
+    """
     explanation = ' '.join(qc_message)
     input.udf['Dx afwijkingen oorzaak'] = 'Data'
     if 'afgekeurd' in qc_conclusion:
@@ -282,6 +285,7 @@ def qc_mark_failed(input, qc_conclusion, qc_message):
     elif 'goedgekeurd' in qc_conclusion:
         input.udf['Dx afwijkingen uitleg'] = f'Conclusie: goedgekeurd (Uitleg: {explanation})'
     return input
+
 
 def fill_next_step_and_send_mail(lims, process_id):
     """
