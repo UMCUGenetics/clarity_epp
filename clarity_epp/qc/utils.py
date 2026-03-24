@@ -12,3 +12,14 @@ def transform_sex_multiqc(value):
             return 'Onbekend'
     else:
         return 'Onbekend'
+
+def is_missing(value):
+    """Check if value is None or -1 (NA)
+
+    Args:
+        value (int | float | None):  Value to check.
+
+    Returns:
+        bool: True if the value is None of -1, False otherwise.
+    """
+    return value is None or value == -1
