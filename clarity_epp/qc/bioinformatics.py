@@ -127,12 +127,12 @@ def qc_check(process, udf_columns, family_info):
         qc_requirements = config.bioinformatics_qc_requirements_srWGS
         qc_message = []
         qc_conclusion = ''
-        coverage = input.udf.get('Dx Gem. dekking')
-        if is_missing(coverage) or coverage < qc_requirements['Coverage']:
+        coverage_value = input.udf.get('Dx Gem. dekking')
+        if is_missing(coverage_value) or coverage_value < qc_requirements['Coverage']:
             qc_message, qc_conclusion = qc_coverage_fail(input, qc_conclusion, qc_message, qc_requirements)
         qc_message, qc_conclusion = qc_ccu_check(input, qc_conclusion, qc_message, family_info, qc_requirements)
-        contamination = input.udf.get('Dx Contaminatie')
-        if is_missing(contamination) or contamination > qc_requirements['Contamination']:
+        contamination_value = input.udf.get('Dx Contaminatie')
+        if is_missing(contamination_value) or contamination_value > qc_requirements['Contamination']:
             qc_message, qc_conclusion = qc_contamination_fail(input, qc_conclusion, qc_message, qc_requirements)
         if input.samples[0].udf.get("Dx Foetus") is True and input.samples[0].udf.get('Dx Geslacht') == 'Onbekend':
             qc_message, qc_conclusion = no_check_foetus(qc_message, qc_conclusion)
