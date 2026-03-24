@@ -41,7 +41,7 @@ def send_mail_manager_review(email_settings, link):
         link (str): URL to the Clarity step where the manager review is requested
     """
     manager_subject = "Manager review aangevraagd in Clarity - Dx srWGS Bioinformatica analyses"
-    manager_message  = (
+    manager_message = (
         "Manager review aangevraagd voor Clarity stap: Dx srWGS Bioinformatica analyses.\n\n"
     )
     manager_message += (
@@ -50,7 +50,7 @@ def send_mail_manager_review(email_settings, link):
         "'Finish step' worden geklikt.\n\n"
     )
     manager_message += f"Link naar clarity stap: {link}\n"
-    
+
     send_email(
         email_settings['server'],
         email_settings['from'],
@@ -58,4 +58,3 @@ def send_mail_manager_review(email_settings, link):
         manager_subject,
         manager_message
     )
-    

@@ -56,21 +56,28 @@ def parse_file(process, lims, udf_columns):
                     else:
                         # Parse samples
                         udf_data = {}
+
                         for udf in udf_columns:
                             try:
-                                if data[udf_columns[udf]['index']] in ['NA', None, '']:
-                                    data[udf_columns[udf]['index']] = None
-                                    udf_data[udf] = data[udf_columns[udf]['index']]
-                                if udf == 'Dx CCU' and data[udf_columns[udf]['index']] is None:
-                                    data[udf_columns[udf]['index']] = -1
-                                    udf_data[udf] = data[udf_columns[udf]['index']]
-                                if data[udf_columns[udf]['index']]:
+                                value = data[udf_columns[udf]['index']]
+
+                                # Normalize missing values
+                                if value in ['NA', None, '']:
+                                    value = None
+
+                                # Apply -1 for missing values
+                                if udf in ['Dx CCU', 'Dx Gem. dekking', 'Dx Contaminatie'] and value is None:
+                                    value = -1
+
+                                if value is not None:
                                     if 'transform' in udf_columns[udf]:
-                                        udf_data[udf] = udf_columns[udf]['transform'](data[udf_columns[udf]['index']])
+                                        udf_data[udf] = udf_columns[udf]['transform'](value)
                                     else:
-                                        udf_data[udf] = data[udf_columns[udf]['index']]
+                                        udf_data[udf] = value
+                                else:
+                                    udf_data[udf] = value
+
                             except (IndexError, ValueError):
-                                # Catch parsing errors
                                 message = (
                                     'Could not correctly parse data from multiqc file.\n'
                                     f'Row = {line_index+1} \t Column = {udf_columns[udf]["column"]} \t UDF = {udf}.\n'
@@ -297,14 +304,17 @@ def fill_next_step_and_send_mail(lims, process_id):
         process_id (str): Process ID
     """
     step = Step(lims,  id=process_id)
-    review_trigger = "conclusie: afgekeurd"
+    review_triggers = [
+        "conclusie: afgekeurd",
+        "conclusie: onbekend",
+    ]
     actions = step.actions
     new_next_actions = []
     for action in actions.next_actions:
         artifact = action["artifact"]
         artifact.get()
         text = (artifact.udf.get("Dx afwijkingen uitleg", "") or "").lower().strip()
-        needs_review = review_trigger.lower() in text
+        needs_review = any(trigger in text for trigger in review_triggers)
 
         if needs_review:
             new_next_actions.append({
@@ -322,7 +332,6 @@ def fill_next_step_and_send_mail(lims, process_id):
     if any(action.get("action") == "review" for action in new_next_actions):
         step_url = get_step_url(process_id)
         send_mail_manager_review(config.email, step_url)
-    return
 
 
 def get_step_url(process_id):

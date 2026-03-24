@@ -228,7 +228,7 @@ def qc_bioinformatics(args):
     """Set QC check based on multiqc data."""
     if args.type == 'qc_check':
         clarity_epp.qc.bioinformatics.bioinf_qc_check(lims, args.process_id)
-    if args.type == 'fill_next_step_and_send_mail':
+    elif args.type == 'fill_next_step_and_send_mail':
         clarity_epp.qc.bioinformatics.fill_next_step_and_send_mail(lims, args.process_id)
 
 
@@ -348,7 +348,7 @@ if __name__ == "__main__":
     parser_export_caliper.set_defaults(func=export_caliper)
 
     parser_export_email = subparser_export.add_parser('email', help='Send emails', parents=[output_parser])
-    parser_export_email.add_argument('type', choices=['sequencing_run', 'manager_review'], help='Email type')
+    parser_export_email.add_argument('type', choices=['sequencing_run'], help='Email type')
     parser_export_email.add_argument('process_id', help='Clarity lims process id')
     parser_export_email.set_defaults(func=export_email)
 

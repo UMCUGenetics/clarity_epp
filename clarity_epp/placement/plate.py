@@ -35,19 +35,18 @@ def copy_layout(lims, process_id):
         process.step.placements.post()
 
 
-def copy_placement(lims, process_id):
+def copy_placement(process, lims):
     """
     Copy placement layout from previous steps.
 
     Args:
+        process_id
         lims (object): Lims connection
-        process_id (str): Process ID
 
     Returns:
         dict: Sample name and placement from the parent container.
-        Container | None: The parent container the placements were copied from, or None if not found.
+        Container | None: The parent container placements or None if not found.
     """
-    process = Process(lims, id=process_id)
     # Get parent container layout
     parent_container = None
     for parent_process in process.parent_processes():
@@ -74,7 +73,7 @@ def copy_layout_to_new_container(lims, process_id):
 
     """
     process = Process(lims, id=process_id)
-    parent_placements, parent_container = copy_placement(lims, process_id)
+    parent_placements, parent_container = copy_placement(process, lims)
     if parent_container:
         # Create new container and copy layout
         new_container = Container.create(lims, type=parent_container.type)
@@ -101,12 +100,8 @@ def copy_layout_to_two_new_container(lims, process_id):
 
     """
     process = Process(lims, id=process_id)
-    parent_placements, parent_container = copy_placement(lims, process_id)
+    parent_placements, parent_container = copy_placement(process, lims)
     if parent_container:
-        for placement in parent_container.placements:
-            sample = parent_container.placements[placement].samples[0].name
-            parent_placements[sample] = placement
-
         # Create two new container and copy layout
         lp_container = Container.create(lims, type=parent_container.type)
         srwgs_container = Container.create(lims, type=parent_container.type)

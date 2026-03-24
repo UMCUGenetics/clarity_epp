@@ -9,6 +9,6 @@ def transform_sex_multiqc(value):
         elif value.upper() == 'XY':
             return 'Man'
         else:
-            return value
+            return 'Onbekend'
     else:
-        return value
+        return 'Onbekend'
