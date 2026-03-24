@@ -4,7 +4,7 @@ from genologics.entities import Process, Step
 
 import config
 from clarity_epp.export.email import send_mail_manager_review
-from clarity_epp.qc.utils import transform_sex_multiqc
+from clarity_epp.qc.utils import transform_sex_multiqc, is_missing
 
 
 def bioinf_qc_check(lims, process_id):
@@ -56,27 +56,18 @@ def parse_file(process, lims, udf_columns):
                     else:
                         # Parse samples
                         udf_data = {}
-
                         for udf in udf_columns:
                             try:
                                 value = data[udf_columns[udf]['index']]
-
-                                # Normalize missing values
                                 if value in ['NA', None, '']:
                                     value = None
-
                                 # Apply -1 for missing values
                                 if udf in ['Dx CCU', 'Dx Gem. dekking', 'Dx Contaminatie'] and value is None:
                                     value = -1
-
-                                if value is not None:
-                                    if 'transform' in udf_columns[udf]:
-                                        udf_data[udf] = udf_columns[udf]['transform'](value)
-                                    else:
-                                        udf_data[udf] = value
+                                if 'transform' in udf_columns[udf]:
+                                    udf_data[udf] = udf_columns[udf]['transform'](value)
                                 else:
                                     udf_data[udf] = value
-
                             except (IndexError, ValueError):
                                 message = (
                                     'Could not correctly parse data from multiqc file.\n'
@@ -136,10 +127,12 @@ def qc_check(process, udf_columns, family_info):
         qc_requirements = config.bioinformatics_qc_requirements_srWGS
         qc_message = []
         qc_conclusion = ''
-        if input.udf['Dx Gem. dekking'] < qc_requirements['Coverage'] or input.udf['Dx Gem. dekking'] is None:
+        coverage = input.udf.get('Dx Gem. dekking')
+        if is_missing(coverage) or coverage < qc_requirements['Coverage']:
             qc_message, qc_conclusion = qc_coverage_fail(input, qc_conclusion, qc_message, qc_requirements)
         qc_message, qc_conclusion = qc_ccu_check(input, qc_conclusion, qc_message, family_info, qc_requirements)
-        if input.udf['Dx Contaminatie'] > qc_requirements['Contamination'] or input.udf['Dx Contaminatie'] is None:
+        contamination = input.udf.get('Dx Contaminatie')
+        if is_missing(contamination) or contamination > qc_requirements['Contamination']:
             qc_message, qc_conclusion = qc_contamination_fail(input, qc_conclusion, qc_message, qc_requirements)
         if input.samples[0].udf.get("Dx Foetus") is True and input.samples[0].udf.get('Dx Geslacht') == 'Onbekend':
             qc_message, qc_conclusion = no_check_foetus(qc_message, qc_conclusion)
@@ -173,8 +166,9 @@ def qc_coverage_fail(input, qc_conclusion, qc_message, qc_requirements):
         str: Updated QC conclusion
     """
     qc_conclusion += 'Dekking afgekeurd.'
+    coverage_value = 'NA' if is_missing(input.udf['Dx Gem. dekking']) else input.udf['Dx Gem. dekking']
     qc_message.append(
-        f"De gemiddelde dekking {input.udf['Dx Gem. dekking']} is onder "
+        f"De gemiddelde dekking {coverage_value} is onder "
         f"{qc_requirements['Coverage']}x.")
     return qc_message, qc_conclusion
 
@@ -201,7 +195,11 @@ def qc_ccu_check(input, qc_conclusion, qc_message, family_info, qc_requirements)
         threshold = qc_requirements['CCU_child']
         label = 'kind'
     else:
-        return qc_conclusion, qc_message
+        qc_conclusion += 'CCU onbekend.'
+        qc_message.append(
+            f"Familie status ontbreekt. CCU waarde: {ccu} kan niet beoordeeld worden."
+        )
+        return qc_message, qc_conclusion
     if ccu is None or ccu > threshold:
         qc_conclusion += 'CCU afgekeurd.'
         qc_message.append(
@@ -212,7 +210,6 @@ def qc_ccu_check(input, qc_conclusion, qc_message, family_info, qc_requirements)
         qc_message.append(
             f"De CCU waarde is NA. Het betreft een {label}."
         )
-
     return qc_message, qc_conclusion
 
 
@@ -229,8 +226,9 @@ def qc_contamination_fail(input, qc_conclusion, qc_message, qc_requirements):
         str: Updated QC conclusion
     """
     qc_conclusion += 'Contaminatie afgekeurd.'
+    contamination_value = 'NA' if is_missing(input.udf['Dx Contaminatie']) else input.udf['Dx Contaminatie']
     qc_message.append(
-        f"De contaminatie waarde {input.udf['Dx Contaminatie']} is boven "
+        f"De contaminatie waarde {contamination_value} is boven "
         f"{qc_requirements['Contamination']}.")
     return qc_message, qc_conclusion
 
