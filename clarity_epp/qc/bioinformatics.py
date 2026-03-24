@@ -4,7 +4,7 @@ from genologics.entities import Process, Step
 
 import config
 from clarity_epp.export.email import send_mail_manager_review
-from clarity_epp.qc.utils import transform_sex_multiqc, is_missing
+from clarity_epp.qc.utils import is_missing, transform_sex_multiqc
 
 
 def bioinf_qc_check(lims, process_id):
