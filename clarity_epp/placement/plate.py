@@ -40,7 +40,7 @@ def copy_placement(process, lims):
     Copy placement layout from previous steps.
 
     Args:
-        process_id
+        process (object): Lims Process object
         lims (object): Lims connection
 
     Returns:
