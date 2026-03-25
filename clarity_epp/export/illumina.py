@@ -228,7 +228,7 @@ def get_samplesheet_samples(sample_artifacts, process, index_2_conversion_orient
     return samplesheet_samples
 
 
-def create_samplesheet_seuencer(lims, process_id, output_file):
+def create_samplesheet_sequencer(lims, process_id, output_file):
     """Create illumina samplesheet v2."""
     process = Process(lims, id=process_id)
     sequencer_conversion_settings = config.sequencer_conversion_settings[process.type.name]
@@ -313,22 +313,18 @@ def set_urgency_status(families, family, sample):
     if sample.udf['Dx NICU Spoed']:
         families[family]['NICU'] = True
         families[family]['split_project_type'] = False
-    if sample.udf['Dx Stoftest code'] == config.stoftestcode_srwgs:
-        if sample.udf['Dx NICU Spoed']:
+        if sample.udf['Dx Stoftest code'] == config.stoftestcode_srwgs:
             families[family]['project_type'] = 'NICUsrWGS_{0}'.format(sample.udf['Dx Familienummer'])
-    else:
-        if sample.udf['Dx NICU Spoed']:
+        else:
             families[family]['project_type'] = 'NICU_{0}'.format(sample.udf['Dx Familienummer'])
 
+    if sample.udf['Dx Stoftest code'] != config.stoftestcode_srwgs:
         # Set urgent status
-        if 'Dx Spoed' in list(sample.udf) and sample.udf['Dx Spoed']:
+        if sample.udf.get('Dx Spoed'):
             families[family]['urgent'] = True
 
         # Set deviating status, remove urgent status if deviating
-        if (
-            ('Dx Mergen' in list(sample.udf) and sample.udf['Dx Mergen']) or
-            ('Dx Exoomequivalent' in list(sample.udf) and sample.udf['Dx Exoomequivalent'] > 1)
-        ):
+        if sample.udf.get('Dx Mergen') or sample.udf.get('Dx Exoomequivalent') > 1:
             families[family]['deviating'] = True
             families[family]['urgent'] = False
 
@@ -368,26 +364,26 @@ def define_project_types_and_set_sample_projects(families, samplesheet_samples):
 
     # Set sample projects
     # Urgent families / samples, skip deviating
-    for family in [family for family in families.values() if family['urgent'] and not family['deviating']]:
-        family_project = get_project(project_types[family['project_type']]['projects'], urgent=True)
-        for sample_sequence_name in family['samples']:
+    for urgent_family in [family for family in families.values() if family['urgent'] and not family['deviating']]:
+        family_project = get_project(project_types[urgent_family['project_type']]['projects'], urgent=True)
+        for sample_sequence_name in urgent_family['samples']:
             samplesheet_samples[sample_sequence_name]['project'] = family_project
-            project_types[family['project_type']]['projects'][family_project] += 1
+            project_types[urgent_family['project_type']]['projects'][family_project] += 1
 
     # Deviating families / samples
-    for family in [family for family in families.values() if family['deviating']]:
-        family_project = get_project(project_types[family['project_type']]['projects'])
-        for sample_sequence_name in family['samples']:
+    for deviating_family in [family for family in families.values() if family['deviating']]:
+        family_project = get_project(project_types[deviating_family['project_type']]['projects'])
+        for sample_sequence_name in deviating_family['samples']:
             samplesheet_samples[sample_sequence_name]['project'] = family_project
-            project_types[family['project_type']]['projects'][family_project] += 1
+            project_types[deviating_family['project_type']]['projects'][family_project] += 1
 
     # Non urgent and non deviating families / samples
     normal_families = [family for family in families.values() if not family['urgent'] and not family['deviating']]
-    for family in sorted(normal_families, key=lambda fam: (len(fam['samples'])), reverse=True):
-        family_project = get_project(project_types[family['project_type']]['projects'])
-        for sample_sequence_name in family['samples']:
+    for normal_family in sorted(normal_families, key=lambda fam: (len(fam['samples'])), reverse=True):
+        family_project = get_project(project_types[normal_family['project_type']]['projects'])
+        for sample_sequence_name in normal_family['samples']:
             samplesheet_samples[sample_sequence_name]['project'] = family_project
-            project_types[family['project_type']]['projects'][family_project] += 1
+            project_types[normal_family['project_type']]['projects'][family_project] += 1
 
     return samplesheet_samples
 
@@ -422,9 +418,7 @@ def get_samplesheet_information(sample_artifacts, process, index_2_conversion_or
                 'Dx Stoftest code' in sample.udf
             ):
                 # Skip Mengfractie samples
-                if sample.udf['Dx Stoftest code'] == config.stoftestcode_wes_duplo:
-                    continue
-                elif sample.udf['Dx Stoftest code'] == config.stoftestcode_srwgs_duplo:
+                if sample.udf.get('Dx Stoftest code') in (config.stoftestcode_wes_duplo, config.stoftestcode_srwgs_duplo):
                     continue
 
                 # Get sample conversion settings

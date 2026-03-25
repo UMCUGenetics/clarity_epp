@@ -57,7 +57,7 @@ def export_hamilton(args):
 def export_illumina(args):
     """Export (updated) illumina samplesheet."""
     if args.type == 'v2':
-        clarity_epp.export.illumina.create_samplesheet_seuencer(lims, args.process_id, args.output_file)
+        clarity_epp.export.illumina.create_samplesheet_sequencer(lims, args.process_id, args.output_file)
     elif args.type == 'bclconvert':
         clarity_epp.export.illumina.generate_samplesheet_sequencer(lims, args.process_id, args.output_file)
 
