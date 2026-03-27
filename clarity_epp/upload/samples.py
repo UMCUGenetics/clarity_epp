@@ -92,7 +92,10 @@ def from_helix(lims, email_settings, input_file):
     for line_index, line in enumerate(input_file):
         data = line.rstrip().strip('"').split('","')
 
-        udf_data = {'Sample Type': 'DNA isolated', 'Dx Import warning': '', 'Dx Exoomequivalent': 1}  # required lims input
+        clusters = config.clusters_per_sample
+        udf_data = {
+            'Sample Type': 'DNA isolated', 'Dx Import warning': '', 'Dx Exoomequivalent': 1, 'Dx # clusters/sample': clusters
+        }  # required lims input
         for udf in udf_column:
             # Transform specific udf
             try:
