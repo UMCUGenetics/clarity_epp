@@ -15,8 +15,12 @@ email = {
     ],
     'to_sequencing_run_complete': [
         'to_1@mail.nl',
-    ]
+    ],
+    'to_manager_review': [
+        'to_1@mail.nl',
+    ],
 }
+
 
 # Import samples: stoftestcode to workflow
 stoftestcode_wes = 'NGS_025'
@@ -30,8 +34,8 @@ stoftestcode_workflow = {
     stoftestcode_wes: '1852',  # DEV Dx Exoom Magnis v2.1
     stoftestcode_wes_duplo: '1852',  # DEV Dx Exoom Magnis v2.1
     stoftestcode_mip: '1651',  # DEV Dx smMIP v1.2
-    stoftestcode_srwgs: '2352',  # DEV Dx srWGS Callisto v1.0
-    stoftestcode_srwgs_duplo: '2352',  # DEV Dx srWGS Callisto v1.0
+    stoftestcode_srwgs: '2602',  # DEV Dx srWGS Callisto v2.0
+    stoftestcode_srwgs_duplo: '2602',  # DEV Dx srWGS Callisto v2.0
 }
 
 # Update exome equivalent for certain indications
@@ -136,6 +140,13 @@ sequencer_conversion_settings = {
         'software_version': '4.1.7',
         'fastq_compression_format': 'gzip',
     },
+    'Dx Library pool denatureren en laden (NovaSeqXPlus) v1.1': {
+        'index_2_conversion_orientation': 'F',
+        'instrument_platform': 'NovaSeqXSeries',
+        'index_orientation': 'Forward',
+        'software_version': '4.1.7',
+        'fastq_compression_format': 'gzip',
+    },
 }
 sample_conversion_settings = {
     'default': {
@@ -161,9 +172,9 @@ sample_conversion_settings = {
 }
 
 # Post sequencing workflow
-sequencing_workflow = '2052'  # DEV Dx Illumina Sequencing v1.3
+sequencing_workflow = '2454'  # DEV Dx Illumina Sequencing v2.0
 post_sequencing_workflow = '1204'  # DEV Dx Bioinformatica analyses v1.1
-post_sequencing_workflow_srwgs = '2507'  # DEV Dx srWGS Bioinformatica analyses v1.0
+post_sequencing_workflow_srwgs = '2603'  # DEV Dx srWGS Bioinformatica analyses v1.1
 post_bioinf_workflow_wes = '1803'  # DEV Dx NGS WES onderzoeken afronden v2.0
 post_bioinf_workflow_srwgs = '2306'  # DEV Dx NGS srWGS Onderzoeken Afronden v1.0
 
@@ -174,16 +185,29 @@ research_onderzoeksindicatie_project = {
 
 # Fragment length
 fragment_length = {
-    'Exoom.analy_IL_versieVP_LP0002_srWGS': 550,
-    'Gen.analy_IL_versieVP_LP0002_srWGS': 550,
-    'SingleGeneAnaly_IL_versieVP_LP0002_srWGS': 550,
+    'Exoom.analy_IL_versieVP_LP0002_srWGS': 600,
+    'Gen.analy_IL_versieVP_LP0002_srWGS': 600,
+    'SingleGeneAnaly_IL_versieVP_LP0002_srWGS': 600,
     'default': '',
 }
 
 # Bioinformatics QC requirements
 bioinformatics_qc_requirements_srWGS = {
     'Coverage': 30,
-    'CCU': 0.5,
-    'CCU_index': 0.3,
+    'CCU_parent': 1.0,
+    'CCU_child': 0.5,
     'Contamination': 0.04,
 }
+
+# Volumes per lane (uL)
+flowcell_volumes = {
+    '1.5B': {'sample_ul': 34, 'phix_ul': 1, 'naoh_ul': 8.5, 'preload_ul': 127.5},
+    '10B': {'sample_ul': 34, 'phix_ul': 1, 'naoh_ul': 8.5, 'preload_ul': 127.5},
+    '25B': {'sample_ul': 56, 'phix_ul': 1.6, 'naoh_ul': 14.0, 'preload_ul': 210.0},
+}
+
+# Number of clusters/sample
+clusters_per_sample = 4.5
+
+# Non DX indications via Dx srWGS Callisto v2.0 flow
+lpsrwgsindicaties = ["PG"]

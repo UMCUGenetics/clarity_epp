@@ -31,3 +31,30 @@ def sequencing_run(lims, email_settings, process_id):
         email_settings['server'], email_settings['from'], email_settings['to_sequencing_run_complete'],
         subject, message
     )
+
+
+def send_mail_manager_review(email_settings, link):
+    """Send an email requesting manager review.
+
+    Args:
+        email_settings (dict): Mail settings with sender and recipient settings
+        link (str): URL to the Clarity step where the manager review is requested
+    """
+    manager_subject = "Manager review aangevraagd in Clarity - Dx srWGS Bioinformatica analyses"
+    manager_message = (
+        "Manager review aangevraagd voor Clarity stap: Dx srWGS Bioinformatica analyses.\n\n"
+    )
+    manager_message += (
+        "Voordat de manager review kan worden afgerond, moet eerst in onderstaande link "
+        "Dx Manager worden geselecteerd in het veld 'Request review by' en vervolgens op "
+        "'Finish step' worden geklikt.\n\n"
+    )
+    manager_message += f"Link naar clarity stap: {link}\n"
+
+    send_email(
+        email_settings['server'],
+        email_settings['from'],
+        email_settings['to_manager_review'],
+        manager_subject,
+        manager_message
+    )

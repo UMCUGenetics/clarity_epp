@@ -56,9 +56,10 @@ def export_hamilton(args):
 
 def export_illumina(args):
     """Export (updated) illumina samplesheet."""
-    clarity_epp.export.illumina.create_samplesheet(
-        lims, args.process_id, args.output_file
-    )
+    if args.type == 'v2':
+        clarity_epp.export.illumina.create_samplesheet_sequencer(lims, args.process_id, args.output_file)
+    elif args.type == 'bclconvert':
+        clarity_epp.export.illumina.generate_samplesheet_sequencer(lims, args.process_id, args.output_file)
 
 
 def export_labels(args):
@@ -108,6 +109,12 @@ def export_manual_pipetting(args):
         clarity_epp.export.manual_pipetting.samplesheet_pool_magnis_pools(lims, args.process_id, args.output_file)
     elif args.type == 'normalization_mix':
         clarity_epp.export.manual_pipetting.samplesheet_normalization_mix(lims, args.process_id, args.output_file)
+    elif args.type == 'sequence_pool_verdunnen':
+        clarity_epp.export.manual_pipetting.samplesheet_sequence_pool_verdunnen(lims, args.process_id, args.output_file)
+    elif args.type == 'sequence_pools':
+        clarity_epp.export.manual_pipetting.calculate_volumes_and_generate_samplesheet_sequence_pool(
+            lims, args.process_id, args.output_file
+        )
 
 
 def export_merge_file(args):
@@ -121,6 +128,20 @@ def export_myra(args):
         clarity_epp.export.myra.samplesheet_callisto(lims, args.process_id, args.output_file)
     elif args.type == 'dilute':
         clarity_epp.export.myra.samplesheet_dilute(lims, args.process_id, args.output_file)
+    elif args.type == 'barcode':
+        clarity_epp.export.myra.check_plate_id_and_generate_samplesheet_barcode(lims, args.process_id, args.output_file)
+    elif args.type == 'callisto_input':
+        clarity_epp.export.myra.get_input_containers_and_generate_samplesheet_callisto_strip(
+            lims, args.process_id, args.multiple_output_files
+        )
+    elif args.type == 'dilute_LP':
+        clarity_epp.export.myra.get_input_containers_and_generate_samplesheet_dilute(lims, args.process_id, args.output_file)
+    elif args.type == 'redilute_DX':
+        clarity_epp.export.myra.get_input_containers_and_generate_samplesheet_redilute(lims, args.process_id, args.output_file)
+    elif args.type == 'callisto_pools':
+        clarity_epp.export.myra.get_input_containers_and_generate_samplesheet_callisto_pools(
+            lims, args.process_id, args.output_file
+        )
 
 
 def export_ped_file(args):
@@ -205,7 +226,10 @@ def upload_magnis_results(args):
 # QC functions
 def qc_bioinformatics(args):
     """Set QC check based on multiqc data."""
-    clarity_epp.qc.bioinformatics.bioinf_qc_check(lims, args.process_id)
+    if args.type == 'qc_check':
+        clarity_epp.qc.bioinformatics.bioinf_qc_check(lims, args.process_id)
+    elif args.type == 'fill_next_step_and_send_mail':
+        clarity_epp.qc.bioinformatics.fill_next_step_and_send_mail(lims, args.process_id)
 
 
 def qc_fragment_length(args):
@@ -234,7 +258,12 @@ def qc_sample_mip(args):
 # Placement functions
 def placement_automatic(args):
     """Copy container layout from previous step."""
-    clarity_epp.placement.plate.copy_layout(lims, args.process_id)
+    if args.type == 'copy_layout':
+        clarity_epp.placement.plate.copy_layout(lims, args.process_id)
+    elif args.type == 'transpose_layout':
+        clarity_epp.placement.plate.copy_placement_row_to_column(lims, args.process_id)
+    elif args.type == 'copy_two_containers':
+        clarity_epp.placement.plate.copy_layout_to_two_new_container(lims, args.process_id)
 
 
 def placement_artifact_set(args):
@@ -283,6 +312,11 @@ def placement_pipetting(args):
     clarity_epp.placement.pipetting.check_nunc_input_nunc_output(lims, args.process_id)
 
 
+def placement_consumables(args):
+    """Check consumables."""
+    clarity_epp.placement.consumables.check_used_consumables(lims, args.process_id)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
@@ -291,6 +325,11 @@ if __name__ == "__main__":
     output_parser.add_argument(
         '-o', '--output_file',  nargs='?', type=argparse.FileType('w'), default=sys.stdout,
         help='Output file path (default=stdout)'
+    )
+    multiple_output_parser = argparse.ArgumentParser(add_help=False)
+    multiple_output_parser.add_argument(
+        '-m', '--multiple_output_files',  nargs='*', type=argparse.FileType('w'), default=sys.stdout,
+        help='Output file paths (default=stdout)'
     )
 
     # export
@@ -323,6 +362,7 @@ if __name__ == "__main__":
     parser_export_illumina = subparser_export.add_parser(
         'illumina', help='Export illumina samplesheet', parents=[output_parser]
     )
+    parser_export_illumina.add_argument('type', choices=['v2', 'bclconvert'], help='Samplesheet type')
     parser_export_illumina.add_argument('process_id', help='Clarity lims process id')
     parser_export_illumina.set_defaults(func=export_illumina)
 
@@ -349,7 +389,7 @@ if __name__ == "__main__":
         choices=[
             'purify', 'dilute_library_pool', 'multiplex_library_pool', 'multiplex_sequence_pool', 'normalization',
             'capture', 'exonuclease', 'pcr_exonuclease', 'mip_multiplex_pool', 'mip_dilute_pool', 'pool_samples',
-            'pool_magnis_pools', 'normalization_mix'
+            'pool_magnis_pools', 'normalization_mix', 'sequence_pool_verdunnen', 'sequence_pools'
         ],
         help='Samplesheet type'
     )
@@ -360,8 +400,14 @@ if __name__ == "__main__":
     parser_export_merge.add_argument('process_id', help='Clarity lims process id')
     parser_export_merge.set_defaults(func=export_merge_file)
 
-    parser_export_myra = subparser_export.add_parser('myra', help='Export myra samplesheet', parents=[output_parser])
-    parser_export_myra.add_argument('type', choices=['callisto', 'dilute'], help='Samplesheet type')
+    parser_export_myra = subparser_export.add_parser(
+        'myra', help='Export myra samplesheet', parents=[output_parser, multiple_output_parser]
+    )
+    parser_export_myra.add_argument(
+        'type',
+        choices=['callisto', 'dilute', 'barcode', 'callisto_input', 'dilute_LP', 'redilute_DX', 'callisto_pools'],
+        help='Samplesheet type'
+    )
     parser_export_myra.add_argument('process_id', help='Clarity lims process id')
     parser_export_myra.set_defaults(func=export_myra)
 
@@ -443,6 +489,9 @@ if __name__ == "__main__":
     subparser_qc = parser_qc.add_subparsers()
 
     parser_qc_bioinformatics = subparser_qc.add_parser('bioinformatics', help='Set bioinf qc flag')
+    parser_qc_bioinformatics.add_argument(
+        'type', choices=['qc_check', 'fill_next_step_and_send_mail'], help='Bioinformatics QC action'
+    )
     parser_qc_bioinformatics.add_argument('process_id', help='Clarity lims process id')
     parser_qc_bioinformatics.set_defaults(func=qc_bioinformatics)
 
@@ -470,6 +519,9 @@ if __name__ == "__main__":
     subparser_placement = parser_placement.add_subparsers()
 
     parser_placement_automatic = subparser_placement.add_parser('copy', help='Copy container layout from previous step')
+    parser_placement_automatic.add_argument(
+        'type', choices=['copy_layout', 'transpose_layout', 'copy_two_containers'], help='Copy type'
+    )
     parser_placement_automatic.add_argument('process_id', help='Clarity lims process id')
     parser_placement_automatic.set_defaults(func=placement_automatic)
 
@@ -511,6 +563,10 @@ if __name__ == "__main__":
     parser_placement_pipetting = subparser_placement.add_parser('pipetting', help='Check pipetting input and output')
     parser_placement_pipetting.add_argument('process_id', help='Clarity lims process id')
     parser_placement_pipetting.set_defaults(func=placement_pipetting)
+
+    parser_placement_consumables = subparser_placement.add_parser('consumables_check', help='Check consumables')
+    parser_placement_consumables.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_consumables.set_defaults(func=placement_consumables)
 
     args = parser.parse_args()
     args.func(args)
