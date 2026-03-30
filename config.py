@@ -211,3 +211,6 @@ clusters_per_sample = 4.5
 
 # Non DX indications via Dx srWGS Callisto v2.0 flow
 lpsrwgsindicaties = ["PG"]
+
+# Non external project applications for clarity_epp.py export manual sequence_pools
+non_external_applications = ["DX", "FG"]
