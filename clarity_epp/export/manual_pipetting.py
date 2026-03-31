@@ -1049,7 +1049,10 @@ def get_udf_info_external_pool(process, input_pools, external_pool):
         if input_pool.name == external_pool:
             clusters = 0
             for sample in input_pool.samples:
-                clusters += sample.udf["Dx Exoomequivalent"]
+                if sample.udf.get("Dx # clusters/sample"):
+                    clusters += sample.udf["Dx # clusters/sample"]
+                else:
+                    clusters += sample.udf["Dx Exoomequivalent"]
             input_pools[external_pool]["clusters"] = clusters
             input_pools[external_pool]["conc"] = input_pool.udf["Dx Concentratie fluorescentie (ng/ul)"]
             input_pools[external_pool]["size"] = input_pool.udf["Dx Fragmentlengte (bp)"]
