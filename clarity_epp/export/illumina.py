@@ -407,14 +407,14 @@ def get_samplesheet_information(sample_artifacts, process, index_2_conversion_or
 
     for sample_artifact in sample_artifacts:
         for sample in sample_artifact.samples:
-        glims_sequence_name = []
-        if sample_artifact.samples[0].udf.get("Dx Onderzoeksindicatie") == "PG" and "_srWGS" in sample_artifact.name:
-            glims_sequence_name.append(sample_artifact)
+            glims_sequence_name = []
+            if sample_artifact.samples[0].udf.get("Dx Onderzoeksindicatie") == "PG" and "_srWGS" in sample_artifact.name:
+                glims_sequence_name.append(sample_artifact)
 
-        if sample_artifact in glims_sequence_name:
-            sample_sequence_name = get_sequence_name(sample_artifact, "glims")
-        else:
-            sample_sequence_name = get_sequence_name(sample_artifact)
+            if sample_artifact in glims_sequence_name:
+                sample_sequence_name = get_sequence_name(sample_artifact, "glims")
+            else:
+                sample_sequence_name = get_sequence_name(sample_artifact)
         sample_index = get_sample_sequence_index(sample_artifact.reagent_labels[0])
         # Adjust empty second index for single index samples
         if len(sample_index) == 1:
