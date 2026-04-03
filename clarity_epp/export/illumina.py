@@ -314,9 +314,10 @@ def set_urgency_status(families, family, sample):
         families[family]['NICU'] = True
         families[family]['split_project_type'] = False
         if sample.udf['Dx Stoftest code'] == config.stoftestcode_srwgs:
-            if families[family]['project_type'] == 'srWGS':
+            project_type = families[family]['project_type']
+            if project_type == 'srWGS':
                 families[family]['project_type'] = f"NICUsrWGS_{sample.udf['Dx Familienummer']}"
-            elif families[family]['project_type'] == 'LPsrWGS':
+            elif project_type == 'LPsrWGS':
                 families[family]['project_type'] = f"LPsrWGS_NICU_{sample.udf['Dx Familienummer']}"
         else:
             families[family]['project_type'] = f"NICU_{sample.udf['Dx Familienummer']}"

@@ -1088,9 +1088,10 @@ def collect_information_for_calculations(lims, process):
         }
     for output_pool in output_pools:
         for input_pool in output_pools[output_pool]["input_pools"]:
-            application = input_pools[input_pool]["lims_object"].samples[0].project.udf.get("Application")
+            input_pool_object = input_pools[input_pool]["lims_object"]
+            application = input_pool_object.samples[0].project.udf.get("Application")
             if application in config.non_external_applications:
-                parent_process = input_pools[input_pool]["lims_object"].parent_process
+                parent_process = input_pool_object.parent_process
                 extension = None
                 if "_" in parent_process.all_inputs()[0].name:
                     extension = parent_process.all_inputs()[0].name.split("_")[-1]
