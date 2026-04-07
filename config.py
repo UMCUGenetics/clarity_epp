@@ -194,8 +194,8 @@ fragment_length = {
 # Bioinformatics QC requirements
 bioinformatics_qc_requirements_srWGS = {
     'Coverage': 30,
-    'CCU_parent': 1.0,
-    'CCU_child': 0.5,
+    'CCU_parent': 0.5,
+    'CCU_child': 0.3,
     'Contamination': 0.04,
 }
 
