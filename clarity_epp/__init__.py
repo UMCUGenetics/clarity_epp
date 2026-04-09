@@ -11,12 +11,16 @@ import mimetypes
 from genologics.entities import Artifact
 
 
-def get_sequence_name(artifact):
+def get_sequence_name(artifact, monsternummer="helix"):
     """Generate sequence name, for combined or single samples."""
     sample_numbers = []
     for sample in artifact.samples:
-        if 'Dx Monsternummer' in sample.udf:  # Use monsternummer for Dx samples
-            sample_numbers.append(sample.udf['Dx Monsternummer'])
+        # Use GLIMS ID for Farmacogenetics samples
+        if monsternummer == "glims":
+            sample_numbers.append(str(sample.udf['Dx GLIMS ID']))
+        else:
+            if 'Dx Monsternummer' in sample.udf:  # Use monsternummer for other Dx samples
+                sample_numbers.append(sample.udf['Dx Monsternummer'])
 
     if sample_numbers:  # Merge monsternummer for Dx samples
         sequence_name = '-'.join(sorted(sample_numbers))

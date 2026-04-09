@@ -1,4 +1,5 @@
 """Barcode  placement functions."""
+import sys
 
 from genologics.entities import Process
 
@@ -23,3 +24,35 @@ def check_family(lims, process_id):
                     if family_sample_artifacts:
                         artifact.udf['Dx monster met BC duplicaat'] = "{sample}".format(sample=family_sample.name)
                         artifact.put()
+
+
+def get_reagent_category_for_artifact(lims, artifact):
+    """Gets the reagent category name of the reagent type/label of the given artifact object.
+
+    Args:
+        lims (object): Lims connection
+        artifact (object): Lims Artifact object
+
+    Returns:
+        str: Reagent category name
+    """
+    reagent_label = artifact.reagent_labels[0]
+    reagent_type = lims.get_reagent_types(name=reagent_label)[0]
+    reagent_category = reagent_type.category
+    return reagent_category
+
+
+def check_plate_id_with_used_reagent_labels(lims, process):
+    """Performs check: Plate number in process udf "Twist barcode plaat ID" is the same as plate number in the reagent category
+    of the added reagent labels in this process.
+
+    Args:
+        lims (object): Lims connection
+        process (object): Lims Process object
+    """
+    twist_plate = process.udf["Twist barcode plaat ID"]
+    for artifact in process.analytes()[0]:
+        reagent_category = get_reagent_category_for_artifact(lims, artifact)
+        if twist_plate not in reagent_category:
+            message = ("Index adapater platen komen niet overeen")
+            sys.exit(message)

@@ -51,13 +51,23 @@ def unpooling(lims, process_id):
                 if 'Sample Type' in sample.udf and 'library' in sample.udf['Sample Type']:
                     sample_artifact.udf['Dx Sequencing Run Project'] = sample_projects[sample.name]
                 else:  # Use sample_artifact.name for Dx samples (upload via Helix)
-                    sample_artifact.udf['Dx Sequencing Run Project'] = sample_projects[sample_artifact.name]
+                    glims_sequence_name = []
+                    if (sample_artifact.samples[0].udf.get("Dx Onderzoeksindicatie") == "PG"
+                            and "_srWGS" in sample_artifact.name):
+                        glims_sequence_name.append(sample_artifact)
+
+                    if sample_artifact in glims_sequence_name:
+                        sample_sequence_name = get_sequence_name(sample_artifact, "glims")
+                    else:
+                        sample_sequence_name = get_sequence_name(sample_artifact)
+                    sample_artifact.udf['Dx Sequencing Run Project'] = sample_projects[sample_sequence_name]
                 sample_artifact.put()
 
                 # Only move DX production samples to post sequencing workflow
                 if sample_artifact not in sample_artifacts and sample.project and sample.project.udf['Application'] == 'DX':
                     if 'SRWGS' in sample_artifact.udf['Dx Sequencing Run Project'].upper():
-                        sample_artifacts_srwgs.append(sample_artifact)
+                        if 'LPSRWGS' not in sample_artifact.udf['Dx Sequencing Run Project'].upper():
+                            sample_artifacts_srwgs.append(sample_artifact)
                     else:
                         sample_artifacts.append(sample_artifact)
         lims.route_artifacts(sample_artifacts_srwgs, workflow_uri=Workflow(lims, id=config.post_sequencing_workflow_srwgs).uri)

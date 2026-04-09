@@ -1,0 +1,4 @@
+name,input_ID,well_input_ID,output_ID,well_output_ID
+{% for sample in samples -%}
+{{ samples[sample]["name"] }},{{ samples[sample]["input"] }},{{ samples[sample]["well_input"] }},{{ samples[sample]["output"] }},{{ samples[sample]["well_output"] }}
+{% endfor -%}

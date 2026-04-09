@@ -1,0 +1,23 @@
+[Header]
+FileFormatVersion,2
+InstrumentPlatform,{{ header["platform"] }}
+IndexOrientation,{{ header["orientation"] }}
+RunName,{{ header["run"] }}
+[Reads]
+Read1Cycles,{{ header["read_1_cycles"] }}
+Read2Cycles,{{ header["read_2_cycles"] }}
+Index1Cycles,{{ header["read_1_index"] }}
+Index2Cycles,{{ header["read_2_index"] }}
+[BCLConvert_Settings]
+SoftwareVersion,{{ header["version"] }}
+FastqCompressionFormat,{{ header["compression"] }}
+AdapterRead1,{{ header["read_1_adapter"] }}
+AdapterRead2,{{ header["read_2_adapter"] }}
+FindAdaptersWithIndels,TRUE
+BarcodeMismatchesIndex1,0
+BarcodeMismatchesIndex2,0
+[BCLConvert_Data]
+Lane,Sample_ID,index,index2,OverrideCycles,Sample_Project
+{%- for sample in samples +%}
+{{ samples[sample]["lane"] }},{{ samples[sample]["sample"] }},{{ samples[sample]["index_1"] }},{{ samples[sample]["index_2"] }},{{ samples[sample]["cycles"] }},{{ samples[sample]["project"] }}
+{%- endfor %}
