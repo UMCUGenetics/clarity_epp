@@ -51,7 +51,16 @@ def unpooling(lims, process_id):
                 if 'Sample Type' in sample.udf and 'library' in sample.udf['Sample Type']:
                     sample_artifact.udf['Dx Sequencing Run Project'] = sample_projects[sample.name]
                 else:  # Use sample_artifact.name for Dx samples (upload via Helix)
-                    sample_artifact.udf['Dx Sequencing Run Project'] = sample_projects[(sample_artifact.name).split("_")[0]]
+                    glims_sequence_name = []
+                    if (sample_artifact.samples[0].udf.get("Dx Onderzoeksindicatie") == "PG"
+                            and "_srWGS" in sample_artifact.name):
+                        glims_sequence_name.append(sample_artifact)
+
+                    if sample_artifact in glims_sequence_name:
+                        sample_sequence_name = get_sequence_name(sample_artifact, "glims")
+                    else:
+                        sample_sequence_name = get_sequence_name(sample_artifact)
+                    sample_artifact.udf['Dx Sequencing Run Project'] = sample_projects[sample_sequence_name]
                 sample_artifact.put()
 
                 # Only move DX production samples to post sequencing workflow

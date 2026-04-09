@@ -186,7 +186,7 @@ research_onderzoeksindicatie_project = {
 # Fragment length
 fragment_length = {
     'Exoom.analy_IL_versieVP_LP0002_srWGS': 600,
-    'Gen.analy_IL_versieVP_LP0002_srWGS': 600,
+    'Genp.analy_IL_versieVP_LP0002_srWGS': 600,
     'SingleGeneAnaly_IL_versieVP_LP0002_srWGS': 600,
     'default': '',
 }
@@ -194,8 +194,8 @@ fragment_length = {
 # Bioinformatics QC requirements
 bioinformatics_qc_requirements_srWGS = {
     'Coverage': 30,
-    'CCU_parent': 1.0,
-    'CCU_child': 0.5,
+    'CCU_parent': 0.5,
+    'CCU_child': 0.3,
     'Contamination': 0.04,
 }
 
@@ -211,3 +211,6 @@ clusters_per_sample = 4.5
 
 # Non DX indications via Dx srWGS Callisto v2.0 flow
 lpsrwgsindicaties = ["PG"]
+
+# Non external project applications for clarity_epp.py export manual sequence_pools
+non_external_applications = ["DX", "FG"]

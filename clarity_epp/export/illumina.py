@@ -314,9 +314,13 @@ def set_urgency_status(families, family, sample):
         families[family]['NICU'] = True
         families[family]['split_project_type'] = False
         if sample.udf['Dx Stoftest code'] == config.stoftestcode_srwgs:
-            families[family]['project_type'] = 'NICUsrWGS_{0}'.format(sample.udf['Dx Familienummer'])
+            project_type = families[family]['project_type']
+            if project_type == 'srWGS':
+                families[family]['project_type'] = f"NICUsrWGS_{sample.udf['Dx Familienummer']}"
+            elif project_type == 'LPsrWGS':
+                families[family]['project_type'] = f"LPsrWGS_NICU_{sample.udf['Dx Familienummer']}"
         else:
-            families[family]['project_type'] = 'NICU_{0}'.format(sample.udf['Dx Familienummer'])
+            families[family]['project_type'] = f"NICU_{sample.udf['Dx Familienummer']}"
 
     if sample.udf['Dx Stoftest code'] != config.stoftestcode_srwgs:
         # Set urgent status
@@ -403,7 +407,14 @@ def get_samplesheet_information(sample_artifacts, process, index_2_conversion_or
     samplesheet_samples = {}
 
     for sample_artifact in sample_artifacts:
-        sample_sequence_name = get_sequence_name(sample_artifact)
+        glims_sequence_name = []
+        if sample_artifact.samples[0].udf.get("Dx Onderzoeksindicatie") == "PG" and "_srWGS" in sample_artifact.name:
+            glims_sequence_name.append(sample_artifact)
+
+        if sample_artifact in glims_sequence_name:
+            sample_sequence_name = get_sequence_name(sample_artifact, "glims")
+        else:
+            sample_sequence_name = get_sequence_name(sample_artifact)
         sample_index = get_sample_sequence_index(sample_artifact.reagent_labels[0])
         # Adjust empty second index for single index samples
         if len(sample_index) == 1:

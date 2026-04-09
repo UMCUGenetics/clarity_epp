@@ -1049,7 +1049,10 @@ def get_udf_info_external_pool(process, input_pools, external_pool):
         if input_pool.name == external_pool:
             clusters = 0
             for sample in input_pool.samples:
-                clusters += sample.udf["Dx Exoomequivalent"]
+                if sample.udf.get("Dx # clusters/sample"):
+                    clusters += sample.udf["Dx # clusters/sample"]
+                else:
+                    clusters += sample.udf["Dx Exoomequivalent"]
             input_pools[external_pool]["clusters"] = clusters
             input_pools[external_pool]["conc"] = input_pool.udf["Dx Concentratie fluorescentie (ng/ul)"]
             input_pools[external_pool]["size"] = input_pool.udf["Dx Fragmentlengte (bp)"]
@@ -1074,7 +1077,7 @@ def collect_information_for_calculations(lims, process):
     lowpass_processes = get_process_types(lims, ["Dx nM verdunning Myra LP"])
     error_message = ""
     for input_pool in process.all_inputs():
-        input_pools[input_pool.name] = {}
+        input_pools[input_pool.name] = {"lims_object": input_pool}
     for output_pool in process.analytes()[0]:
         udf_final_volume = process.udf["Final volume"]
         output_pools[output_pool.name] = {
@@ -1083,34 +1086,56 @@ def collect_information_for_calculations(lims, process):
             "final_volume_per_lane": float(udf_final_volume.split(" ul ")[0]),
             "load_conc": process.udf["Dx Laadconcentratie (pM)"]
         }
-        if "WES" not in output_pool.name:  # all but WES output_pool
+    for output_pool in output_pools:
+        for input_pool in output_pools[output_pool]["input_pools"]:
+            input_pool_object = input_pools[input_pool]["lims_object"]
+            application = input_pool_object.samples[0].project.udf.get("Application")
+            if application in config.non_external_applications:
+                parent_process = input_pool_object.parent_process
+                extension = None
+                if "_" in parent_process.all_inputs()[0].name:
+                    extension = parent_process.all_inputs()[0].name.split("_")[-1]
+                if not extension:  # only WES output_pool
+                    input_pools[input_pool]["pool_sort"] = "WES pool"
+                    input_pools = get_udf_info_wes_pool(process, input_pools, input_pool)
+                elif extension == "LPsrWGS":  # only LPsrWGS input_pool
+                    input_pools[input_pool]["pool_sort"] = "LPsrWGS pool"
+                    input_pools[input_pool]["external"] = True
+                    input_pools = get_udf_info_lpsrwgs_pool(lims, process, lowpass_processes, input_pools, input_pool)
+                elif extension == "srWGS":  # only srWGS input_pool
+                    input_pools[input_pool]["pool_sort"] = "srWGS pool"
+                    input_pools[input_pool]["external"] = False
+                    input_pools, output_pools = get_udf_info_srwgs_pool(
+                        lims, process, lowpass_processes, input_pools, output_pools, input_pool
+                    )
+                else:  # unknown input_pool
+                    error_message = (
+                        f"Samples in input pool {input_pool} hebben een onbekende toevoeging {extension}. "
+                        "Niet duidelijk wat voor pool het is en welke berekening uit te voeren."
+                    )
+            else:  # only external input_pool
+                input_pools[input_pool]["pool_sort"] = "external pool"
+                input_pools[input_pool]["external"] = True
+                input_pools = get_udf_info_external_pool(process, input_pools, input_pool)
+
+        if "WES pool" in [input_pools[input_pool]["pool_sort"] for input_pool in output_pools[output_pool]["input_pools"]]:
+            output_pools[output_pool]["pool_sort"] = "WES pool"
+        else:
+            output_pools[output_pool]["pool_sort"] = "non WES pool"
+
+        if output_pools[output_pool]["pool_sort"] != "WES pool":  # all but WES output_pool
             udf_clusters_per_lane = process.udf["Dx # clusters flowcell/laantje (10^6)"]
-            output_pools[output_pool.name]["clusters_per_lane"] = float(udf_clusters_per_lane.split("(")[-1].strip(")"))
+            output_pools[output_pool]["clusters_per_lane"] = float(udf_clusters_per_lane.split("(")[-1].strip(")"))
             # udf check: same kit in both udfs
             kit_udf_final_volume = udf_final_volume.split("(")[-1].strip(")").split("/")
             kit_udf_clusters_per_lane = udf_clusters_per_lane.split(" (")[0]
             if kit_udf_clusters_per_lane not in kit_udf_final_volume:
                 error_message = "Kit in CF Dx # clusters flowcell/laantje (10^6) komt niet overeen met kit in CF Final volume"
         else:
-            for input_pool in output_pools[output_pool.name]["input_pools"]:
-                if "WES" not in input_pool:
+            for input_pool in output_pools[output_pool]["input_pools"]:
+                if input_pools[input_pool]["pool_sort"] != "WES pool":
                     error_message = "Een WES input pool kan niet gecombineerd worden met andere input pools"
 
-    for output_pool in output_pools:
-        for input_pool in output_pools[output_pool]["input_pools"]:
-            if "WES" in output_pool:  # only WES output_pool
-                input_pools = get_udf_info_wes_pool(process, input_pools, input_pool)
-            elif "LPsrWGS" in input_pool:  # only LPsrWGS input_pool
-                input_pools[input_pool]["external"] = True
-                input_pools = get_udf_info_lpsrwgs_pool(lims, process, lowpass_processes, input_pools, input_pool)
-            elif "srWGS" in input_pool:  # only srWGS input_pool
-                input_pools[input_pool]["external"] = False
-                input_pools, output_pools = get_udf_info_srwgs_pool(
-                    lims, process, lowpass_processes, input_pools, output_pools, input_pool
-                )
-            else:  # only external input_pool
-                input_pools[input_pool]["external"] = True
-                input_pools = get_udf_info_external_pool(process, input_pools, input_pool)
     return input_pools, output_pools, error_message
 
 
@@ -1129,7 +1154,7 @@ def calculate_clusters(input_pools, output_pools):
     for output_pool in output_pools:
         nr_lane = output_pools[output_pool]["nr_lane"]
         output_pools[output_pool]["final_volume_output_pool"] = output_pools[output_pool]["final_volume_per_lane"] * nr_lane
-        if "WES" in output_pool:  # only WES output_pool
+        if output_pools[output_pool]["pool_sort"] == "WES pool":  # only WES output_pool
             exoomequivalenten_total = 0
             for input_pool in output_pools[output_pool]["input_pools"]:
                 exoomequivalenten_total += input_pools[input_pool]["exoomequivalenten"]
@@ -1146,12 +1171,12 @@ def calculate_clusters(input_pools, output_pools):
             load_clusters = (output_pools[output_pool]["load_conc"] / clusters_available)
             clusters_external_pools = 0
             for input_pool in output_pools[output_pool]["input_pools"]:
-                if "LPsrWGS" in input_pool or "srWGS" not in input_pool:  # all but WES output_pool and srWGS input_pool
+                if input_pools[input_pool]["pool_sort"] != "srWGS pool":  # all but (WES output_pool and) srWGS input_pool
                     pm_input_pool = load_clusters * input_pools[input_pool]["clusters"]
                     input_pools[input_pool]["pm_input_pool"] = pm_input_pool
                     clusters_external_pools += input_pools[input_pool]["clusters"]
             for input_pool in output_pools[output_pool]["input_pools"]:
-                if "srWGS" in input_pool and "LPsrWGS" not in input_pool:  # only srWGS input_pool
+                if input_pools[input_pool]["pool_sort"] == "srWGS pool":  # only srWGS input_pool
                     needed_clusters_srwgs_pool = clusters_available - clusters_external_pools
                     needed_clusters_srwgs_pool_per_sample = needed_clusters_srwgs_pool / input_pools[input_pool]["nr_samples"]
                     if needed_clusters_srwgs_pool_per_sample < output_pools[output_pool]["clusters_per_srwgs"]:
@@ -1172,11 +1197,12 @@ def calculate_load_concentration(input_pools, output_pools):
     """
     for output_pool in output_pools:
         for input_pool in output_pools[output_pool]["input_pools"]:
-            if "WES" in output_pool or "srWGS" not in input_pool:  # only WES output_pool and external input_ppol
+            # only WES output_pool and external input_ppol
+            if output_pools[output_pool]["pool_sort"] == "WES pool" or input_pools[input_pool]["pool_sort"] == "external pool":
                 conc = input_pools[input_pool]["conc"]
                 size = input_pools[input_pool]["size"]
                 nm = (conc * 1000) * ((1 / 660) * (1 / size)) * 1000
-            else:  # only (LPsrWGS) input_pools
+            else:  # only (LP)srWGS input_pools
                 nm = input_pools[input_pool]["nm_pool"]
             input_pools[input_pool]["load_conc_input_pool"] = ((nm * 1000) / 5) / input_pools[input_pool]["pm_input_pool"]
     return input_pools
@@ -1234,7 +1260,7 @@ def calculate_pipetting_volumes(input_pools, output_pools):
             input_pools[input_pool]["flowcell_volume_input_pool_with_excess"] = flowcell_volume_input_pool_with_excess
             flowcell_volume_input_pools += flowcell_volume_input_pool
             # only LPsrWGS input_pool or external input_pool in srWGS output_pool
-            if "WES" not in output_pool and ("LPsrWGS" in input_pool or "srWGS" not in input_pool):
+            if output_pools[output_pool]["pool_sort"] != "WES pool" and input_pools[input_pool]["pool_sort"] != "srWGS pool":
                 flowcell_volume_external_input_pools += flowcell_volume_input_pool
                 volumes_for_correction_check.append(flowcell_volume_input_pool_with_excess)
         output_pools[output_pool]["flowcell_volume_external_input_pools"] = flowcell_volume_external_input_pools * 1.1
@@ -1242,7 +1268,7 @@ def calculate_pipetting_volumes(input_pools, output_pools):
         output_pools[output_pool]["flowcell_volume_tris"] = flowcell_volume_tris
         output_pools[output_pool]["flowcell_volume_tris_with_excess"] = flowcell_volume_tris * 1.1
         output_pools[output_pool]["corrected_volumes"] = False
-        if "WES" not in output_pool:  # all but WES output_pools
+        if output_pools[output_pool]["pool_sort"] != "WES pool":  # all but WES output_pools
             if volumes_for_correction_check:
                 lowest_volume_external_input_pool = min(volumes_for_correction_check)
                 if lowest_volume_external_input_pool < 1:
