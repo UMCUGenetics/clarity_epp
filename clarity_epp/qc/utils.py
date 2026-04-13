@@ -2,16 +2,15 @@
 
 
 def transform_sex_multiqc(value):
-    """Transform multiqc sex value to lims sex value."""
-    if value is not None and value.strip():
-        if value.upper() == 'XX':
-            return 'Vrouw'
-        elif value.upper() == 'XY':
-            return 'Man'
-        else:
-            return 'Onbekend'
+    """Transform multiqc sex missing values to 'Onbekend' and keep valid values."""
+    if value is None or not value.strip():
+        return 'Onbekend'
+    gender = value.strip().lower()
+    if gender in ('man', 'vrouw'):
+        return value
     else:
         return 'Onbekend'
+
 
 def is_missing(value):
     """Check if value is None or -1 (NA)
