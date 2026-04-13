@@ -1,15 +1,15 @@
 """Utility functions."""
 
 
+
 def transform_sex_multiqc(value):
     """Transform multiqc sex missing values to 'Onbekend' and keep valid values."""
     if value is None or not value.strip():
         return 'Onbekend'
-    gender = value.strip().lower()
-    if gender in ('man', 'vrouw'):
+    value = value.strip()
+    if value in ('Man', 'Vrouw'):
         return value
-    else:
-        return 'Onbekend'
+    return 'Onbekend'
 
 
 def is_missing(value):
