@@ -6,6 +6,7 @@ class ClaritySettings(BaseModel):
     base_url: str
     username: str
     password: SecretStr
+    timeout: int = 60
 
 
 class Settings(BaseSettings):

@@ -31,9 +31,11 @@ class ClarityFactory:
     @classmethod
     def get_instance(cls) -> ClarityService:
         if cls._instance is None:
-            api_v2_url = f"{settings.clarity.base_url}/api/v2/"
             lims = s4.clarity.LIMS(
-                api_v2_url, settings.clarity.username, settings.clarity.password.get_secret_value()
+                root_uri=f"{settings.clarity.base_url}/api/v2/",
+                username=settings.clarity.username,
+                password= settings.clarity.password.get_secret_value(),
+                timeout=settings.clarity.timeout
             )
             try:
                 for lims_connection_attempt in Retrying(stop=stop_after_attempt(2), wait=wait_fixed(1)):
