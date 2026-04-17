@@ -1,0 +1,4 @@
+[clarity]
+base_url = "https://lims-example.umcutrecht.nl"
+username = "lims_user"
+password = "lims_password"
