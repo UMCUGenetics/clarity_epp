@@ -1,6 +1,0 @@
-Pipetteerschema correctie externe multiplex pool
-Sample,Pipetteervolume Gecorrigeerd
-{% for sample in samples -%}
-{{ samples[sample]["sample"] }},{{ samples[sample]["corrected_volume"] }}
-{% endfor -%}
-,{# column needed for not deleting empty row by csv2xlsx tool #}

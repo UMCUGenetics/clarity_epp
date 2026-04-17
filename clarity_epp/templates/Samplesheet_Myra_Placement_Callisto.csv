@@ -1,4 +1,0 @@
-sample_ID,input_ID,well_input_ID,output_ID,well_output_ID,volume
-{% for sample in samples -%}
-{{ samples[sample]["sample"] }},{{ samples[sample]["input"] }},{{ samples[sample]["well_input"] }},{{ samples[sample]["output"] }},{{ samples[sample]["well_output"] }},{{ samples[sample]["volume"] }}
-{% endfor -%}

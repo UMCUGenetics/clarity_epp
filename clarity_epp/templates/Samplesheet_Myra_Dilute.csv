@@ -1,4 +1,0 @@
-Monsternummer,Plate_Id_input,Well_input,Plate_Id_output,Well_output,Pipetteervolume DNA (ul),Pipetteervolume H2O (ul)
-{% for sample in samples -%}
-{{ samples[sample]["sample"] }},{{ samples[sample]["input"] }},{{ samples[sample]["well_input"] }},{{ samples[sample]["output"] }},{{ samples[sample]["well_output"] }},{{ samples[sample]["volume_sample"] }},{{ samples[sample]["volume_water"] }}
-{% endfor -%}
