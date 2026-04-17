@@ -1,11 +1,9 @@
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 # import genologics.lims
 # from genologics.entities import Artifact, Process
-
 import s4.clarity
-from tenacity import Retrying, RetryError, stop_after_attempt, wait_fixed
-
+from tenacity import RetryError, Retrying, stop_after_attempt, wait_fixed
 
 from clarity_epp.config import settings
 

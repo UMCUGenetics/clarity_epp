@@ -1,4 +1,5 @@
 import typer
+
 from clarity_epp.services import ClarityFactory
 
 app = typer.Typer(no_args_is_help=True)
