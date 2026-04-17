@@ -10,11 +10,12 @@ requires-python = ">=3.13"
 dependencies = [
     "pydantic-settings>=2.13.1",
     "s4-clarity>=1.8.0",
+    "tenacity>=9.1.4",
     "typer>=0.24.1",
 ]
 
 [project.scripts]
-clarity-epp = "clarity_epp:main"
+clarity_epp = "clarity_epp:main"
 
 [build-system]
 requires = ["uv_build>=0.11.7,<0.12.0"]

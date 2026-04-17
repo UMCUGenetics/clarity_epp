@@ -1,4 +1,5 @@
 import typer
+from clarity_epp.services import ClarityFactory
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -6,6 +7,10 @@ app = typer.Typer(no_args_is_help=True)
 @app.command("hello")
 def hello():
     typer.echo("Hello World!")
+
+    clarity = ClarityFactory.get_instance()
+    typer.echo(clarity.versions)
+
 
 def main() -> None:
     app()
