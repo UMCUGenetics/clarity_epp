@@ -3,9 +3,13 @@ import re
 
 from genologics.entities import Process
 
-from .. import get_mix_sample_barcode, get_unique_sample_id
+from .. import get_mix_sample_barcode, get_sample_artifacts_from_pool, get_unique_sample_id
 import clarity_epp.export.utils
-from clarity_epp.export.utils import create_samplesheet, get_info_from_LP_process, get_process_types
+from clarity_epp.export.utils import (create_samplesheet,
+                                      get_artifactname_extensions_for_list_of_artifacts,
+                                      get_info_from_LP_process,
+                                      get_process_types,
+                                      get_project_applications_for_samples_in_pool)
 import config
 
 
@@ -1089,34 +1093,54 @@ def collect_information_for_calculations(lims, process):
     for output_pool in output_pools:
         for input_pool in output_pools[output_pool]["input_pools"]:
             input_pool_object = input_pools[input_pool]["lims_object"]
-            application = input_pool_object.samples[0].project.udf.get("Application")
-            if application in config.non_external_applications:
-                parent_process = input_pool_object.parent_process
-                extension = None
-                if "_" in parent_process.all_inputs()[0].name:
-                    extension = parent_process.all_inputs()[0].name.split("_")[-1]
-                if not extension:  # only WES output_pool
-                    input_pools[input_pool]["pool_sort"] = "WES pool"
-                    input_pools = get_udf_info_wes_pool(process, input_pools, input_pool)
-                elif extension == "LPsrWGS":  # only LPsrWGS input_pool
-                    input_pools[input_pool]["pool_sort"] = "LPsrWGS pool"
+            applications = get_project_applications_for_samples_in_pool(input_pool_object)
+            non_external = []
+            for application in applications:
+                if application in config.non_external_applications:
+                    non_external.append(True)
+                else:
+                    non_external.append(False)
+            if len(list(set(non_external))) > 1:  # check if both external as non_external applications present
+                error_message = (
+                    f"Input pool {input_pool} bevat zowel samples met externe als niet externe project applicaties "
+                    f"{applications}. Als dit allen niet externe applicaties zijn stuur deze melding dan naar "
+                    "bioinformatica-genetica@umcutrecht.nl zodat config.non_external_applications geupdate kan worden."
+                )
+                return input_pools, output_pools, error_message
+            else:
+                if applications[0] in config.non_external_applications:
+                    input_pool_input_artifacts = get_sample_artifacts_from_pool(lims, input_pool_object)
+                    extensions = get_artifactname_extensions_for_list_of_artifacts(input_pool_input_artifacts)
+                    if len(extensions) > 1:  # check if multiple sample extensions in pool
+                        error_message = (
+                            f"Input pool {input_pool} bevat samples met verschillende toevoegingen {extensions}. "
+                            "Hierdoor is niet te bepalen wat voor soort pool dit is."
+                        )
+                        return input_pools, output_pools, error_message
+                    else:
+                        extension = extensions[0]
+                        if extension == "geen extensie":  # only WES output_pool
+                            input_pools[input_pool]["pool_sort"] = "WES pool"
+                            input_pools = get_udf_info_wes_pool(process, input_pools, input_pool)
+                        elif extension == "LPsrWGS":  # only LPsrWGS input_pool
+                            input_pools[input_pool]["pool_sort"] = "LPsrWGS pool"
+                            input_pools[input_pool]["external"] = True
+                            input_pools = get_udf_info_lpsrwgs_pool(lims, process, lowpass_processes, input_pools, input_pool)
+                        elif extension == "srWGS":  # only srWGS input_pool
+                            input_pools[input_pool]["pool_sort"] = "srWGS pool"
+                            input_pools[input_pool]["external"] = False
+                            input_pools, output_pools = get_udf_info_srwgs_pool(
+                                lims, process, lowpass_processes, input_pools, output_pools, input_pool
+                            )
+                        else:  # unknown input_pool
+                            error_message = (
+                                f"Samples in input pool {input_pool} hebben een onbekende toevoeging {extension}. "
+                                "Niet duidelijk wat voor pool het is en welke berekening uit te voeren."
+                            )
+                else:  # only external input_pool
+                    input_pools[input_pool]["pool_sort"] = "external pool"
                     input_pools[input_pool]["external"] = True
-                    input_pools = get_udf_info_lpsrwgs_pool(lims, process, lowpass_processes, input_pools, input_pool)
-                elif extension == "srWGS":  # only srWGS input_pool
-                    input_pools[input_pool]["pool_sort"] = "srWGS pool"
-                    input_pools[input_pool]["external"] = False
-                    input_pools, output_pools = get_udf_info_srwgs_pool(
-                        lims, process, lowpass_processes, input_pools, output_pools, input_pool
-                    )
-                else:  # unknown input_pool
-                    error_message = (
-                        f"Samples in input pool {input_pool} hebben een onbekende toevoeging {extension}. "
-                        "Niet duidelijk wat voor pool het is en welke berekening uit te voeren."
-                    )
-            else:  # only external input_pool
-                input_pools[input_pool]["pool_sort"] = "external pool"
-                input_pools[input_pool]["external"] = True
-                input_pools = get_udf_info_external_pool(process, input_pools, input_pool)
+                    input_pools = get_udf_info_external_pool(process, input_pools, input_pool)
 
         if "WES pool" in [input_pools[input_pool]["pool_sort"] for input_pool in output_pools[output_pool]["input_pools"]]:
             output_pools[output_pool]["pool_sort"] = "WES pool"
