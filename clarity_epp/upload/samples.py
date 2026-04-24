@@ -154,20 +154,20 @@ def from_helix(lims, email_settings, input_file):
                 udf_data['Dx norm. manueel'] = False
 
         # Set 'Dx Familie status' udf
-        if udf_data['Dx Onderzoeksreden'] == 'Bevestiging diagnose':
+        if 'Bevestiging diagnose' in udf_data['Dx Onderzoeksreden']:
             udf_data['Dx Familie status'] = 'Kind'
-        elif udf_data['Dx Onderzoeksreden'] == 'Prenataal onderzoek':
+        elif 'Prenataal onderzoek' in udf_data['Dx Onderzoeksreden']:
             udf_data['Dx Familie status'] = 'Kind'
-        elif udf_data['Dx Onderzoeksreden'] == 'Eerstegraads-verwantenond':
+        elif 'Eerstegraads-verwantenond' in udf_data['Dx Onderzoeksreden']:
             udf_data['Dx Familie status'] = 'Kind'
-        elif udf_data['Dx Onderzoeksreden'] == 'Partneronderzoek':
+        elif 'Partneronderzoek' in udf_data['Dx Onderzoeksreden']:
             udf_data['Dx Familie status'] = 'Kind'
-        elif udf_data['Dx Onderzoeksreden'] == 'Dragerschapbepaling':
+        elif 'Dragerschapbepaling' in udf_data['Dx Onderzoeksreden']:
             udf_data['Dx Familie status'] = 'Kind'
         # Helix export is truncated (Presymptomatisch onderzoek)
-        elif udf_data['Dx Onderzoeksreden'] == 'Presymptomatisch onderzoe':
+        elif 'Presymptomatisch onderzoe' in udf_data['Dx Onderzoeksreden']:
             udf_data['Dx Familie status'] = 'Kind'
-        elif udf_data['Dx Onderzoeksreden'] == 'Informativiteitstest':
+        elif 'Informativiteitstest' in udf_data['Dx Onderzoeksreden']:
             udf_data['Dx Familie status'] = 'Ouder'
         else:
             udf_data['Dx Import warning'] = ';'.join([
@@ -197,7 +197,7 @@ def from_helix(lims, email_settings, input_file):
             udf_data['Dx Familienummer'] = udf_data['Dx Familienummer'].split('/')[-1].strip(' ')
 
         # Set NICU status for related samples using Dx Gerelateerde onderzoeken
-        if udf_data['Dx NICU Spoed'] and not udf_data['Dx Onderzoeksreden'] == 'Informativiteitstest':
+        if udf_data['Dx NICU Spoed'] and 'Informativiteitstest' not in udf_data['Dx Onderzoeksreden']:
             for related_research in udf_data['Dx Gerelateerde onderzoeken'].split(';'):
                 for related_sample in lims.get_samples(udf={'Dx Onderzoeknummer': related_research}):
                     related_sample.udf['Dx NICU Spoed'] = udf_data['Dx NICU Spoed']
