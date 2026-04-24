@@ -238,3 +238,42 @@ def get_info_from_LP_process(lims, lowpass_processes, analyte):
     nM_pool = float(lowpass_process.udf['Dx Pool verdunning (nM)'])
     volume_sample = float(lowpass_process.udf['Sample volume (ul)'])
     return nM_pool, volume_sample
+
+
+def get_project_applications_for_samples_in_pool(pool):
+    """Gets list of all project applications of samples in a pool.
+
+    Args:
+        pool (artifact): Artifact object of a pool of samples
+
+    Returns:
+        list: List of the project applications of all samples in the given pool
+    """
+    applications = []
+    for sample in pool.samples:
+        application = sample.project.udf.get("Application")
+        if application not in applications:
+            applications.append(application)
+    return applications
+
+
+def get_artifactname_extensions_for_list_of_artifacts(artifact_list):
+    """Gets artifact name extensions (artifactname_extension) for a list of artifacts
+
+    Args:
+        artifact_list (list): List of Artifact objects
+
+    Returns:
+        list: List of unique extensions (no extension will return "geen extensie")
+    """
+    extensions = []
+    for artifact in artifact_list:
+        artifact_name = artifact.name
+        if "_" in artifact_name:
+            extension = artifact_name.split("_")[-1]
+            if extension not in extensions:
+                extensions.append(extension)
+        else:
+            if "geen extensie" not in extensions:
+                extensions.append("geen extensie")
+    return extensions
