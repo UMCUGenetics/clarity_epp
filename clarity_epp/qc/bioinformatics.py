@@ -59,7 +59,7 @@ def parse_file(process, lims, udf_columns):
                         for udf in udf_columns:
                             try:
                                 value = data[udf_columns[udf]['index']]
-                                if value in ['NA', None, '']:
+                                if value in ['NA', 'None', None, '']:
                                     value = None
                                 # Apply -1 for missing values
                                 if udf in ['Dx CCU', 'Dx Gem. dekking', 'Dx Contaminatie'] and value is None:
