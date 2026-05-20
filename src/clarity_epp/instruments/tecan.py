@@ -26,8 +26,6 @@ def export_qc_samplesheet(
     well_plate = get_well_plate_from_process(process)
     well_artifact = []
 
-    # output_file.write("Position\tSample\n")
-
     for well in sort_96_well_plate(well_plate.keys()):
         # Set correct artifact name
         artifact = well_plate[well]
