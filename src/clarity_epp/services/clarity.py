@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Any
 
 import s4.clarity
+from s4.clarity.process import Process
 from tenacity import RetryError, Retrying, stop_after_attempt, wait_fixed
 
 from clarity_epp.core.config import settings
@@ -23,9 +24,21 @@ class ClarityService(ClarityServiceType):
         """
         return getattr(self._lims, name)
 
+    def get_process(self, process_id: str) -> Process:
+        """
+        Get process by id.
+
+        Args:
+            process_id (str): Clarity process id.
+
+        Returns:
+            Process: Clarity process.
+        """
+        return self._lims.processes.from_limsid(process_id)
+
 
 class ClarityFactory:
-    _instance: s4.clarity.LIMS = None
+    _instance: ClarityService | None = None
 
     @classmethod
     def get_instance(cls) -> ClarityService:
@@ -37,12 +50,10 @@ class ClarityFactory:
                 timeout=settings.clarity.timeout,
             )
             try:
-                for lims_connection_attempt in Retrying(
-                    stop=stop_after_attempt(2), wait=wait_fixed(1)
-                ):
+                for lims_connection_attempt in Retrying(stop=stop_after_attempt(2), wait=wait_fixed(1)):
                     with lims_connection_attempt:
                         _ = lims.versions
             except RetryError:
                 raise Exception("Could not connect to Clarity LIMS.")
-            cls._instance = lims
+            cls._instance = ClarityService(lims)
         return cls._instance

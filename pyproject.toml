@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-clarity_epp = "clarity_epp:main"
+clarity_epp = "clarity_epp.cli:cli"
 
 [build-system]
 requires = ["uv_build>=0.11.7,<0.12.0"]
@@ -28,3 +28,6 @@ dev = [
     "pytest-mock>=3.15.1",
     "ruff>=0.15.11",
 ]
+
+[tool.ruff]
+line-length = 127
