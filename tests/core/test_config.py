@@ -2,7 +2,7 @@ import pytest
 import typer
 from pydantic_settings import BaseSettings
 
-from clarity_epp.config import load_settings
+from clarity_epp.core.config import load_settings
 
 
 def test_load_settings() -> None:
