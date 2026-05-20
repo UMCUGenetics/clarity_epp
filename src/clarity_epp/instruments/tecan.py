@@ -21,7 +21,7 @@ def export_qc_samplesheet(
     """
     clarity = ClarityFactory.get_instance()
 
-    process = clarity.get_process(process_id)
+    process = clarity.get_process(process_id)  # or clarity.processes.from_limsid(process_id)
     well_plate = get_well_plate_from_process(process)
 
     output_file.write("Position\tSample\n")
