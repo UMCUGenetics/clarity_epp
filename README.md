@@ -33,38 +33,32 @@ With v2 we update the application structure to better fit all the functionality 
 ```tree
 ├── LICENSE
 ├── README.md
-├── config.toml  # Application config, using pydantic-settings
+├── config.toml                     # Application config, using pydantic-settings
 ├── pyproject.toml
 ├── src
 │   └── clarity_epp
 │       ├── __init__.py
-│       ├── cli.py  # Typer cli config
+│       ├── cli.py                  # Typer cli config
 │       ├── core
 │       │   ├── __init__.py
-│       │   └── config.py  # pydantic-settings models
-│       ├── instruments  # Code for interacting with lab instruments, combines export / upload from v1
+│       │   └── config.py           # pydantic-settings models
+│       ├── instruments             # Code for interacting with lab instruments, combines export / upload from v1
 │       │   ├── __init__.py
-│       │   ├── bioanalyzer.py
-│       │   ├── caliper.py
-│       │   └── hamilton.py
-│       ├── qc  # QC calculations -> could also move to 'workflow'
+│       │   └── tecan.py
+│       ├── qc                      # QC calculations
 │       │   ├── __init__.py
 │       │   ├── bioinformatics.py
 │       │   └── fragment_length.py
-│       ├── services  # Service classes to interact with (external) systems
+│       ├── services                # Service classes to interact with (external) systems
 │       │   ├── __init__.py
 │       │   └── clarity.py
-│       ├── utils  # Utility functions
-│       │   ├── __init__.py
-│       │   ├── artifacts.py  # For example to get (metadata) from artifact name or parse UDF value
-│       │   └── samples.py
-│       └── workflow  # lab workflow functions, moving samples, copying plates, etc.
+│       └── utils                   # Utility functions
 │           ├── __init__.py
-│           ├── plate.py
-│           ├── pool.py
-│           └── step.py
+│           ├── container.py
+│           └── process.py
 ├── tests
 │   └── core
 │       └── test_config.py
 └── uv.lock
+
 ```
