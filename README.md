@@ -42,6 +42,7 @@ With v2 we update the application structure to better fit all the functionality 
 │       ├── core
 │       │   ├── __init__.py
 │       │   └── config.py           # pydantic-settings models
+│       │   └── templates.py        # Jinja environment code
 │       ├── instruments             # Code for interacting with lab instruments, combines export / upload from v1
 │       │   ├── __init__.py
 │       │   └── tecan.py
@@ -52,6 +53,9 @@ With v2 we update the application structure to better fit all the functionality 
 │       ├── services                # Service classes to interact with (external) systems
 │       │   ├── __init__.py
 │       │   └── clarity.py
+│       ├── templates               # Jinja2 templates
+│       │   └── instruments
+│       │       └── tecan_qc_samplesheet.tsv
 │       └── utils                   # Utility functions
 │           ├── __init__.py
 │           ├── container.py

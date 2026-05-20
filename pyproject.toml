@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "jinja2>=3.1.6",
     "pydantic-settings>=2.13.1",
     "s4-clarity>=1.8.0",
     "tenacity>=9.1.4",

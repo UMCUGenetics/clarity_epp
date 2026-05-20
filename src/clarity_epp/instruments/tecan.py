@@ -1,6 +1,7 @@
 import typer
 from typing_extensions import Annotated
 
+from clarity_epp.core.templates import render_template
 from clarity_epp.services.clarity import ClarityFactory
 from clarity_epp.utils.container import sort_96_well_plate
 from clarity_epp.utils.process import get_well_plate_from_process
@@ -23,8 +24,9 @@ def export_qc_samplesheet(
 
     process = clarity.get_process(process_id)  # or clarity.processes.from_limsid(process_id)
     well_plate = get_well_plate_from_process(process)
+    well_artifact = []
 
-    output_file.write("Position\tSample\n")
+    # output_file.write("Position\tSample\n")
 
     for well in sort_96_well_plate(well_plate.keys()):
         # Set correct artifact name
@@ -33,5 +35,6 @@ def export_qc_samplesheet(
             artifact_name = artifact.name.split("_")[0]
         else:
             artifact_name = artifact.name
+        well_artifact.append((well, artifact_name))
 
-        output_file.write(f"{well}\t{artifact_name}\n")
+    output_file.write(render_template("instruments/tecan_qc_samplesheet.tsv", wells=well_artifact))
