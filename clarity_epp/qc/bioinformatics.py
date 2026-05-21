@@ -21,6 +21,7 @@ def bioinf_qc_check(lims, process_id):
         'Dx CCU': {'column': 'CNV Coverage Uniformity', 'transform': float},
         'Dx Contaminatie': {'column': 'Contamination', 'transform': float},
         'Dx Gevonden geslacht': {'column': 'Sex', 'transform': transform_sex_multiqc},
+        'Dx autosome callability': {'column': 'Autosome callability', 'transform': float},
     }
     sample_qcs = parse_file(process, lims, udf_columns)
     family_information = get_family_info(process, sample_qcs, udf_columns)
@@ -62,7 +63,7 @@ def parse_file(process, lims, udf_columns):
                                 if value in ['NA', 'None', None, '']:
                                     value = None
                                 # Apply -1 for missing values
-                                if udf in ['Dx CCU', 'Dx Gem. dekking', 'Dx Contaminatie'] and value is None:
+                                if udf in ['Dx CCU', 'Dx Gem. dekking', 'Dx Contaminatie', 'Dx autosome callability'] and value is None:
                                     value = -1
                                 if 'transform' in udf_columns[udf]:
                                     udf_data[udf] = udf_columns[udf]['transform'](value)
@@ -134,6 +135,9 @@ def qc_check(process, udf_columns, family_info):
         contamination_value = input.udf.get('Dx Contaminatie')
         if is_missing(contamination_value) or contamination_value > qc_requirements['Contamination']:
             qc_message, qc_conclusion = qc_contamination_fail(input, qc_conclusion, qc_message, qc_requirements)
+        autosome_callability_value = input.udf.get('Dx Autosome callability')
+        if is_missing(autosome_callability_value) or autosome_callability_value < qc_requirements['Autosome_callability']:
+            qc_message, qc_conclusion = qc_autosome_callability_fail(input, qc_conclusion, qc_message, qc_requirements)
         if input.samples[0].udf.get("Dx Foetus") is True and input.samples[0].udf.get('Dx Geslacht') == 'Onbekend':
             qc_message, qc_conclusion = no_check_foetus(qc_message, qc_conclusion)
         else:
@@ -230,6 +234,25 @@ def qc_contamination_fail(input, qc_conclusion, qc_message, qc_requirements):
     qc_message.append(
         f"De contaminatie waarde {contamination_value} is boven "
         f"{qc_requirements['Contamination']}.")
+    return qc_message, qc_conclusion
+
+
+def qc_autosome_callability_fail(input, qc_conclusion, qc_message, qc_requirements):
+    """Add conclusion and message for autosome callability fail
+
+    Args:
+        input (Artificat): Lims artifact
+        qc_conclusion (str): QC conclusion
+        qc_message (list): QC message
+
+    Returns:
+        list: qc_message for gender fail
+        str: Updated QC conclusion
+    """
+    qc_conclusion += 'Autosome callability afgekeurd.'
+    qc_message.append(
+        f"De autosome callability waarde {input.udf['Dx Autosome callability']}% is onder "
+        f"{qc_requirements['Autosome_callability']}%.")
     return qc_message, qc_conclusion
 
 
