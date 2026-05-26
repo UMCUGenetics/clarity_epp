@@ -22,7 +22,7 @@ def export_qc_samplesheet(
     """
     clarity = ClarityFactory.get_instance()
 
-    process = clarity.get_process(process_id)  # or clarity.processes.from_limsid(process_id)
+    process = clarity.processes.from_limsid(process_id)
     well_plate = get_well_plate_from_process(process)
     well_artifact = []
 

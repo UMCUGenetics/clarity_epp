@@ -28,6 +28,9 @@ class ClarityService(ClarityServiceType):
         """
         Get process by id.
 
+        NOTE: In this particular case, the processes.from_limsid(process_id) should be used directly from the LIMS object.
+        This method is added here to provide a clear and simple example of how to add methods to the ClarityService class while still allowing access to all methods of the underlying LIMS object.
+
         Args:
             process_id (str): Clarity process id.
 
