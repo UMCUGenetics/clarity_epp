@@ -64,7 +64,10 @@ def unpooling(lims, process_id):
                 sample_artifact.put()
 
                 # Only move DX production samples to post sequencing workflow
-                if sample_artifact not in sample_artifacts and sample.project and sample.project.udf['Application'] == 'DX':
+                if (sample_artifact not in sample_artifacts
+                    and sample_artifact not in sample_artifacts_srwgs
+                    and sample.project
+                    and sample.project.udf['Application'] == 'DX'):
                     if 'SRWGS' in sample_artifact.udf['Dx Sequencing Run Project'].upper():
                         if 'LPSRWGS' not in sample_artifact.udf['Dx Sequencing Run Project'].upper():
                             sample_artifacts_srwgs.append(sample_artifact)

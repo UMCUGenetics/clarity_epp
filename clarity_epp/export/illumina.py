@@ -299,40 +299,36 @@ def create_samplesheet_sequencer(lims, process_id, output_file):
     output_file.write('\n'.join(sample_sheet))
 
 
-def set_urgency_status(families, family, sample):
+def set_urgency_status(family, sample):
     """Sets urgency status for sample depending on udf settings
 
     Args:
-        families (dict): Dictionary with family information
-        family (str): Family of sample
+        family (dict): Dictionary with family information
         sample (object): Sample object for which urgency status is set
 
     Returns:
-        dict: Updated families dictionary
+        dict: Updated family dictionary
     """
     if sample.udf['Dx NICU Spoed']:
-        families[family]['NICU'] = True
-        families[family]['split_project_type'] = False
+        family['NICU'] = True
+        family['split_project_type'] = False
         if sample.udf['Dx Stoftest code'] == config.stoftestcode_srwgs:
-            project_type = families[family]['project_type']
-            if project_type == 'srWGS':
-                families[family]['project_type'] = f"NICUsrWGS_{sample.udf['Dx Familienummer']}"
-            elif project_type == 'LPsrWGS':
-                families[family]['project_type'] = f"LPsrWGS_NICU_{sample.udf['Dx Familienummer']}"
+            family['project_type'] = f"NICUsrWGS_{sample.udf['Dx Familienummer']}"
+            family['project_type_LPsrWGS'] = f"LPsrWGS_NICU_{sample.udf['Dx Familienummer']}"
         else:
-            families[family]['project_type'] = f"NICU_{sample.udf['Dx Familienummer']}"
+            family['project_type'] = f"NICU_{sample.udf['Dx Familienummer']}"
 
     if sample.udf['Dx Stoftest code'] != config.stoftestcode_srwgs:
         # Set urgent status
         if sample.udf.get('Dx Spoed'):
-            families[family]['urgent'] = True
+            family['urgent'] = True
 
         # Set deviating status, remove urgent status if deviating
         if sample.udf.get('Dx Mergen') or sample.udf.get('Dx Exoomequivalent') > 1:
-            families[family]['deviating'] = True
-            families[family]['urgent'] = False
+            family['deviating'] = True
+            family['urgent'] = False
 
-    return families
+    return family
 
 
 def define_project_types_and_set_sample_projects(families, samplesheet_samples):
@@ -357,6 +353,18 @@ def define_project_types_and_set_sample_projects(families, samplesheet_samples):
                 'split_project_type': family['split_project_type']
             }
 
+        if ('project_type_LPsrWGS' in family
+            and family['project_type_LPsrWGS'] in project_types
+            and 'LPsrWGS_samples' in family
+            and family['LPsrWGS_samples']):
+            project_types[family['project_type_LPsrWGS']]['sample_count'] += len(family['LPsrWGS_samples'])
+        elif 'LPsrWGS_samples' in family:
+            project_types[family['project_type_LPsrWGS']] = {
+                'sample_count': len(family['LPsrWGS_samples']),
+                'projects': {},
+                'split_project_type': family['split_project_type']
+            }
+
     # Define projects per project_type
     for project_type in project_types:
         project_types[project_type]['index'] = 0
@@ -373,6 +381,11 @@ def define_project_types_and_set_sample_projects(families, samplesheet_samples):
         for sample_sequence_name in urgent_family['samples']:
             samplesheet_samples[sample_sequence_name]['project'] = family_project
             project_types[urgent_family['project_type']]['projects'][family_project] += 1
+        if 'project_type_LPsrWGS' in urgent_family and 'LPsrWGS_samples' in urgent_family:
+            family_LPsrWGS_project = get_project(project_types[urgent_family['project_type_LPsrWGS']]['projects'], urgent=True)
+            for sample_sequence_name in urgent_family['LPsrWGS_samples']:
+                samplesheet_samples[sample_sequence_name]['project'] = family_LPsrWGS_project
+                project_types[urgent_family['project_type_LPsrWGS']]['projects'][family_LPsrWGS_project] += 1
 
     # Deviating families / samples
     for deviating_family in [family for family in families.values() if family['deviating']]:
@@ -380,6 +393,11 @@ def define_project_types_and_set_sample_projects(families, samplesheet_samples):
         for sample_sequence_name in deviating_family['samples']:
             samplesheet_samples[sample_sequence_name]['project'] = family_project
             project_types[deviating_family['project_type']]['projects'][family_project] += 1
+        if 'project_type_LPsrWGS' in deviating_family and 'LPsrWGS_samples' in deviating_family:
+            family_LPsrWGS_project = get_project(project_types[deviating_family['project_type_LPsrWGS']]['projects'])
+            for sample_sequence_name in deviating_family['LPsrWGS_samples']:
+                samplesheet_samples[sample_sequence_name]['project'] = family_LPsrWGS_project
+                project_types[deviating_family['project_type_LPsrWGS']]['projects'][family_LPsrWGS_project] += 1
 
     # Non urgent and non deviating families / samples
     normal_families = [family for family in families.values() if not family['urgent'] and not family['deviating']]
@@ -388,6 +406,11 @@ def define_project_types_and_set_sample_projects(families, samplesheet_samples):
         for sample_sequence_name in normal_family['samples']:
             samplesheet_samples[sample_sequence_name]['project'] = family_project
             project_types[normal_family['project_type']]['projects'][family_project] += 1
+        if 'project_type_LPsrWGS' in normal_family and 'LPsrWGS_samples' in normal_family:
+            family_LPsrWGS_project = get_project(project_types[normal_family['project_type_LPsrWGS']]['projects'])
+            for sample_sequence_name in normal_family['LPsrWGS_samples']:
+                samplesheet_samples[sample_sequence_name]['project'] = family_LPsrWGS_project
+                project_types[normal_family['project_type_LPsrWGS']]['projects'][family_LPsrWGS_project] += 1
 
     return samplesheet_samples
 
@@ -449,22 +472,21 @@ def get_samplesheet_information(sample_artifacts, process, index_2_conversion_or
                     index_2_conversion_orientation=index_2_conversion_orientation
                 )
 
-                # Change project for LowPass srWGS samples
-                project = sample_conversion_setting['project']
-                if sample_conversion_setting['project'] == "srWGS" and "_LPsrWGS" in sample_artifact.name:
-                    project = "LPsrWGS"
-
                 # Set family and create if not exist
                 family = sample.udf['Dx Familienummer']
                 if family not in families:
                     families[family] = {
                         'samples': [],
                         'NICU': False,
-                        'project_type': project,
+                        'project_type': sample_conversion_setting['project'],
                         'split_project_type': sample_conversion_setting['split_project'],
                         'urgent': False,
                         'deviating': False  # merge, deep sequencing (5x), etc samples
                     }
+
+                # Add LPsrWGS project for srWGS families
+                if sample_conversion_setting['project'] == 'srWGS':
+                    families[family]['project_type_LPsrWGS'] = 'LPsrWGS'
 
                 # Update family information
                 if sample.udf['Dx Onderzoeksreden'] == 'Research':  # Dx research sample
@@ -476,7 +498,7 @@ def get_samplesheet_information(sample_artifacts, process, index_2_conversion_or
                             break
 
                 else:  # Dx clinic sample
-                    families = set_urgency_status(families, family, sample)
+                    families[family] = set_urgency_status(families[family], sample)
 
             else:  # Other samples
                 # Use project name as family name and Remove 'dx' (ignore case) and strip leading space or _
@@ -491,11 +513,10 @@ def get_samplesheet_information(sample_artifacts, process, index_2_conversion_or
                         'deviating': False
                     }
 
-                # Change project for non DX LowPass srWGS samples
+                # Add project for non DX LowPass srWGS indications
                 if "Dx Onderzoeksindicatie" in sample.udf:
-                    if sample.udf["Dx Onderzoeksindicatie"] in config.lpsrwgsindicaties and "_LPsrWGS" in sample_artifact.name:
-                        project = f"LPsrWGS_{family}"
-                        families[family]['project_type'] = project
+                    if sample.udf["Dx Onderzoeksindicatie"] in config.lpsrwgsindicaties:
+                        families[family]['project_type_LPsrWGS'] = f"LPsrWGS_{family}"
 
                 # Setup override cycles
                 if 'Dx Override Cycles' in list(sample.udf) and sample.udf['Dx Override Cycles']:
@@ -522,7 +543,13 @@ def get_samplesheet_information(sample_artifacts, process, index_2_conversion_or
 
             # Add sample to family
             if sample_sequence_name not in families[family]['samples']:
-                families[family]['samples'].append(sample_sequence_name)
+                if 'project_type_LPsrWGS' in families[family] and "_LPsrWGS" in sample_artifact.name:
+                    if 'LPsrWGS_samples' not in families[family]:
+                        families[family]['LPsrWGS_samples'] = [sample_sequence_name]
+                    else:
+                        families[family]['LPsrWGS_samples'].append(sample_sequence_name)
+                else:
+                    families[family]['samples'].append(sample_sequence_name)
 
     samplesheet_samples = define_project_types_and_set_sample_projects(families, samplesheet_samples)
 
