@@ -344,7 +344,7 @@ def define_project_types_and_set_sample_projects(families, samplesheet_samples):
     # Get all project types and count samples
     project_types = {}
     for family in families.values():
-        if family['project_type'] in project_types and family['samples']:
+        if family['project_type'] in project_types:
             project_types[family['project_type']]['sample_count'] += len(family['samples'])
         else:
             project_types[family['project_type']] = {
