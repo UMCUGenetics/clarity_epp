@@ -381,12 +381,11 @@ def define_project_types_and_set_sample_projects(families, samplesheet_samples):
         for sample_sequence_name in urgent_family['samples']:
             samplesheet_samples[sample_sequence_name]['project'] = family_project
             project_types[urgent_family['project_type']]['projects'][family_project] += 1
-        if 'project_type_LPsrWGS' in urgent_family:
+        if 'project_type_LPsrWGS' in urgent_family and 'LPsrWGS_samples' in urgent_family:
             family_LPsrWGS_project = get_project(project_types[urgent_family['project_type_LPsrWGS']]['projects'], urgent=True)
-            if 'LPsrWGS_samples' in urgent_family:
-                for sample_sequence_name in urgent_family['LPsrWGS_samples']:
-                    samplesheet_samples[sample_sequence_name]['project'] = family_LPsrWGS_project
-                    project_types[urgent_family['project_type_LPsrWGS']]['projects'][family_LPsrWGS_project] += 1
+            for sample_sequence_name in urgent_family['LPsrWGS_samples']:
+                samplesheet_samples[sample_sequence_name]['project'] = family_LPsrWGS_project
+                project_types[urgent_family['project_type_LPsrWGS']]['projects'][family_LPsrWGS_project] += 1
 
     # Deviating families / samples
     for deviating_family in [family for family in families.values() if family['deviating']]:
@@ -394,12 +393,11 @@ def define_project_types_and_set_sample_projects(families, samplesheet_samples):
         for sample_sequence_name in deviating_family['samples']:
             samplesheet_samples[sample_sequence_name]['project'] = family_project
             project_types[deviating_family['project_type']]['projects'][family_project] += 1
-        if 'project_type_LPsrWGS' in deviating_family:
+        if 'project_type_LPsrWGS' in deviating_family and 'LPsrWGS_samples' in deviating_family:
             family_LPsrWGS_project = get_project(project_types[deviating_family['project_type_LPsrWGS']]['projects'])
-            if 'LPsrWGS_samples' in deviating_family:
-                for sample_sequence_name in deviating_family['LPsrWGS_samples']:
-                    samplesheet_samples[sample_sequence_name]['project'] = family_LPsrWGS_project
-                    project_types[deviating_family['project_type_LPsrWGS']]['projects'][family_LPsrWGS_project] += 1
+            for sample_sequence_name in deviating_family['LPsrWGS_samples']:
+                samplesheet_samples[sample_sequence_name]['project'] = family_LPsrWGS_project
+                project_types[deviating_family['project_type_LPsrWGS']]['projects'][family_LPsrWGS_project] += 1
 
     # Non urgent and non deviating families / samples
     normal_families = [family for family in families.values() if not family['urgent'] and not family['deviating']]
@@ -408,12 +406,11 @@ def define_project_types_and_set_sample_projects(families, samplesheet_samples):
         for sample_sequence_name in normal_family['samples']:
             samplesheet_samples[sample_sequence_name]['project'] = family_project
             project_types[normal_family['project_type']]['projects'][family_project] += 1
-        if 'project_type_LPsrWGS' in normal_family:
+        if 'project_type_LPsrWGS' in normal_family and 'LPsrWGS_samples' in normal_family:
             family_LPsrWGS_project = get_project(project_types[normal_family['project_type_LPsrWGS']]['projects'])
-            if 'LPsrWGS_samples' in normal_family:
-                for sample_sequence_name in normal_family['LPsrWGS_samples']:
-                    samplesheet_samples[sample_sequence_name]['project'] = family_LPsrWGS_project
-                    project_types[normal_family['project_type_LPsrWGS']]['projects'][family_LPsrWGS_project] += 1
+            for sample_sequence_name in normal_family['LPsrWGS_samples']:
+                samplesheet_samples[sample_sequence_name]['project'] = family_LPsrWGS_project
+                project_types[normal_family['project_type_LPsrWGS']]['projects'][family_LPsrWGS_project] += 1
 
     return samplesheet_samples
 
