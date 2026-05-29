@@ -44,11 +44,6 @@ def send_mail_manager_review(email_settings, link):
     manager_message = (
         "Manager review aangevraagd voor Clarity stap: Dx srWGS Bioinformatica analyses.\n\n"
     )
-    manager_message += (
-        "Voordat de manager review kan worden afgerond, moet eerst in onderstaande link "
-        "Dx Manager worden geselecteerd in het veld 'Request review by' en vervolgens op "
-        "'Finish step' worden geklikt.\n\n"
-    )
     manager_message += f"Link naar clarity stap: {link}\n"
 
     send_email(
