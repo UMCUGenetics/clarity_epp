@@ -21,7 +21,7 @@ def bioinf_qc_check(lims, process_id):
         'Dx CCU': {'column': 'CNV Coverage Uniformity', 'transform': float},
         'Dx Contaminatie': {'column': 'Contamination', 'transform': float},
         'Dx Gevonden geslacht': {'column': 'Determined Sex', 'transform': transform_sex_multiqc},
-        'Dx Autosome callability': {'column': 'Autosome callability', 'transform': float},
+        'Dx Autosome callability': {'column': 'Percent Autosome Callability', 'transform': float},
     }
     sample_qcs = parse_file(process, lims, udf_columns)
     family_information = get_family_info(process, sample_qcs, udf_columns)
