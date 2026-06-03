@@ -20,7 +20,7 @@ def bioinf_qc_check(lims, process_id):
         'Dx Gem. dekking': {'column': 'Average Coverage', 'transform': float},
         'Dx CCU': {'column': 'CNV Coverage Uniformity', 'transform': float},
         'Dx Contaminatie': {'column': 'Contamination', 'transform': float},
-        'Dx Gevonden geslacht': {'column': 'Sex', 'transform': transform_sex_multiqc},
+        'Dx Gevonden geslacht': {'column': 'Determined Sex', 'transform': transform_sex_multiqc},
     }
     sample_qcs = parse_file(process, lims, udf_columns)
     family_information = get_family_info(process, sample_qcs, udf_columns)
