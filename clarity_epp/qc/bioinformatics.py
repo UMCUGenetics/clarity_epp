@@ -21,7 +21,7 @@ def bioinf_qc_check(lims, process_id):
         'Dx CCU': {'column': 'CNV Coverage Uniformity', 'transform': float},
         'Dx Contaminatie': {'column': 'Contamination', 'transform': float},
         'Dx Gevonden geslacht': {'column': 'Determined Sex', 'transform': transform_sex_multiqc},
-        'Dx autosome callability': {'column': 'Autosome callability', 'transform': float},
+        'Dx Autosome callability': {'column': 'Autosome callability', 'transform': float},
     }
     sample_qcs = parse_file(process, lims, udf_columns)
     family_information = get_family_info(process, sample_qcs, udf_columns)
@@ -63,7 +63,7 @@ def parse_file(process, lims, udf_columns):
                                 if value in ['NA', 'None', None, '']:
                                     value = None
                                 # Apply -1 for missing values
-                                if udf in ['Dx CCU', 'Dx Gem. dekking', 'Dx Contaminatie', 'Dx autosome callability'] and value is None:
+                                if udf in ['Dx CCU', 'Dx Gem. dekking', 'Dx Contaminatie', 'Dx Autosome callability'] and value is None:
                                     value = -1
                                 if 'transform' in udf_columns[udf]:
                                     udf_data[udf] = udf_columns[udf]['transform'](value)
