@@ -1,7 +1,7 @@
 import sys
 from typing import List, Dict, Tuple
 
-from genologics.entities import Process, Step
+from genologics.entities import Process, Step, Artifact
 
 import config
 from clarity_epp.export.email import send_mail_manager_review
