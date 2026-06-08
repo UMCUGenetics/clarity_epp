@@ -1,4 +1,5 @@
 import sys
+from typing import List, Dict, Tuple
 
 from genologics.entities import Process, Step
 
@@ -237,17 +238,18 @@ def qc_contamination_fail(input, qc_conclusion, qc_message, qc_requirements):
     return qc_message, qc_conclusion
 
 
-def qc_autosome_callability_fail(input, qc_conclusion, qc_message, qc_requirements):
+def qc_autosome_callability_fail(input: Artifact, qc_conclusion: str, qc_message: List[str], qc_requirements: Dict[str, float]) -> Tuple[List[str], str]:
     """Add conclusion and message for autosome callability fail
 
     Args:
-        input (Artificat): Lims artifact
-        qc_conclusion (str): QC conclusion
-        qc_message (list): QC message
+        input: Lims artifact
+        qc_conclusion: QC conclusion
+        qc_message: QC message
+        qc_requirements: QC requirements
 
     Returns:
-        list: qc_message for gender fail
-        str: Updated QC conclusion
+        qc_message for gender fail
+        Updated QC conclusion
     """
     qc_conclusion += 'Autosome callability afgekeurd.'
     qc_message.append(
