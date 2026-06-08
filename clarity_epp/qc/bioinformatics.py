@@ -1,6 +1,6 @@
 import sys
 
-from genologics.entities import Artifact, Process, Step
+from genologics.entities import Process, Step
 
 import config
 from clarity_epp.export.email import send_mail_manager_review
@@ -237,18 +237,17 @@ def qc_contamination_fail(input, qc_conclusion, qc_message, qc_requirements):
     return qc_message, qc_conclusion
 
 
-def qc_autosome_callability_fail(input: Artifact, qc_conclusion: str, qc_message: list, qc_requirements: dict) -> tuple[list, str]:
+def qc_autosome_callability_fail(input, qc_conclusion, qc_message, qc_requirements):
     """Add conclusion and message for autosome callability fail
 
     Args:
-        input: Lims artifact
-        qc_conclusion: QC conclusion
-        qc_message: QC message
-        qc_requirements: Dictionary with qc requirements
+        input (Artificat): Lims artifact
+        qc_conclusion (str): QC conclusion
+        qc_message (list): QC message
 
     Returns:
-        qc_message for gender fail
-        Updated QC conclusion
+        list: qc_message for gender fail
+        str: Updated QC conclusion
     """
     qc_conclusion += 'Autosome callability afgekeurd.'
     qc_message.append(
