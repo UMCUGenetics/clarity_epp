@@ -17,8 +17,8 @@ def export_qc_samplesheet(
     Export QC samplesheet.
 
     Args:
-        process_id (str): Clarity process id.
-        output_file (path): Output file. Defaults to "/dev/stdout".
+        process_id: Clarity process id.
+        output_file: Output file. Defaults to "/dev/stdout".
     """
     clarity = ClarityFactory.get_instance()
 

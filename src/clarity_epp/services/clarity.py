@@ -32,7 +32,7 @@ class ClarityService(ClarityServiceType):
         This method is added here to provide a clear and simple example of how to add methods to the ClarityService class while still allowing access to all methods of the underlying LIMS object.
 
         Args:
-            process_id (str): Clarity process id.
+            process_id: Clarity process id.
 
         Returns:
             Process: Clarity process.

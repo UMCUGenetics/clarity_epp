@@ -6,10 +6,10 @@ def get_well_plate_from_process(process: Process) -> dict[str, Artifact]:
     """Get well plate artifacts for a given process.
 
     Args:
-        process (Process): Clarity process object.
+        process: Clarity process object.
 
     Returns:
-        dict[str, Artifact]: Dictionary with well positions as keys and Artifacts as values.
+        Dictionary with well positions as keys and Artifacts as values.
 
     """
     well_plate = {}
