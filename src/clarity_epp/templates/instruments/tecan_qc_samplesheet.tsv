@@ -1,0 +1,4 @@
+Position	Sample
+{% for well, artifact_name in wells -%}
+{{ well }}	{{ artifact_name }}
+{% endfor -%}
