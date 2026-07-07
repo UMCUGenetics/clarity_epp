@@ -139,10 +139,8 @@ def qc_check(process, udf_columns, family_info):
         autosome_callability_value = input.udf.get('Dx Autosome callability')
         if is_missing(autosome_callability_value) or autosome_callability_value < qc_requirements['Autosome_callability']:
             qc_message, qc_conclusion = qc_autosome_callability_fail(input, qc_conclusion, qc_message, qc_requirements)
-        if input.samples[0].udf.get("Dx Foetus") is True and input.samples[0].udf.get('Dx Geslacht') == 'Onbekend':
-            qc_message, qc_conclusion = no_check_foetus(qc_message, qc_conclusion)
-        elif input.samples[0].udf.get("Dx Onderzoeksindicatie") == "DSD":
-            qc_message, qc_conclusion = no_check_DSD(qc_message, qc_conclusion)
+        if input.samples[0].udf.get('Dx Geslacht') == 'Onbekend':
+            qc_message, qc_conclusion = no_gender_check(qc_message, qc_conclusion)
         else:
             if (
                 input.udf['Dx Gevonden geslacht'] != input.samples[0].udf['Dx Geslacht']
@@ -279,40 +277,22 @@ def qc_sex_fail(input, qc_conclusion, qc_message):
     return qc_message, qc_conclusion
 
 
-def no_check_foetus(qc_message, qc_conclusion):
-    """Add conclusion and message when gender check is skipped for feutus samples
+def no_gender_check(qc_message, qc_conclusion):
+    """Add conclusion and message for no check on Dx Geslacht = Onbekend
 
     Args:
-        qc_conclusion (str): QC conclusion
         qc_message (list): QC message
-
-    Returns:
-        Updated QC conclusion and message when feutus gender check is skipped
-    """
-    qc_conclusion += 'Geslacht goedgekeurd.'
-    qc_message.append(
-        "Prenataal sample (Dx Foetus = True) met onbekend geslacht,"
-        " geslachtscontrole is niet uitgevoerd."
-    )
-    return qc_message, qc_conclusion
-
-
-def no_check_DSD(qc_message, qc_conclusion):
-    """Add conclusion and message when dx onderzoeksindicatie is DSD and gender check is skipped
-
-    Args:
         qc_conclusion (str): QC conclusion
-        qc_message (list): QC message   
 
     Returns:
-        Updated QC conclusion and message when DSD indicatie and gender check is skipped
+        list: qc_message for no check on unknown gender
+        str: Updated QC conclusion
     """
     qc_conclusion += 'Geslacht goedgekeurd.'
     qc_message.append(
-        "Dx Onderzoeksindicatie is DSD, geslachtscontrole is niet uitgevoerd."
+        "Dx Geslacht is onbekend, geen geslachtcontrole uitgevoerd."
     )
     return qc_message, qc_conclusion
-
 
 def qc_mark_failed(input, qc_conclusion, qc_message):
     """Fill in 'Afwijkingen' udfs for failed qc
