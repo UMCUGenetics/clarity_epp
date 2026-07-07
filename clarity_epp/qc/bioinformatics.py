@@ -141,6 +141,8 @@ def qc_check(process, udf_columns, family_info):
             qc_message, qc_conclusion = qc_autosome_callability_fail(input, qc_conclusion, qc_message, qc_requirements)
         if input.samples[0].udf.get("Dx Foetus") is True and input.samples[0].udf.get('Dx Geslacht') == 'Onbekend':
             qc_message, qc_conclusion = no_check_foetus(qc_message, qc_conclusion)
+        elif input.samples[0].udf.get("Dx Onderzoeksindicatie") == "DSD":
+            qc_message, qc_conclusion = no_check_DSD(qc_message, qc_conclusion)
         else:
             if (
                 input.udf['Dx Gevonden geslacht'] != input.samples[0].udf['Dx Geslacht']
@@ -291,6 +293,23 @@ def no_check_foetus(qc_message, qc_conclusion):
     qc_message.append(
         "Prenataal sample (Dx Foetus = True) met onbekend geslacht,"
         " geslachtscontrole is niet uitgevoerd."
+    )
+    return qc_message, qc_conclusion
+
+
+def no_check_DSD(qc_message, qc_conclusion):
+    """Add conclusion and message when dx onderzoeksindicatie is DSD and gender check is skipped
+
+    Args:
+        qc_conclusion (str): QC conclusion
+        qc_message (list): QC message   
+
+    Returns:
+        Updated QC conclusion and message when DSD indicatie and gender check is skipped
+    """
+    qc_conclusion += 'Geslacht goedgekeurd.'
+    qc_message.append(
+        "Dx Onderzoeksindicatie is DSD, geslachtscontrole is niet uitgevoerd."
     )
     return qc_message, qc_conclusion
 
