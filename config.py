@@ -221,3 +221,7 @@ manual_normalization_concentration_limits = {
     'Fluorescentiemeter': 37.7,
     'Spectrofotometer': 75.4
 }
+
+# Concentration limits (<=) for Dx norm. manueel udf for Qubit and Tecan QC steps
+manual_normalization_concentration_limit_qubit = 37.7
+manual_normalization_concentration_limit_tecan = 37.7

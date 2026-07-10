@@ -4,6 +4,8 @@ import re
 
 from genologics.entities import Process
 
+import config
+
 
 def set_qc_flag(lims, process_id, cutoff=10):
     """Set qubit qc flags based on Dx Concentratie fluorescentie (ng/ul) values."""
@@ -31,7 +33,7 @@ def set_qc_flag(lims, process_id, cutoff=10):
         for analyte in process.analytes()[0]:
             if analyte.name == sample:
                 if 'Dx Sample registratie zuivering' in analyte.parent_process.type.name:
-                    if sample_measurements_average <= 29.3:
+                    if sample_measurements_average <= config.manual_normalization_concentration_limit_qubit:
                         artifact.samples[0].udf['Dx norm. manueel'] = True
                     else:
                         artifact.samples[0].udf['Dx norm. manueel'] = False

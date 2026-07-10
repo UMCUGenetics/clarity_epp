@@ -4,6 +4,7 @@ import re
 
 from genologics.entities import Process
 
+import config
 from clarity_epp.upload.utils import txt_to_bool
 
 
@@ -82,7 +83,7 @@ def results_qc(lims, process_id):
                 for analyte in process.analytes()[0]:
                     if analyte.name == artifact.name:
                         if 'Dx Sample registratie zuivering' in analyte.parent_process.type.name:
-                            if sample_concentration <= 29.3:
+                            if sample_concentration <= config.manual_normalization_concentration_limit_tecan:
                                 artifact.samples[0].udf['Dx norm. manueel'] = True
                             else:
                                 artifact.samples[0].udf['Dx norm. manueel'] = False
