@@ -39,7 +39,7 @@ stoftestcode_workflow = {
 }
 
 # Update exome equivalent for certain indications
-indications_exome_equivalent = {'UBA1': 5, 'PID09': 5}
+indications_exome_equivalent = {'UBA1': 5, 'PID09': 5}  # UBA1 and PID09 vervallen
 
 # Export meetw protocol steps WES
 meetw_zui_wes_processes = [
@@ -215,3 +215,9 @@ lpsrwgsindicaties = ["PG", "DxVal", "DxExternDx"]
 
 # Non external project applications for clarity_epp.py export manual sequence_pools
 non_external_applications = ["DX", "FG", "DxVal", "DxExternDx"]
+
+# Concentration limits (<=) for Dx norm. manueel udf based on type of measurement
+manual_normalization_concentration_limits = {
+    'Fluorescentiemeter': 37.7,
+    'Spectrofotometer': 75.4
+}

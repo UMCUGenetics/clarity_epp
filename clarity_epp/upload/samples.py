@@ -77,7 +77,9 @@ def from_helix(lims, email_settings, input_file):
         'Dx Einddatum': {'column': 'Einddatum'},
         'Dx Gerelateerde onderzoeken': {'column': 'Gerelateerde onderzoeken'},
         'Dx gerelateerd aan oz': {'column': 'Gerelateerd aan'},
-        'Dx gerelateerde oz #': {'column': 'Aantal gerelateerde onderzoeken.'},
+        'Dx gerelateerde oz #': {'column': 'Aantal gerelateerde onderzoeken'},
+        'Dx Conc. meting type': {'column': 'Concentratie meting type'},
+        'Dx RIN/DIN waarde': {'column': 'RIN/DIN.'},
     }
     header = input_file.readline().rstrip().split(',')  # expect header on first line
     for udf in udf_column:
@@ -90,7 +92,9 @@ def from_helix(lims, email_settings, input_file):
 
     # Parse samples
     for line_index, line in enumerate(input_file):
-        data = line.rstrip().strip('"').split('","')
+        data = line.rstrip().split('","')
+        for i in [0, -1]:  # instead of .strip('"') in line above, because that doesn't work if last column is empty ("")
+            data[i] = data[i].replace('"', '')
 
         clusters = config.clusters_per_sample
         udf_data = {
@@ -105,7 +109,7 @@ def from_helix(lims, email_settings, input_file):
                     udf_data[udf] = clarity_epp.upload.utils.transform_sex(data[udf_column[udf]['index']])
                 elif udf == 'Dx Foetus':
                     udf_data[udf] = bool(data[udf_column[udf]['index']].strip())
-                elif udf == 'Dx Concentratie (ng/ul)':
+                elif udf in ['Dx Concentratie (ng/ul)', 'Dx RIN/DIN waarde']:
                     udf_data[udf] = data[udf_column[udf]['index']].replace(',', '.')
                     if udf_data[udf]:
                         udf_data[udf] = float(udf_data[udf])
@@ -146,12 +150,17 @@ def from_helix(lims, email_settings, input_file):
         else:
             udf_data['Dx Handmatig'] = False
 
-        # Set 'Dx norm. manueel' udf for samples with Dx Concentratie (ng/ul)
+        # Set 'Dx norm. manueel' udf for concentration and type of measurement
         if udf_data['Dx Concentratie (ng/ul)']:
-            if udf_data['Dx Concentratie (ng/ul)'] <= 29.3:
-                udf_data['Dx norm. manueel'] = True
-            else:
-                udf_data['Dx norm. manueel'] = False
+            type_of_measurement = udf_data['Dx Conc. meting type']
+            for type_of_measurement, limit in config.manual_normalization_concentration_limits.items():
+                if udf_data['Dx Conc. meting type'] == type_of_measurement:
+                    if udf_data['Dx Concentratie (ng/ul)'] <= limit:
+                        udf_data['Dx norm. manueel'] = True
+                    else:
+                        udf_data['Dx norm. manueel'] = False
+        else:
+            udf_data['Dx norm. manueel'] = True
 
         # Set 'Dx Familie status' udf
         if 'Bevestiging diagnose' in udf_data['Dx Onderzoeksreden']:
@@ -211,7 +220,7 @@ def from_helix(lims, email_settings, input_file):
                 ):
                     udf_data['Dx NICU Spoed'] = related_sample.udf['Dx NICU Spoed']
 
-        # Set 'Dx Mengfractie' WES
+        # Set 'Dx Mengfractie' WES (do not transfer this if/elif for stoftestcode_wes(_duplo) to v2, not used anymore)
         if udf_data['Dx Stoftest code'] == config.stoftestcode_wes_duplo:
             udf_data['Dx Mengfractie'] = True
 
@@ -327,13 +336,13 @@ def from_helix(lims, email_settings, input_file):
                         'Herhaling of dubbele indicatie, beide monsters ingeladen ({sample}).'.format(sample=sample.name),
                         udf_data['Dx Import warning']
                     ])
-                elif 'Dx Mengfractie' not in sample.udf or not sample.udf['Dx Mengfractie']:
-                    udf_data['Dx Import warning'] = ';'.join([
-                        'Eerder onderzoek met protocolomschrijving {protocol} ({sample}).'.format(
-                            protocol=sample.udf['Dx Protocolomschrijving'], sample=sample.name
-                        ),
-                        udf_data['Dx Import warning']
-                    ])
+                # elif 'Dx Mengfractie' not in sample.udf or not sample.udf['Dx Mengfractie']:
+                #     udf_data['Dx Import warning'] = ';'.join([
+                #         'Eerder onderzoek met protocolomschrijving {protocol} ({sample}).'.format(
+                #             protocol=sample.udf['Dx Protocolomschrijving'], sample=sample.name
+                #         ),
+                #         udf_data['Dx Import warning']
+                #     ])
             elif (
                 sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving']
                 and sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
