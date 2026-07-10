@@ -188,6 +188,7 @@ fragment_length = {
     'Exoom.analy_IL_versieVP_LP0002_srWGS': 600,
     'Genp.analy_IL_versieVP_LP0002_srWGS': 600,
     'SingleGeneAnaly_IL_versieVP_LP0002_srWGS': 600,
+    'DxExtern_versieVP_LP0002_srWGS': 600,
     'default': '',
 }
 
@@ -210,7 +211,7 @@ flowcell_volumes = {
 clusters_per_sample = 4.5
 
 # Non DX indications via Dx srWGS Callisto v2.0 flow
-lpsrwgsindicaties = ["PG", "DxVal"]
+lpsrwgsindicaties = ["PG", "DxVal", "DxExternDx"]
 
 # Non external project applications for clarity_epp.py export manual sequence_pools
-non_external_applications = ["DX", "FG", "DxVal"]
+non_external_applications = ["DX", "FG", "DxVal", "DxExternDx"]
