@@ -197,6 +197,7 @@ bioinformatics_qc_requirements_srWGS = {
     'CCU_parent': 0.5,
     'CCU_child': 0.3,
     'Contamination': 0.04,
+    'Autosome_callability': 95,
 }
 
 # Volumes per lane (uL)

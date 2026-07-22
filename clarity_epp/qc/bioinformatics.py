@@ -1,6 +1,7 @@
 import sys
+from typing import List, Dict, Tuple
 
-from genologics.entities import Process, Step
+from genologics.entities import Process, Step, Artifact
 
 import config
 from clarity_epp.export.email import send_mail_manager_review
@@ -20,7 +21,8 @@ def bioinf_qc_check(lims, process_id):
         'Dx Gem. dekking': {'column': 'Average Coverage', 'transform': float},
         'Dx CCU': {'column': 'CNV Coverage Uniformity', 'transform': float},
         'Dx Contaminatie': {'column': 'Contamination', 'transform': float},
-        'Dx Gevonden geslacht': {'column': 'Sex', 'transform': transform_sex_multiqc},
+        'Dx Gevonden geslacht': {'column': 'Determined Sex', 'transform': transform_sex_multiqc},
+        'Dx Autosome callability': {'column': 'Percent Autosome Callability', 'transform': float},
     }
     sample_qcs = parse_file(process, lims, udf_columns)
     family_information = get_family_info(process, sample_qcs, udf_columns)
@@ -62,7 +64,7 @@ def parse_file(process, lims, udf_columns):
                                 if value in ['NA', 'None', None, '']:
                                     value = None
                                 # Apply -1 for missing values
-                                if udf in ['Dx CCU', 'Dx Gem. dekking', 'Dx Contaminatie'] and value is None:
+                                if udf in ['Dx CCU', 'Dx Gem. dekking', 'Dx Contaminatie', 'Dx Autosome callability'] and value is None:
                                     value = -1
                                 if 'transform' in udf_columns[udf]:
                                     udf_data[udf] = udf_columns[udf]['transform'](value)
@@ -134,8 +136,11 @@ def qc_check(process, udf_columns, family_info):
         contamination_value = input.udf.get('Dx Contaminatie')
         if is_missing(contamination_value) or contamination_value > qc_requirements['Contamination']:
             qc_message, qc_conclusion = qc_contamination_fail(input, qc_conclusion, qc_message, qc_requirements)
-        if input.samples[0].udf.get("Dx Foetus") is True and input.samples[0].udf.get('Dx Geslacht') == 'Onbekend':
-            qc_message, qc_conclusion = no_check_foetus(qc_message, qc_conclusion)
+        autosome_callability_value = input.udf.get('Dx Autosome callability')
+        if is_missing(autosome_callability_value) or autosome_callability_value < qc_requirements['Autosome_callability']:
+            qc_message, qc_conclusion = qc_autosome_callability_fail(input, qc_conclusion, qc_message, qc_requirements)
+        if input.samples[0].udf.get('Dx Geslacht') == 'Onbekend':
+            qc_message, qc_conclusion = no_gender_check(qc_message, qc_conclusion)
         else:
             if (
                 input.udf['Dx Gevonden geslacht'] != input.samples[0].udf['Dx Geslacht']
@@ -233,6 +238,26 @@ def qc_contamination_fail(input, qc_conclusion, qc_message, qc_requirements):
     return qc_message, qc_conclusion
 
 
+def qc_autosome_callability_fail(input: Artifact, qc_conclusion: str, qc_message: List[str], qc_requirements: Dict[str, float]) -> Tuple[List[str], str]:
+    """Add conclusion and message for autosome callability fail
+
+    Args:
+        input: Lims artifact
+        qc_conclusion: QC conclusion
+        qc_message: QC message
+        qc_requirements: QC requirements
+
+    Returns:
+        qc_message for gender fail
+        Updated QC conclusion
+    """
+    qc_conclusion += 'Autosome callability afgekeurd.'
+    qc_message.append(
+        f"De autosome callability waarde {input.udf['Dx Autosome callability']}% is onder "
+        f"{qc_requirements['Autosome_callability']}%.")
+    return qc_message, qc_conclusion
+
+
 def qc_sex_fail(input, qc_conclusion, qc_message):
     """Add conclusion and message for gender fail
 
@@ -252,23 +277,22 @@ def qc_sex_fail(input, qc_conclusion, qc_message):
     return qc_message, qc_conclusion
 
 
-def no_check_foetus(qc_message, qc_conclusion):
-    """Add conclusion and message when gender check is skipped for feutus samples
+def no_gender_check(qc_message, qc_conclusion):
+    """Add conclusion and message for no check on Dx Geslacht = Onbekend
 
     Args:
-        qc_conclusion (str): QC conclusion
         qc_message (list): QC message
+        qc_conclusion (str): QC conclusion
 
     Returns:
-        Updated QC conclusion and message when feutus gender check is skipped
+        list: qc_message for no check on unknown gender
+        str: Updated QC conclusion
     """
     qc_conclusion += 'Geslacht goedgekeurd.'
     qc_message.append(
-        "Prenataal sample (Dx Foetus = True) met onbekend geslacht,"
-        " geslachtscontrole is niet uitgevoerd."
+        "Dx Geslacht is onbekend, geen geslachtcontrole uitgevoerd."
     )
     return qc_message, qc_conclusion
-
 
 def qc_mark_failed(input, qc_conclusion, qc_message):
     """Fill in 'Afwijkingen' udfs for failed qc
