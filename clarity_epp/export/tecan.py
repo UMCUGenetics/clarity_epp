@@ -2,8 +2,9 @@
 
 from genologics.entities import Process
 
-from .. import get_mix_sample_barcode
 import clarity_epp.export.utils
+
+from .. import get_mix_sample_barcode
 
 
 def samplesheet(lims, process_id, type, output_file):
@@ -62,6 +63,7 @@ def samplesheet(lims, process_id, type, output_file):
                             for qc_sample in qc_artifact.samples:
                                 if qc_sample.name == input_sample.name:
                                     concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+                                    meter = 'Fluorescentiemeter'
 
                 else:
                     parent_process = input_artifact.parent_process
@@ -75,47 +77,75 @@ def samplesheet(lims, process_id, type, output_file):
                                         for qc_sample in qc_artifact.samples:
                                             if qc_sample.name == input_sample.name:
                                                 concentration = float(qc_artifact.udf['Dx Concentratie fluorescentie (ng/ul)'])
+                                                meter = 'Fluorescentiemeter'
                             else:
                                 # No QC process found, use Helix concentration
                                 concentration = input_sample.udf['Dx Concentratie (ng/ul)']
+                                meter = input_sample.udf['Concentratie meting type']
 
-                samples[input_sample.udf['Dx Monsternummer']] = {'conc': concentration}
+                samples[input_sample.udf['Dx Monsternummer']] = {'conc': concentration, 'meter': meter}
 
         for well in clarity_epp.export.utils.sort_96_well_plate(well_plate.keys()):
             artifact = well_plate[well]
+            input_ng = artifact.udf.get('Input (ng) zuivering')
             sample_mix = False
             if len(artifact.samples) > 1:
                 sample_mix = True
 
-            if sample_mix:
-                dividend = 880
-                max_volume = 30
-            else:
-                dividend = 1760
-                max_volume = 60
+            artifact_meters = []
+            for sample in artifact.samples:
+                monster = sample.udf['Dx Monsternummer']
+                artifact_meters.append(samples[monster]['meter'])
 
             for sample in artifact.samples:
                 monster = sample.udf['Dx Monsternummer']
                 samples[monster]['message'] = ''
+
                 if sample_mix:
                     samples[monster]['mix_names'] = artifact.name
+                    # If other sample of smple_mix has a different meter change meter for this sample
+                    if (len(set(artifact_meters)) > 1
+                        and 'Spectrofotometer' in artifact_meters
+                        and samples[monster]['meter'] != 'Spectrofotometer'):
+                        samples[monster]['meter'] = 'Spectrofotometer'
                 else:
                     samples[monster]['mix_names'] = monster
 
-                # Calculation of pipetting volumes
-                calc_sample = dividend / samples[monster]['conc']
-                if calc_sample < 4:
-                    volume_sample = 4
-                elif calc_sample > max_volume:
-                    volume_sample = max_volume
-                    samples[monster]['message'] = (
-                        'Conc. too low - volume= {calc_sample} ul'.format(calc_sample=calc_sample)
-                    )
+                if not input_ng:
+                    samples[monster]['message'] = f'CF "Input (ng) zuivering" is leeg voor {artifact.name}'
+                    samples[monster]['sample_volume'] = 'NB'
+                    samples[monster]['water_volume'] = 'NB'
                 else:
-                    volume_sample = calc_sample
-                samples[monster]['sample_volume'] = volume_sample
-                volume_water = max_volume - volume_sample
-                samples[monster]['water_volume'] = volume_water
+                    sample_concentration = samples[monster]['conc']
+                    sample_concentration_meter = samples[monster]['meter']
+
+                    if sample_concentration_meter == 'Fluorescentiemeter':
+                        if sample_mix:  # Mengfractie met Fluorescentiemeter
+                            dividend = input_ng / 2
+                            max_volume = 30
+                        else:  # Single sample met Fluorescentiemeter
+                            dividend = input_ng
+                            max_volume = 60
+                    elif sample_concentration_meter == 'Spectrofotometer':
+                        if sample_mix:  # Mengfractie met Spectrofotometer
+                            dividend = input_ng
+                            max_volume = 30
+                        else:  # Single sample met Spectrofotometer
+                            dividend = input_ng * 2
+                            max_volume = 60
+
+                    # Calculation of pipetting volumes
+                    calc_sample = dividend / sample_concentration
+                    if calc_sample < 4:
+                        volume_sample = 4
+                    elif calc_sample > max_volume:
+                        volume_sample = max_volume
+                        samples[monster]['message'] = (f'Concentratie te laag - volume= {calc_sample} ul')
+                    else:
+                        volume_sample = calc_sample
+                    samples[monster]['sample_volume'] = volume_sample
+                    volume_water = max_volume - volume_sample
+                    samples[monster]['water_volume'] = volume_water
 
             for sample in artifact.samples:
                 monster = sample.udf['Dx Monsternummer']
