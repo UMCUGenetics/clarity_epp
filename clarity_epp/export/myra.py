@@ -5,8 +5,13 @@ import sys
 from genologics.entities import Process
 
 from clarity_epp.export.utils import (
-    create_samplesheet, extract_well_from_reagent_label, get_info_from_LP_process, get_input_containers, get_process_types,
-    get_qc_values_parent_process_artifact, sort_dict_by_nested_well_location
+    create_samplesheet,
+    extract_well_from_reagent_label,
+    get_info_from_LP_process,
+    get_input_containers,
+    get_process_types,
+    get_qc_values_parent_process_artifact,
+    sort_dict_by_nested_well_location,
 )
 from clarity_epp.placement.barcode import check_plate_id_with_used_reagent_labels
 
@@ -233,23 +238,37 @@ def get_info_for_samplesheet_placement_callisto(process, input_container):
     return info_dictionary
 
 
-def generate_samplesheet_callisto_strip(process, input_container):
-    """Generates a Myra samplesheet for pipetting from Callisto strip.
+def generate_samplesheets_callisto_strip(process, input_containers):
+    """Generates Myra samplesheets for pipetting from Callisto strip.
 
     Args:
         process (object): Lims Process object
-        input_container (str): Input container name
+        input_containers (list): List of input container names
 
     Returns:
-        str: Myra Placement Callisto samplesheet
+        list: List of generated Myra Placement Callisto samplesheets
     """
-    info_dictionary = get_info_for_samplesheet_placement_callisto(process, input_container)
-    sorted_info_dictionary = sort_dict_by_nested_well_location(
-        info_dictionary, "well_input", "24_well_barcoded_callisto_strip"
+    samplesheets = []
+    combined_info_dictionary = {}
+
+    for input_container in input_containers:
+        info_dictionary = get_info_for_samplesheet_placement_callisto(process, input_container)
+        combined_info_dictionary.update(info_dictionary)
+        sorted_info_dictionary = sort_dict_by_nested_well_location(
+            info_dictionary, "well_input", "24_well_barcoded_callisto_strip"
+        )
+        samplesheet_content = {"samples": sorted_info_dictionary}
+        samplesheet = create_samplesheet("Samplesheet_Myra_Placement_Callisto.csv", samplesheet_content)
+        samplesheets.append(samplesheet)
+
+    sorted_combined_info_dictionary = sort_dict_by_nested_well_location(
+        combined_info_dictionary, "well_output", "96_well_plate"
     )
-    samplesheet_content = {"samples": sorted_info_dictionary}
-    samplesheet = create_samplesheet("Samplesheet_Myra_Placement_Callisto.csv", samplesheet_content)
-    return samplesheet
+    combined_samplesheet_content = {"samples": sorted_combined_info_dictionary}
+    combined_samplesheet = create_samplesheet("Samplesheet_Myra_Placement_Callisto.csv", combined_samplesheet_content)
+    samplesheets.append(combined_samplesheet)
+
+    return samplesheets
 
 
 def get_input_containers_and_generate_samplesheet_callisto_strip(lims, process_id, output_files):
@@ -262,20 +281,23 @@ def get_input_containers_and_generate_samplesheet_callisto_strip(lims, process_i
     """
     process = Process(lims, id=process_id)
     input_containers = get_input_containers(process)
+    samplesheets = generate_samplesheets_callisto_strip(process, input_containers)
 
     number_of_inputs = len(input_containers)
-    samplesheet_1 = generate_samplesheet_callisto_strip(process, input_containers[0])
+    samplesheet_1 = samplesheets[0]
     if number_of_inputs > 1:
-        samplesheet_2 = generate_samplesheet_callisto_strip(process, input_containers[1])
+        samplesheet_2 = samplesheets[1]
     else:
         samplesheet_2 = "geen 2e input container"
     if number_of_inputs > 2:
-        samplesheet_3 = generate_samplesheet_callisto_strip(process, input_containers[2])
+        samplesheet_3 = samplesheets[2]
     else:
         samplesheet_3 = "geen 3e input container"
+    samplesheet_all = samplesheets[-1]
     output_files[0].write(samplesheet_1)
     output_files[1].write(samplesheet_2)
     output_files[2].write(samplesheet_3)
+    output_files[3].write(samplesheet_all)
 
 
 def calculate_volumes_nM_diluting(nM_pool, ul_sample, size, concentration):
