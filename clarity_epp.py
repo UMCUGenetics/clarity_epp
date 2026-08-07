@@ -275,6 +275,8 @@ def placement_artifact_set(args):
         clarity_epp.placement.artifact.set_runid_name(lims, args.process_id)
     elif args.type == 'norm_udf':
         clarity_epp.placement.artifact.set_norm_manual_udf(lims, args.process_id)
+    elif args.type == 'lp_pool_udf':
+        clarity_epp.placement.artifact.set_udf_lpsrwgs_pool(lims, args.process_id)
 
 
 def placement_route_artifact(args):
@@ -529,7 +531,9 @@ if __name__ == "__main__":
     parser_placement_automatic.set_defaults(func=placement_automatic)
 
     parser_placement_artifact = subparser_placement.add_parser('artifact', help='Change artifact name to sequence name')
-    parser_placement_artifact.add_argument('type', choices=['sequence_name', 'run_id', 'norm_udf'], help='Check type')
+    parser_placement_artifact.add_argument(
+        'type', choices=['sequence_name', 'run_id', 'norm_udf', 'lp_pool_udf'], help='Check type'
+    )
     parser_placement_artifact.add_argument('process_id', help='Clarity lims process id')
     parser_placement_artifact.set_defaults(func=placement_artifact_set)
 

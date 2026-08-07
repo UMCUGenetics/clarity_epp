@@ -2,9 +2,10 @@
 
 from genologics.entities import Process, Workflow
 
-from .. import get_sequence_name
-from clarity_epp.export.utils import sort_artifact_list
 import config
+from clarity_epp.export.utils import sort_artifact_list
+
+from .. import get_sample_artifacts_from_pool, get_sequence_name
 
 
 def set_sequence_name(lims, process_id):
@@ -83,3 +84,24 @@ def set_norm_manual_udf(lims, process_id):
             if sample.udf['Dx norm. manueel']:
                 artifact.udf['Dx norm. manueel'] = True
         artifact.put()
+
+
+def set_udf_lpsrwgs_pool(lims, process_id):
+    """Only for all LPsrWGS artifacts in the output pools; fills the udf 'Dx LPpool' of corresponding srWGS output artifacts of
+    'Dx sample duplicate' step with the output pool name
+
+    Args:
+        lims (object): Lims connection
+        process (object): Lims Process object
+    """
+    process = Process(lims, id=process_id)
+    analytes = process.analytes()[0]
+    for pool in analytes:
+        for pool_sample_artifact in get_sample_artifacts_from_pool(lims, pool):
+            if pool_sample_artifact.name.split('_')[-1] == 'LPsrWGS':
+                duplicate_process = pool_sample_artifact.parent_process.parent_processes()[0]
+                for duplicate_output_artifact in duplicate_process.analytes()[0]:
+                    if (pool_sample_artifact.name.split('_')[0] == duplicate_output_artifact.name.split('_')[0]
+                        and duplicate_output_artifact.name.split('_')[-1] == 'srWGS'):
+                        pool_sample_artifact.udf['Dx LPpool'] = pool.name
+                        pool_sample_artifact.put()
