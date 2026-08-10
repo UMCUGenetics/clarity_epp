@@ -1,0 +1,64 @@
+<html>
+<body>
+
+<h3>LIMS QC Controle</h3>
+
+<p>
+<b>Sequencing Run:</b>
+{{ sequencing_run }}
+</p>
+
+<p>
+<b>Technician:</b>
+{{ technician }}
+</p>
+
+<p>
+<b>LIMS Next Action:</b>
+{{ next_action }}
+</p>
+
+
+<h4>QC Resultaat</h4>
+
+<p>
+<b>Conversie rapport OK:</b>
+{{ conversion_ok }}
+</p>
+
+
+{% if error_description %}
+<p>
+<b>Fouten registratie (uitleg):</b>
+{{ error_description }}
+</p>
+{% endif %}
+
+
+{% if error_cause %}
+<p>
+<b>Fouten registratie (oorzaak):</b>
+{{ error_cause }}
+</p>
+{% endif %}
+
+
+{% if manager_review %}
+
+<h4>Manager Review LIMS</h4>
+
+<p>
+<b>Aangevraagd door:</b>
+{{ manager_review.author }}
+</p>
+
+<p>
+<b>Request:</b>
+{{ manager_review.request }}
+</p>
+
+{% endif %}
+
+
+</body>
+</html>
