@@ -17,10 +17,20 @@ class ClaritySettings(BaseModel):
     timeout: int = 60
 
 
+class EmailSettings(BaseModel):
+    """Email settings."""
+
+    host: str
+    from_email: str
+    to_sequencing_run_complete: list[str]
+    to_manager_review: list[str]
+
+
 class Settings(BaseSettings):
     """Clarity_epp settings."""
 
     clarity: ClaritySettings
+    email: EmailSettings
 
     model_config = SettingsConfigDict(toml_file="config.toml")
 
