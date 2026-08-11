@@ -80,9 +80,9 @@ def from_helix(lims, email_settings, input_file):
         'Dx gerelateerd aan oz': {'column': 'Gerelateerd aan'},
         'Dx gerelateerde oz #': {'column': 'Aantal gerelateerde onderzoeken'},
         'Dx Conc. meting type': {'column': 'Concentratie meting type'},
-        'Dx RIN/DIN waarde': {'column': 'RIN/DIN.'},
+        'Dx RIN/DIN waarde': {'column': 'RIN/DIN'},
     }
-    header = input_file.readline().rstrip().split(',')  # expect header on first line
+    header = input_file.readline().rstrip().rstrip('.').split(',') # expect header on first line
     for udf in udf_column.keys():
         udf_column[udf]['index'] = header.index(udf_column[udf]['column'])
 
@@ -331,13 +331,6 @@ def from_helix(lims, email_settings, input_file):
                         f'Herhaling of dubbele indicatie, beide monsters ingeladen ({sample.name}).',
                         udf_data['Dx Import warning']
                     ])
-                # elif 'Dx Mengfractie' not in sample.udf or not sample.udf['Dx Mengfractie']:
-                #     udf_data['Dx Import warning'] = ';'.join([
-                #         'Eerder onderzoek met protocolomschrijving {protocol} ({sample}).'.format(
-                #             protocol=sample.udf['Dx Protocolomschrijving'], sample=sample.name
-                #         ),
-                #         udf_data['Dx Import warning']
-                #     ])
             elif (
                 sample.udf['Dx Protocolomschrijving'] in udf_data['Dx Protocolomschrijving']
                 and sample.udf['Dx Foetus'] == udf_data['Dx Foetus']
