@@ -1,12 +1,12 @@
 """Clarity epp package."""
 
-from email import encoders
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email.mime.text import MIMEText
+import mimetypes
 import re
 import smtplib
-import mimetypes
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from genologics.entities import Artifact
 
@@ -30,25 +30,34 @@ def get_sequence_name(artifact, monsternummer="helix"):
     return sequence_name
 
 
-def get_sample_artifacts_from_pool(lims, pool_artifact):
-    """Get sample artifacts from (sequence) pool."""
-    sample_artifacts = []
-    pool_artifact_demux = lims.get(pool_artifact.uri + '/demux')
-    for node in pool_artifact_demux.getiterator('artifact'):
-        if node.find('samples'):
-            if len(node.find('samples').findall('sample')) in [1, 2]:
-                sample_artifact = Artifact(lims, uri=node.attrib['uri'])
+def get_sample_artifacts_from_pool(lims, pool_artifact, sample_artifacts=None):
+    """Gets all sample artifacts from pool, skipping pool artifacts in pool
 
-                # Check if sample_artifact with 2 samples are from the same person
-                if len(sample_artifact.samples) == 2:
-                    if (
-                        'Dx Persoons ID' in sample_artifact.samples[0].udf and
-                        'Dx Persoons ID' in sample_artifact.samples[1].udf and
-                        sample_artifact.samples[0].udf['Dx Persoons ID'] == sample_artifact.samples[1].udf['Dx Persoons ID']
-                    ):
-                        sample_artifacts.append(sample_artifact)
-                else:
-                    sample_artifacts.append(sample_artifact)
+    Args:
+        lims (object): Lims connection
+        pool_artifact (object): Lims pool artifact object
+        sample_artifacts (list): (empty) list for adding sample artifacts, default = None
+
+    Returns:
+        list: Filled list containing sample artifacts
+    """
+    if not sample_artifacts:
+        sample_artifacts = []
+    pool_artifact_demux = lims.get(pool_artifact.uri + '/demux')
+    artifacts = pool_artifact_demux.find("./demux/artifacts")
+    for artifact in artifacts:
+        lims_artifact = Artifact(lims, uri=artifact.attrib['uri'])
+        if artifact.findall('demux'):  # artifact is a pool artifact
+            sample_artifacts.extend(get_sample_artifacts_from_pool(lims, lims_artifact, sample_artifacts))
+        else:  # artifact is a sample artifact
+            first_sample_persoons_id = lims_artifact.samples[0].udf.get('Dx Persoons ID')
+            if len(lims_artifact.samples) == 2:
+                if(first_sample_persoons_id
+                        and first_sample_persoons_id == lims_artifact.samples[1].udf.get('Dx Persoons ID')):
+                    sample_artifacts.append(lims_artifact)
+            else:
+                sample_artifacts.append(lims_artifact)
+
     return sample_artifacts
 
 
