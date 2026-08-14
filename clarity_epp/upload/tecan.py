@@ -200,7 +200,7 @@ def get_portion_results_of_normalization(lims, process_id):
             for line in file_data[1:]:
                 if line.rstrip():
                     data = line.rstrip().split(';')
-                    tecan_result[data[header.index('SampleID')]] = {
+                    tecan_result[data[header.index('sampleID')]] = {
                         'portions': int(data[header.index('aantalPorties')])
                     }
             break  # File found exit loop
