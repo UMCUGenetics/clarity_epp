@@ -136,7 +136,7 @@ def export_myra(args):
     elif args.type == 'dilute_LP':
         clarity_epp.export.myra.get_input_containers_and_generate_samplesheet_dilute(lims, args.process_id, args.output_file)
     elif args.type == 'redilute_DX':
-        clarity_epp.export.myra.get_input_containers_and_generate_samplesheet_redilute(lims, args.process_id, args.output_file)
+        clarity_epp.export.myra.check_pool_and_generate_samplesheet_redilute(lims, args.process_id, args.multiple_output_files)
     elif args.type == 'callisto_pools':
         clarity_epp.export.myra.get_input_containers_and_generate_samplesheet_callisto_pools(
             lims, args.process_id, args.output_file
