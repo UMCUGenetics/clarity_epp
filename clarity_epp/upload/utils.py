@@ -48,3 +48,11 @@ def stoftestcode_to_workflow(lims, stoftestcode):
         return Workflow(lims, id=config.stoftestcode_workflow[stoftestcode])
     else:
         return None
+
+
+def protocol_description_to_workflow(lims, protocol_description):
+    """Return workflow based on helix protocoldescription."""
+    if protocol_decsription in config.protocol_description_workflow:
+        return Workflow(lims, id=config.protocol_description_workflow[protocol_description])
+    else:
+        return None
