@@ -1,17 +1,18 @@
 """Sample upload epp functions."""
-from datetime import datetime
 import re
-from requests.exceptions import ConnectionError
 import sys
+from datetime import datetime, timedelta
 
-from genologics.entities import Sample, Project, Containertype, Container
+from genologics.entities import Container, Containertype, Project, Sample
+from requests.exceptions import ConnectionError
 
-from .. import send_email
 import clarity_epp.upload.utils
 import config
 
+from .. import send_email
 
-def from_helix(lims, email_settings, input_file):
+
+def from_helix_worklist(lims, email_settings, input_file):
     """Upload samples from helix export file."""
     project_name = 'Dx {filename}'.format(filename=input_file.name.rstrip('.csv').split('/')[-1])
     helix_initials = project_name.split('_')[-1]
@@ -366,3 +367,299 @@ def from_helix(lims, email_settings, input_file):
     # Send final email
     message += '\n'.join(sample_messages.values())
     send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix'], subject, message)
+
+
+def from_helix_sql(lims, email_settings, input_file):
+    """Upload samples from helix sql 'dna_mons_indi_tijd' export file.
+
+    Args:
+        lims (object): Lims connection
+        email_settings (dict): Email settings from config file
+        input_file (object): File object (read mode)
+    """
+    filename = input_file.name.rstrip('.csv').split('/')[-1]
+
+    # Try lims connection
+    try:
+        lims.check_version()
+    except ConnectionError:
+        subject = f"ERROR Lims Helix Upload: {filename}"
+        message = "Kan niet verbinden met de lims server, neem contact op met een lims administrator."
+        send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix_sql'], subject, message)
+        sys.exit(message)
+
+    # match header and udf fields
+    udf_columns_check = {
+        'Dx Persoons ID': {'column': 'Achternaam'},
+        'Dx Geboortejaar': {'column': 'Geboortedatum'},
+        'Dx GLIMS ID': {'column': 'GLIMS monsternummer'}
+    }
+    udf_columns_fill = {
+        'Dx Geslacht': {'column': 'Geslacht'},
+        'Dx Einddatum': {'column': 'Datum aanmelding'},
+        'Dx Monsternummer': {'column': 'Monsternummers'},
+        'Dx Fractienummer': {'column': 'Fractienummers'},
+        'Dx Concentratie (ng/ul)': {'column': 'Conc'},
+        'Dx Conc. meting type': {'column': 'Concentratie meting type'},
+        'Dx Opslaglocatie': {'column': 'Opslagpositie'},
+    }
+    for line_index, line in enumerate(input_file):
+        if line.startswith('Achternaam'):
+            header = line.rstrip().split(';')
+            status_column_index = header.index('Status')
+            break
+
+    # Setup email
+    subject = f"Lims Helix Upload: {filename}"
+    message = f"Bestand: {filename}\n\nSamples:\n"
+    sample_messages = {}
+
+    for udf_dict in [udf_columns_check, udf_columns_fill]:
+        for udf in udf_dict:
+            udf_dict[udf]['index'] = header.index(udf_dict[udf]['column'])
+
+    for line_index, line in enumerate(input_file):
+        if not line.startswith('.'):
+            data = line.rstrip().split(';')
+            if data[status_column_index] == 'O':  # only upload status O (opgewerkt) samples
+                udf_data = {
+                    'Dx Import warning': '',
+                    'Dx NICU Spoed': False,
+                    'Dx Spoed':	False,
+                    'Dx Override Cycles': 'Y150N1;I10N9;I10;Y150N1',
+                    'Dx Mergen': False
+                }
+                for udf in udf_columns_fill:
+                    # Transform specific udf
+                    try:
+                        if udf == 'Dx Geslacht':
+                            udf_data[udf] = clarity_epp.upload.utils.transform_sex(data[udf_columns_fill[udf]['index']])
+                        elif udf == 'Dx Einddatum':
+                            entry_date = datetime.strptime(data[udf_columns_fill[udf]['index']], '%d-%m-%Y')  # Helix format
+                            end_date = entry_date + timedelta(weeks=4)
+                            udf_data[udf] = end_date.strftime('%Y-%m-%d')  # LIMS format (2021-01-14)
+                        elif udf in ['Dx Monsternummer', 'Dx Fractienummer']:
+                            udf_data[udf] = clarity_epp.upload.utils.transform_sample_name(
+                                data[udf_columns_fill[udf]['index']]
+                            )
+                        elif udf == 'Dx Concentratie (ng/ul)':
+                            udf_data[udf] = data[udf_columns_fill[udf]['index']].replace(',', '.')
+                            if udf_data[udf]:
+                                udf_data[udf] = float(udf_data[udf])
+                        elif udf == 'Dx Conc. meting type':
+                            udf_data[udf] = data[udf_columns_fill[udf]['index']].split(' - ')[-1]
+                        else:
+                            udf_data[udf] = data[udf_columns_fill[udf]['index']]
+                    except (IndexError, ValueError):
+                        # Catch parsing errors and send email
+                        subject = f"ERROR Lims Helix Upload: {filename}"
+                        message = (
+                            "Kan de data uit het Helix export bestand (sql dna_mons_indi_tijd) niet correct parsen.\n"
+                            f"Rij = {line_index+1} \t Kolom = {udf_columns_fill[udf]['column']} \t CF = {udf}.\n"
+                            "Check/update het bestand en probeer opnieuw."
+                        )
+                        send_email(
+                            email_settings['server'],
+                            email_settings['from'],
+                            email_settings['to_import_helix_sql'],
+                            subject,
+                            message
+                        )
+                        sys.exit(message)
+
+                # Set 'Dx norm. manueel' udf for concentration and type of measurement
+                if udf_data['Dx Concentratie (ng/ul)']:
+                    type_of_measurement = udf_data['Dx Conc. meting type']
+                    for type_of_measurement, limit in config.manual_normalization_concentration_limits.items():
+                        if udf_data['Dx Conc. meting type'] == type_of_measurement:
+                            if udf_data['Dx Concentratie (ng/ul)'] <= limit:
+                                udf_data['Dx norm. manueel'] = True
+                            else:
+                                udf_data['Dx norm. manueel'] = False
+                else:
+                    udf_data['Dx norm. manueel'] = True
+
+                # Set 'Dx Mengfractie' srWGS
+                pg_samples = lims.get_samples(udf={
+                    'Dx Persoons ID': data[udf_columns_check['Dx Persoons ID']['index']],
+                    'Dx Onderzoeksindicatie': 'PG'
+                })
+                for pg_sample in pg_samples:
+                    monster = pg_sample.udf.get('Dx Monsternummer')
+                    glims_id = pg_sample.udf.get('Dx GLIMS ID')
+                    if not monster and glims_id == line[udf_columns_check['Dx GLIMS ID']['index']]:
+                        break
+                    elif glims_id != line[udf_columns_check['Dx GLIMS ID']['index']]:
+                        udf_data['Dx Mengfractie'] = True
+                    else:
+                        udf_data['Dx Import warning'] = ';'.join([
+                            ('Er is al een PG sample aanwezig in Clarity met hetzelfde Dx Monsternummer '
+                            f'({pg_sample.name}, {pg_sample.project.name}).'),
+                            udf_data['Dx Import warning']
+                        ])
+
+                # Find pg sample in Clarity
+                sample_udf = {'Dx Onderzoeksindicatie': 'PG'}
+                for udf in udf_columns_check:
+                    if udf == 'Dx Geboortejaar':
+                        birthday = datetime.strptime(data[udf_columns_check[udf]['index']], '%d-%m-%Y')
+                        sample_udf[udf] =  birthday.strftime('%Y')
+                    elif udf == 'Dx GLIMS ID':
+                        sample_udf[udf] = int(float(data[udf_columns_check[udf]['index']].replace(',', '.')))
+                    else:
+                        sample_udf[udf] = data[udf_columns_check[udf]['index']]
+                sample_name = sample_udf['Dx GLIMS ID']
+                samples = lims.get_samples(name=sample_name, udf=sample_udf)
+
+                if not samples:
+                    sample_name = udf_data['Dx Monsternummer']
+                    glims_id = int(float(data[udf_columns_check[udf]['index']].replace(',', '.')))
+                    if udf_data['Dx Import warning']:
+                        sample_messages[sample_name] = (
+                            f"{sample_name}\tsample {glims_id} niet gevonden in Clarity, niet ingeladen."
+                            f"\tImport waarschuwing: {udf_data['Dx Import warning']}"
+                        )
+                    else:
+                        sample_messages[sample_name] = (
+                            f"{sample_name}\tsample {glims_id} niet gevonden in Clarity, niet ingeladen."
+                        )
+                else:
+                    for sample in samples:
+                        if sample.udf.get('Dx Onderzoeksindicatie') == 'PG':
+                            udf_data = {
+                                'Dx externe Spoed':	config.external_urgency_pg,
+                                'Dx Protocolcode':	config.protocolcode_pg,
+                                'Dx Protocolomschrijving':	config.protocoldescription_pg,
+                                'Dx Exoomequivalent': config.exoomequivalent_pg,
+                                'Dx # clusters/sample': config.clusters_per_sample_pg
+                            }
+                        # Add sample to workflow
+                        workflow = clarity_epp.upload.utils.protocol_description_to_workflow(
+                            lims, udf_data['Dx Protocolomschrijving']
+                        )
+                        if workflow:
+                            for udf in udf_data:
+                                sample.udf[udf] = udf_data[udf]
+                            sample.name = sample.udf['Dx Monsternummer']
+                            sample.put()
+                            lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
+                            if udf_data['Dx Import warning']:
+                                sample_messages[sample.name] = (
+                                    f"{sample.name}\taangevuld en toegevoegd aan workflow: {workflow.name}."
+                                    f"\tImport waarschuwing: {udf_data['Dx Import warning']}"
+                                )
+                            else:
+                                sample_messages[sample.name] = (
+                                    f"{sample.name}\taangevuld en toegevoegd aan workflow: {workflow.name}."
+                                )
+                        else:
+                            description = udf_data['Dx Protocolomschrijving']
+                            sample_messages[sample_name] = (
+                                f"{sample_name}\tERROR: Protocolomschrijving {description} is niet gelinked aan een workflow."
+                            )
+        else:
+            break
+
+    # Send final email
+    message += '\n'.join(sample_messages.values())
+    send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix_sql'], subject, message)
+
+
+def from_glims(lims, email_settings, input_file):
+    """Upload samples from glims export file.
+
+    Args:
+        lims (object): Lims connection
+        email_settings (dict): Email settings from config file
+        input_file (object): File object (read mode)
+    """
+    researcher = lims.get_researchers(username="GLIMSCDL")[0]
+    filename = input_file.name.rstrip('.csv').split('/')[-1]
+    if filename.startswith('Farmacogenetica'):
+        filename_date = datetime.strptime(filename[15:23], "%Y%m%d")
+        project_name = 'Dx_Farmacogenetica_{date}'.format(date=filename_date.strftime("%Y%m%d"))
+    else:
+        subject = f"ERROR Lims GLIMS Upload: {filename}"
+        message = "Bestandsnaam start niet met Farmacogenetica, project/samples niet aangemaakt."
+        send_email(email_settings['server'], email_settings['from'], email_settings['to_import_glims'], subject, message)
+        sys.exit(message)
+
+    # Try lims connection
+    try:
+        lims.check_version()
+    except ConnectionError:
+        subject = f"ERROR Lims GLIMS Upload: {project_name}"
+        message = "Kan niet verbinden met de lims server, neem contact op met een lims administrator."
+        send_email(email_settings['server'], email_settings['from'], email_settings['to_import_glims'], subject, message)
+        sys.exit(message)
+
+    # Get or create project
+    if not lims.get_projects(name=project_name):
+        project = Project.create(lims, name=project_name, researcher=researcher, udf={'Application': 'FG'})
+    else:
+        project = lims.get_projects(name=project_name)[0]
+
+    container_type = Containertype(lims, id='2')  # Tube
+
+    # match header and udf fields
+    udf_column = {
+        'Dx Persoons ID': {'column': 'Glims patient id'},
+        'Dx GLIMS ID': {'column': 'Glims monster id'},
+        'Dx Geboortejaar': {'column': 'geboortejaar'},
+        'Dx Onderzoeksindicatie': {'column': 'projectcode'},
+    }
+
+    header = input_file.readline().rstrip().split(';') # expect header on first line
+    for udf in udf_column:
+        udf_column[udf]['index'] = header.index(udf_column[udf]['column'])
+
+    # Setup email
+    subject = f"Lims Glims Upload: {project_name}"
+    message = f"Project: {project_name}\n\nSamples:\n"
+    sample_messages = {}
+
+    # Parse samples
+    for line_index, line in enumerate(input_file):
+        if ';' in line:
+            data = line.rstrip().split(';')
+
+            udf_data = {'Sample Type': 'DNA isolated'}  # required lims input
+            for udf in udf_column:
+                # Transform specific udf
+                try:
+                    udf_data[udf] = data[udf_column[udf]['index']]
+                except (IndexError, ValueError):
+                    # Catch parsing errors and send email
+                    subject = f"ERROR Lims Glims Upload: {project_name}"
+                    message = (
+                        "Kan de data uit het Glims export bestand niet correct parsen.\n"
+                        f"Rij = {line_index+1} \t Kolom = {udf_column[udf]['column']} \t CF = {udf}.\n"
+                        "Check/update het bestand en probeer opnieuw."
+                    )
+                    send_email(
+                        email_settings['server'], email_settings['from'], email_settings['to_import_glims'], subject, message
+                    )
+                    sys.exit(message)
+
+            sample_name = f"{udf_data['Dx GLIMS ID']}"
+
+            excisting_clarity_samples = lims.get_samples(
+                udf={'Dx GLIMS ID': udf_data['Dx GLIMS ID'], 'Dx Persoons ID': udf_data['Dx Persoons ID']}
+            )
+
+            if not excisting_clarity_samples:
+                container = Container.create(lims, type=container_type, name=udf_data['Dx GLIMS ID'])
+                sample = Sample.create(
+                    lims, container=container, position='1:1', project=project, name=sample_name, udf=udf_data
+                )
+
+                sample_messages[sample.name] = f"{sample.name}\taangemaakt."
+            else:
+                sample_messages[sample_name] = (
+                    f"{sample_name}\tniet aangemaakt, "
+                    "er bestaat al een sample in Clarity met dezelfde 'Dx GLIMS ID' en 'Dx Persoons ID'."
+                )
+
+    # Send final email
+    message += '\n'.join(sample_messages.values())
+    send_email(email_settings['server'], email_settings['from'], email_settings['to_import_glims'], subject, message)

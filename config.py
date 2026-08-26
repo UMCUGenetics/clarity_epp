@@ -13,6 +13,12 @@ email = {
     'to_import_helix': [
         'to_1@mail.nl',
     ],
+    'to_import_helix_sql': [
+        'to_1@mail.nl',
+    ],
+    'to_import_glims': [
+        'to_1@mail.nl',
+    ],
     'to_sequencing_run_complete': [
         'to_1@mail.nl',
     ],
@@ -36,6 +42,11 @@ stoftestcode_workflow = {
     stoftestcode_mip: '1651',  # DEV Dx smMIP v1.2
     stoftestcode_srwgs: '2602',  # DEV Dx srWGS Callisto v2.0
     stoftestcode_srwgs_duplo: '2602',  # DEV Dx srWGS Callisto v2.0
+}
+
+# Import samples: protocol_description to workflow
+protocol_description_workflow= {
+    'DxExtern_versieVP_LP0002_srWGS': '2602',  # DEV Dx srWGS Callisto v2.0
 }
 
 # Update exome equivalent for certain indications
@@ -209,6 +220,13 @@ flowcell_volumes = {
 
 # Number of clusters/sample
 clusters_per_sample = 4.5
+
+# PG import
+external_urgency_pg = True
+protocolcode_pg = 'EX_SRWGS_001'
+protocoldescription_pg = 'DxExtern_versieVP_LP0002_srWGS'
+exoomequivalent_pg = 1
+clusters_per_sample_pg = 4.5
 
 # Non DX indications via Dx srWGS Callisto v2.0 flow
 lpsrwgsindicaties = ["PG", "DxVal"]
