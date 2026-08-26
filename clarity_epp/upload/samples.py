@@ -13,7 +13,13 @@ from .. import send_email
 
 
 def from_helix(lims, email_settings, input_file):
-    """Upload samples from helix export file."""
+    """Upload samples from helix 'werklijst' export file.
+
+    Args:
+        lims (object): Lims connection
+        email_settings (dict): Email settings from config file
+        input_file (object): File object (read mode)
+    """
     project_name = f"Dx {input_file.name.rstrip('.csv').split('/')[-1]}"
     helix_initials = project_name.split('_')[-1]
 
@@ -83,7 +89,7 @@ def from_helix(lims, email_settings, input_file):
         'Dx RIN/DIN waarde': {'column': 'RIN/DIN'},
     }
     header = input_file.readline().rstrip().rstrip('.').split(',') # expect header on first line
-    for udf in udf_column.keys():
+    for udf in udf_column:
         udf_column[udf]['index'] = header.index(udf_column[udf]['column'])
 
     # Setup email
