@@ -588,15 +588,14 @@ def from_glims(lims, email_settings, input_file):
     try:
         lims.check_version()
     except ConnectionError:
-        subject = f"ERROR Lims GLIMS Upload: {project_name}"
+        subject = f"ERROR Lims GLIMS Upload: {filename}"
         message = "Kan niet verbinden met de lims server, neem contact op met een lims administrator."
         send_email(email_settings['server'], email_settings['from'], email_settings['to_import_glims'], subject, message)
         sys.exit(message)
 
-    # Get or create project
-    if not lims.get_projects(name=project_name):
-        project = Project.create(lims, name=project_name, researcher=researcher, udf={'Application': 'FG'})
-    else:
+    # Get project if exists
+    project = None
+    if lims.get_projects(name=project_name):
         project = lims.get_projects(name=project_name)[0]
 
     container_type = Containertype(lims, id='2')  # Tube
@@ -614,8 +613,8 @@ def from_glims(lims, email_settings, input_file):
         udf_column[udf]['index'] = header.index(udf_column[udf]['column'])
 
     # Setup email
-    subject = f"Lims Glims Upload: {project_name}"
-    message = f"Project: {project_name}\n\nSamples:\n"
+    subject = f"Lims Glims Upload: {filename}"
+    message = f"Bestand: {filename}\nProject: {project_name}\n\nSamples:\n"
     sample_messages = {}
 
     # Parse samples
@@ -630,7 +629,7 @@ def from_glims(lims, email_settings, input_file):
                     udf_data[udf] = data[udf_column[udf]['index']]
                 except (IndexError, ValueError):
                     # Catch parsing errors and send email
-                    subject = f"ERROR Lims Glims Upload: {project_name}"
+                    subject = f"ERROR Lims Glims Upload: {filename}"
                     message = (
                         "Kan de data uit het Glims export bestand niet correct parsen.\n"
                         f"Rij = {line_index+1} \t Kolom = {udf_column[udf]['column']} \t CF = {udf}.\n"
@@ -648,6 +647,8 @@ def from_glims(lims, email_settings, input_file):
             )
 
             if not excisting_clarity_samples:
+                if not project:
+                    project = Project.create(lims, name=project_name, researcher=researcher, udf={'Application': 'FG'})
                 container = Container.create(lims, type=container_type, name=udf_data['Dx GLIMS ID'])
                 sample = Sample.create(
                     lims, container=container, position='1:1', project=project, name=sample_name, udf=udf_data
