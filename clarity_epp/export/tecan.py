@@ -87,7 +87,7 @@ def samplesheet(lims, process_id, type, output_file):
                                 else:
                                     # No QC process found, use Helix concentration
                                     concentration = input_sample.udf['Dx Concentratie (ng/ul)']
-                                    meter = input_sample.udf['Concentratie meting type']
+                                    meter = input_sample.udf.get('Dx Conc. meting type')
 
                     samples[input_sample.udf['Dx Monsternummer']] = {'conc': concentration, 'meter': meter}
 
@@ -134,31 +134,40 @@ def samplesheet(lims, process_id, type, output_file):
                         else:  # Single sample met Spectrofotometer
                             dividend = input_ng * 2
                             max_volume = 60
-
-                    # Calculation of pipetting volumes
-                    calc_sample = dividend / sample_concentration
-                    if calc_sample < 4:
-                        volume_sample = 4
-                    elif calc_sample > max_volume:
-                        volume_sample = max_volume
-                        samples[monster]['message'] = (f'Concentratie te laag - volume= {calc_sample} ul')
                     else:
-                        volume_sample = calc_sample
-                    samples[monster]['sample_volume'] = volume_sample
-                    volume_water = max_volume - volume_sample
-                    samples[monster]['water_volume'] = volume_water
+                        samples[monster]['message'] += (
+                            'Geen concentratie meting type bekend, dus geen berekening uit kunnen voeren, '
+                            'vul submitted sample CF "Dx Conc. meting type" met het juiste type meter en probeer opnieuw'
+                        )
+
+                    if sample_concentration_meter and dividend and max_volume:
+                        # Calculation of pipetting volumes
+                        calc_sample = dividend / sample_concentration
+                        if calc_sample < 4:
+                            volume_sample = 4
+                        elif calc_sample > max_volume:
+                            volume_sample = max_volume
+                            samples[monster]['message'] = (f'Concentratie te laag - volume= {calc_sample} ul')
+                        else:
+                            volume_sample = calc_sample
+                        samples[monster]['sample_volume'] = volume_sample
+                        volume_water = max_volume - volume_sample
+                        samples[monster]['water_volume'] = volume_water
 
                 for sample in artifact.samples:
                     monster = sample.udf['Dx Monsternummer']
-                    output_file.write('{sample};{volume_sample:.2f};{volume_water:.2f};{index};{name};{empty};{message}\n'.format(
-                        sample=sample.udf['Dx Fractienummer'],
-                        volume_sample=samples[monster]['sample_volume'],
-                        volume_water=samples[monster]['water_volume'],
-                        index=clarity_epp.export.utils.get_well_index(well, one_based=True),
-                        name=samples[monster]['mix_names'],
-                        empty='',
-                        message=samples[monster]['message']
-                    ))
+                    fraction = sample.udf['Dx Fractienummer']
+                    index = clarity_epp.export.utils.get_well_index(well, one_based=True)
+                    name = samples[monster]['mix_names']
+                    empty = ''
+                    message = samples[monster]['message']
+                    if samples[monster]['sample_volume'] and samples[monster]['water_volume']:
+                        volume_sample = f"{samples[monster]['sample_volume']:.2f}"
+                        volume_water = f"{samples[monster]['water_volume']:.2f}"
+                    else:
+                        volume_sample = ''
+                        volume_water = ''
+                    output_file.write(f'{fraction};{volume_sample};{volume_water};{index};{name};{empty};{message}\n')
 
     elif type == 'normalise':
         output_file.write('SourceTubeID;PositionID;PositionIndex\n')
