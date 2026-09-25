@@ -735,10 +735,10 @@ def check_all_samples_same_LP_pool(process):
     Returns:
         bool: True if all samples are from the same LP pool, else False
     """
-    analytes = process.analytes()[0]
+    input_artifacts = process.all_inputs()
     lp_pool_values = set()
-    for analyte in analytes:
-        lp_pool = analyte.udf.get('Dx LPpool')
+    for input_artifact in input_artifacts:
+        lp_pool = input_artifact.udf.get('Dx LPpool')
         lp_pool_values.add(lp_pool)
 
     return len(lp_pool_values) == 1 and None not in lp_pool_values
