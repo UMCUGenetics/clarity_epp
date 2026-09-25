@@ -102,6 +102,6 @@ def set_udf_lpsrwgs_pool(lims, process_id):
                 duplicate_process = pool_sample_artifact.parent_process.parent_processes()[0]
                 for duplicate_output_artifact in duplicate_process.analytes()[0]:
                     if (pool_sample_artifact.name.split('_')[0] == duplicate_output_artifact.name.split('_')[0]
-                        and duplicate_output_artifact.name.split('_')[-1] == 'srWGS'):
-                        pool_sample_artifact.udf['Dx LPpool'] = pool.name
-                        pool_sample_artifact.put()
+                            and duplicate_output_artifact.name.split('_')[-1] == 'srWGS'):
+                        duplicate_output_artifact.udf['Dx LPpool'] = pool.name
+                        duplicate_output_artifact.put()
