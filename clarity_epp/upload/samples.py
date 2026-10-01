@@ -1,14 +1,15 @@
 """Sample upload epp functions."""
-from datetime import datetime
 import re
-from requests.exceptions import ConnectionError
 import sys
+from datetime import datetime
 
-from genologics.entities import Sample, Project, Containertype, Container
+from genologics.entities import Container, Containertype, Project, Sample
+from requests.exceptions import ConnectionError
 
-from .. import send_email
 import clarity_epp.upload.utils
 import config
+
+from .. import send_email
 
 
 def from_helix(lims, email_settings, input_file):
@@ -77,9 +78,9 @@ def from_helix(lims, email_settings, input_file):
         'Dx Einddatum': {'column': 'Einddatum'},
         'Dx Gerelateerde onderzoeken': {'column': 'Gerelateerde onderzoeken'},
         'Dx gerelateerd aan oz': {'column': 'Gerelateerd aan'},
-        'Dx gerelateerde oz #': {'column': 'Aantal gerelateerde onderzoeken.'},
+        'Dx gerelateerde oz #': {'column': 'Aantal gerelateerde onderzoeken'},
     }
-    header = input_file.readline().rstrip().split(',')  # expect header on first line
+    header = input_file.readline().rstrip().rstrip('.').split(',')  # expect header on first line
     for udf in udf_column:
         udf_column[udf]['index'] = header.index(udf_column[udf]['column'])
 
