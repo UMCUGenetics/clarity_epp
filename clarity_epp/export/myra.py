@@ -571,7 +571,7 @@ def check_excluding_sample(process, dx_analyte, volume_water, performances_dict)
     Returns:
         dict: Supplied dictionary (performances_dict) updated with 'volume_water' per sample and 'excluded' if sample excluded
     """
-    water_limit_low = process.udf['Dx Flowcell type (watervolume)']
+    water_limit_low = float(process.udf['Dx Flowcell type (watervolume)'].strip(' ul)').split('(')[-1])
     water_limit_high = 180
     sample_name = dx_analyte.name.split('_')[0]
 
