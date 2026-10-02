@@ -605,14 +605,13 @@ def fill_info_dictionary(dx_analytes, volumes_dict, manually_excluded_samples):
         cause = 'Exclusie reden: '
         base_cause_length = len(cause)
 
-        if dx_analyte in manually_excluded_samples:
-            cause += 'Handmatig geëxcludeerd (wel meegenomen in berekening); '
-
         sample_name = dx_analyte.name.split('_')[0]
         if 'excluded' in volumes_dict[sample_name] and volumes_dict[sample_name]['excluded']:
-            cause += f'Volume water buiten range: {volumes_dict[sample_name]["water_range"]} (wel meegenomen in berekening); '
+            cause += f'Volume water buiten range: {volumes_dict[sample_name]["water_range"]} (wel meegenomen in berekening)'
         elif volumes_dict[sample_name]['clusters'] == 0.0:
-            cause += '0.0 clusters (niet meegenomen in berekening); '
+            cause += '0.0 clusters (niet meegenomen in berekening)'
+        elif dx_analyte in manually_excluded_samples:
+            cause += 'Handmatig geëxcludeerd (wel meegenomen in berekening)'
 
         input_artifact = dx_analyte.input_artifact_list()[0]
         if len(cause) > base_cause_length:
@@ -661,10 +660,10 @@ def get_info_for_samplesheet_redilute(lims, process):
         Float Average number of clusters
         Int Number of samples
     """
+    manually_excluded_samples = get_excluded_samples(process)
+
     cluster_dict, missing_samples = get_LP_QC_stats(lims, process)
     lowpass_processes = get_process_types(lims, ["Dx nM verdunning Myra LP"])
-
-    manually_excluded_samples = get_excluded_samples(process)
 
     performances_dict, average_clusters, nr_samples = calculate_performances(cluster_dict)
     dx_analytes = process.analytes()[0]
@@ -759,7 +758,8 @@ def check_pool_and_generate_samplesheet_redilute(lims, process_id, output_files)
         samplesheet, samplesheet_excluded_samples, missing_samples = generate_samplesheet_redilute(lims, process)
 
         output_files[0].write(samplesheet)
-        output_files[1].write(samplesheet_excluded_samples)
+        with open(output_files[1].name, 'w', encoding='utf-8-sig') as excluded_samples_file:
+            excluded_samples_file.write(samplesheet_excluded_samples)
 
         if missing_samples:
             message = (
