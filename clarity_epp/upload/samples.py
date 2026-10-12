@@ -411,7 +411,7 @@ def from_helix_sql(lims, email_settings, input_file):
 
     # Setup email
     subject = f"Lims Helix Upload: {filename}"
-    message = f"Bestand: {filename}\n\nSamples:\n"
+    message = f"Bestand: {filename}\n\nOpgewerkte samples:\n"
     sample_messages = {}
 
     for udf_dict in [udf_columns_check, udf_columns_fill]:
@@ -427,7 +427,12 @@ def from_helix_sql(lims, email_settings, input_file):
                     'Dx NICU Spoed': False,
                     'Dx Spoed':	False,
                     'Dx Override Cycles': 'Y150N1;I10N9;I10;Y150N1',
-                    'Dx Mergen': False
+                    'Dx Mergen': False,
+                    'Dx externe Spoed':	config.external_urgency_pg,
+                    'Dx Protocolcode':	config.protocolcode_pg,
+                    'Dx Protocolomschrijving':	config.protocoldescription_pg,
+                    'Dx Exoomequivalent': config.exoomequivalent_pg,
+                    'Dx # clusters/sample': config.clusters_per_sample_pg
                 }
                 for udf in udf_columns_fill:
                     # Transform specific udf
@@ -440,7 +445,7 @@ def from_helix_sql(lims, email_settings, input_file):
                             udf_data[udf] = end_date.strftime('%Y-%m-%d')  # LIMS format (2021-01-14)
                         elif udf in ['Dx Monsternummer', 'Dx Fractienummer']:
                             udf_data[udf] = clarity_epp.upload.utils.transform_sample_name(
-                                data[udf_columns_fill[udf]['index']]
+                                data[udf_columns_fill[udf]['index']].strip()
                             )
                         elif udf == 'Dx Concentratie (ng/ul)':
                             udf_data[udf] = data[udf_columns_fill[udf]['index']].replace(',', '.')
@@ -487,14 +492,14 @@ def from_helix_sql(lims, email_settings, input_file):
                 for pg_sample in pg_samples:
                     monster = pg_sample.udf.get('Dx Monsternummer')
                     glims_id = pg_sample.udf.get('Dx GLIMS ID')
-                    if not monster and glims_id == line[udf_columns_check['Dx GLIMS ID']['index']]:
-                        break
-                    elif glims_id != line[udf_columns_check['Dx GLIMS ID']['index']]:
+                    if not monster and str(glims_id) != str(data[udf_columns_check['Dx GLIMS ID']['index']]):
                         udf_data['Dx Mengfractie'] = True
-                    else:
+                        pg_sample.udf['Dx Mengfractie'] = True
+                        pg_sample.put()
+                    elif monster and monster == udf_data['Dx Monsternummer']:
                         udf_data['Dx Import warning'] = ';'.join([
-                            ('Er is al een PG sample aanwezig in Clarity met hetzelfde Dx Monsternummer '
-                            f'({pg_sample.name}, {pg_sample.project.name}).'),
+                            ('Er is al een PG sample aanwezig in Clarity met hetzelfde Dx Monsternummer in project '
+                            f'{pg_sample.project.name}.'),
                             udf_data['Dx Import warning']
                         ])
 
@@ -525,14 +530,6 @@ def from_helix_sql(lims, email_settings, input_file):
                         )
                 else:
                     for sample in samples:
-                        if sample.udf.get('Dx Onderzoeksindicatie') == 'PG':
-                            udf_data = {
-                                'Dx externe Spoed':	config.external_urgency_pg,
-                                'Dx Protocolcode':	config.protocolcode_pg,
-                                'Dx Protocolomschrijving':	config.protocoldescription_pg,
-                                'Dx Exoomequivalent': config.exoomequivalent_pg,
-                                'Dx # clusters/sample': config.clusters_per_sample_pg
-                            }
                         # Add sample to workflow
                         workflow = clarity_epp.upload.utils.protocol_description_to_workflow(
                             lims, udf_data['Dx Protocolomschrijving']
