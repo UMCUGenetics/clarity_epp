@@ -378,6 +378,7 @@ def from_helix_sql(lims, email_settings, input_file):
         input_file (object): File object (read mode)
     """
     filename = input_file.name.rstrip('.csv').split('/')[-1]
+    helix_initials = filename.split('.')[0].split('-')[-1]
 
     # Try lims connection
     try:
@@ -385,6 +386,17 @@ def from_helix_sql(lims, email_settings, input_file):
     except ConnectionError:
         subject = f"ERROR Lims Helix Upload: {filename}"
         message = "Kan niet verbinden met de lims server, neem contact op met een lims administrator."
+        send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix_sql'], subject, message)
+        sys.exit(message)
+
+    # Get researcher using helix initials
+    for researcher in lims.get_researchers():
+        if researcher.fax == helix_initials:
+            email_settings['to_import_helix_sql'].append(researcher.email)
+            break
+    else:   # No researcher found
+        subject = f"ERROR Lims Helix Upload: {filename}"
+        message = f"Can't find researcher with initials: {helix_initials}."
         send_email(email_settings['server'], email_settings['from'], email_settings['to_import_helix_sql'], subject, message)
         sys.exit(message)
 
