@@ -1,3 +1,8 @@
+"""Clarity services encapsulate the business logic required to interact with Clarity LIMS and execute laboratory workflows.
+
+This keeps business logic reusable and consistent, while separating it from CLI commands, data access and general-purpose utilities.
+"""
+
 from typing import TYPE_CHECKING, Any
 
 import s4.clarity
@@ -9,13 +14,22 @@ from clarity_epp.core.config import settings
 # In order to make autocomplete available in IDEs
 if TYPE_CHECKING:
 
-    class ClarityServiceType(s4.clarity.LIMS): ...
+    class ClarityServiceType(s4.clarity.LIMS):
+        """Provide the LIMS type for ClarityService to enable autocomplete in IDEs."""
+
 else:
     ClarityServiceType = object
 
 
 class ClarityService(ClarityServiceType):
+    """Provide a unified interface for interacting with Clarity LIMS.
+
+    Wraps the underlying LIMS connector to expose its functionality while allowing additional
+    application-specific methods to be defined.
+    """
+
     def __init__(self, connector: s4.clarity.LIMS):
+        """Initialize the ClarityService with a LIMS connector."""
         self._lims = connector
 
     def __getattr__(self, name) -> Any:
@@ -38,10 +52,20 @@ class ClarityService(ClarityServiceType):
 
 
 class ClarityFactory:
+    """Create and provide a Clarity LIMS service instance."""
+
     _instance: ClarityService | None = None
 
     @classmethod
     def get_instance(cls) -> ClarityService:
+        """Get a ClarityService instance using configuration settings.
+
+        Returns:
+            ClarityService: ClarityService instance.
+
+        Raises:
+            Exception: If the connection to Clarity LIMS fails.
+        """
         if cls._instance is None:
             lims = s4.clarity.LIMS(
                 root_uri=f"{settings.clarity.base_url}/api/v2/",

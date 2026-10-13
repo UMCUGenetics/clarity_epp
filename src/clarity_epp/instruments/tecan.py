@@ -1,3 +1,5 @@
+"""Collection of methods when using Tecan instruments."""
+
 from typing import Annotated
 
 import typer
