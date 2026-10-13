@@ -35,10 +35,10 @@ class Settings(BaseSettings):
     def settings_customise_sources(
         cls,
         settings_cls: type[BaseSettings],
-        init_settings: PydanticBaseSettingsSource,
-        env_settings: PydanticBaseSettingsSource,
-        dotenv_settings: PydanticBaseSettingsSource,
-        file_secret_settings: PydanticBaseSettingsSource,
+        _init_settings: PydanticBaseSettingsSource,
+        _env_settings: PydanticBaseSettingsSource,
+        _dotenv_settings: PydanticBaseSettingsSource,
+        _file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
         """Customise the settings sources to load from config.toml file."""
         return (TomlConfigSettingsSource(settings_cls),)
