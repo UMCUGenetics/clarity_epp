@@ -64,7 +64,7 @@ class ClarityFactory:
             ClarityService: ClarityService instance.
 
         Raises:
-            Exception: If the connection to Clarity LIMS fails.
+            ConnectionError: If the connection to Clarity LIMS fails.
         """
         if cls._instance is None:
             lims = s4.clarity.LIMS(
@@ -77,7 +77,7 @@ class ClarityFactory:
                 for lims_connection_attempt in Retrying(stop=stop_after_attempt(2), wait=wait_fixed(1)):
                     with lims_connection_attempt:
                         _ = lims.versions
-            except RetryError:
-                raise Exception("Could not connect to Clarity LIMS.")
+            except RetryError as error:
+                raise ConnectionError("Could not connect to Clarity LIMS.") from error
             cls._instance = ClarityService(lims)
         return cls._instance
