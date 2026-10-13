@@ -13,8 +13,7 @@ cli = typer.Typer(no_args_is_help=True)
 def export_qc_samplesheet(
     process_id: str, output_file: Annotated[typer.FileTextWrite, typer.Argument()] = "/dev/stdout"
 ) -> None:
-    """
-    Export QC samplesheet.
+    """Export QC samplesheet.
 
     Args:
         process_id: Clarity process id.

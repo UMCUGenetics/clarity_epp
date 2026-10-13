@@ -19,14 +19,11 @@ class ClarityService(ClarityServiceType):
         self._lims = connector
 
     def __getattr__(self, name) -> Any:
-        """
-        If an attribute does not exist in ClarityService, then check whether it exists in self._lims.
-        """
+        """If an attribute does not exist in ClarityService, then check whether it exists in self._lims."""
         return getattr(self._lims, name)
 
     def get_process(self, process_id: str) -> Process:
-        """
-        Get process by id.
+        """Get process by id.
 
         NOTE: In this particular case, the processes.from_limsid(process_id) should be used directly from the LIMS object.
         This method is added here to provide a clear and simple example of how to add methods to the ClarityService class while still allowing access to all methods of the underlying LIMS object.

@@ -1,6 +1,5 @@
 def get_96_well_plate() -> list[str]:
-    """
-    Return a list representing a 96 well plate in standard order.
+    """Return a list representing a 96 well plate in standard order.
 
     Returns:
         List of well positions from A1 to H12.
