@@ -13,6 +13,7 @@ def sort_96_well_plate(wells: list[str]) -> list[str]:
 
     Args:
         wells: List of well positions.
+
     Returns:
         Sorted list of well positions.
     """

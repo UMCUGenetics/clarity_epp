@@ -1,5 +1,5 @@
 import typer
-from typing_extensions import Annotated
+from typing import Annotated
 
 from clarity_epp.core.templates import render_template
 from clarity_epp.services.clarity import ClarityFactory
