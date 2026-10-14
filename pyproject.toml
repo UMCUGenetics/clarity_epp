@@ -10,6 +10,7 @@ requires-python = ">=3.13"
 dependencies = [
     "jinja2>=3.1.6",
     "pydantic-settings>=2.13.1",
+    "ruff==0.16.10",
     "s4-clarity>=1.8.0",
     "tenacity>=9.1.4",
     "typer>=0.24.1",
@@ -32,3 +33,46 @@ dev = [
 
 [tool.ruff]
 line-length = 127
+
+
+[tool.ruff.lint]
+extend-select = [
+    "A",   # Prevent builtin shadowing
+    "ARG", # Detect unused function arguments
+    "D",   # Enforce docstring conventions
+    "DOC", # Validate docstrings against code
+    "DTZ", # Require timezone-aware datetimes
+    "E",   # Enforce general Python style
+    "ISC", # Detect implicit string concatenation
+    "I",   # Enforce import ordering
+    "N",   # Enforce PEP 8 naming conventions
+    "PT",  # Enforce pytest best practices
+    "PTH", # Prefer pathlib over os.path
+    "Q",   # Enforce consistent quote style
+    "SIM", # Simplify code
+    "UP",  # Modernize Python code
+    "W",   # Enforce whitespace conventions
+]
+
+ignore = [
+    "RUF100", # Some imports are considered unused but are needed for the module to work
+    "SIM105", # Explicit try/except can be clearer then contextlib.suppress when exception handling has intentional semantics
+    "SIM108", # Ternary expressions can reduce readability for complex or multi-line conditions
+    "UP012",  # Explicit string conversion can make the intended type conversion clearer
+    "UP015",  # Explicit open modes can make file behavior more obvious
+    "UP030",  # Keep %-style formatting where it improves readability or matches existing code
+]
+
+[tool.ruff.lint.flake8-unused-arguments]
+ignore-variadic-names = true
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.uv]
+required-version = ">=0.11.28"
+package = true
+exclude-newer = "7 days"
