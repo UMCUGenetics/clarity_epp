@@ -233,3 +233,9 @@ lpsrwgsindicaties = ["PG", "DxVal"]
 
 # Non external project applications for clarity_epp.py export manual sequence_pools
 non_external_applications = ["DX", "FG", "DxVal"]
+
+# Concentration limits (<=) for Dx norm. manueel udf based on type of measurement
+manual_normalization_concentration_limits = {
+    'Fluorescentiemeter': 37.7,
+    'Spectrofotometer': 75.4
+}
