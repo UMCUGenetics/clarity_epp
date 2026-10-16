@@ -223,7 +223,7 @@ clusters_per_sample = 4.5
 
 # PG import
 external_urgency_pg = True
-protocolcode_pg = 'EX_SRWGS_001'
+protocolcode_pg = 'Extern_SRWGS_001'
 protocoldescription_pg = 'DxExtern_versieVP_LP0002_srWGS'
 exoomequivalent_pg = 1
 clusters_per_sample_pg = 4.5
