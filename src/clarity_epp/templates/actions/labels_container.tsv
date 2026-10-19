@@ -1,0 +1,6 @@
+{% if include_description -%} Description {% endif -%}
+Container
+{% for artifact in artifacts -%}
+    {% if include_description -%} {{ artifact.description }}	{% endif -%}
+    {{ artifact.container_name }}
+{% endfor -%}
