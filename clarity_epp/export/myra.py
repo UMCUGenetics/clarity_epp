@@ -471,14 +471,15 @@ def get_LP_QC_stats(lims, process):
             QC_stats_file = lims.get_file_contents(QC_stats_file_id).data.decode('utf-8').rstrip().split('\n')
             for line in QC_stats_file:
                 if line.startswith('Sample'):
-                    header = line.split('\t')
+                    header = line.rstrip().split('\t')
+                    break
 
     for line_index, line in enumerate(QC_stats_file):
         data = line.rstrip().split('\t')
         try:
             if ' - L' not in data[header.index('Sample')] and 'LPsrWGS' in data[header.index('Project')]:
                 cluster_dict[data[header.index('Sample')].split(' (L')[0].split('_LPsrWGS')[0]] = {
-                    'clusters': float(data[header.index('Clusters')]),
+                    'clusters': float(data[header.index('Clusters')].replace(',','.')),
                     'project': data[header.index('Project')]
                 }
         except (IndexError, ValueError):
