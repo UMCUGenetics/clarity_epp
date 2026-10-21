@@ -42,9 +42,9 @@ def export_labels_container(
     ]
 
     if with_artifacts:
-        template_to_use = "actions/labels_container.tsv"
-    else:
         template_to_use = "actions/labels_container_sample.tsv"
+    else:
+        template_to_use = "actions/labels_container.tsv"
 
     output_file.write(
         render_template(
