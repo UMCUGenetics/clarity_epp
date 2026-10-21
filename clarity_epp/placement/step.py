@@ -49,6 +49,26 @@ def finish_protocol_complete(lims, process_id):
     step.advance()
 
 
+def set_next_actions(stepactions, actions):
+    """Sets next actions (from newer version genologics).
+
+    Args:
+        stepactions (object): StepActions object
+        actions (list): List of dictionaries per artifact contiaining new actions
+    """
+    action_dict = {a["artifact"].uri: a for a in actions}
+    for node in stepactions.root.find("next-actions").findall("next-action"):
+        art_uri = node.attrib.get("artifact-uri")
+        action = action_dict[art_uri]
+        if "action" in action:
+            node.attrib["action"] = action.get("action")
+            if "step-uri" in action:
+                node.attrib["step-uri"] = action.get("step-uri")
+            if "rework-step-uri" in action:
+                node.attrib["rework-step-uri"] = action.get("rework-step-uri")
+    stepactions.put()
+
+
 def get_next_LP_and_DX_dilution_steps(lims, duplicate_step):
     """Gets both available "Dx nM verdunning Myra" next step options and returns these ProtocolSteps.
 
@@ -82,12 +102,15 @@ def get_and_set_next_step_based_on_artifact_extension(lims, process_id):
     duplicate_step = Step(lims, id=process_id)
     LP_step, DX_step = get_next_LP_and_DX_dilution_steps(lims, duplicate_step)
     duplicate_step_actions = duplicate_step.actions
+    new_next_actions = []
     for action in duplicate_step_actions.next_actions:
         extension = action["artifact"].name.split('_')[-1]
         if extension == "LPsrWGS":
             action["action"] = "nextstep"
-            action["step"] = LP_step
+            action["step-uri"] = LP_step.uri
         elif extension == "srWGS":
             action["action"] = "nextstep"
-            action["step"] = DX_step
-    duplicate_step_actions.put()
+            action["step-uri"] = DX_step.uri
+        new_next_actions.append(action)
+    # Used genologics version doesn't work with duplicate_step_actions.put(), use newer version genologics code
+    set_next_actions(duplicate_step_actions, new_next_actions)
