@@ -14,9 +14,9 @@ def get_xml_root_from_data_file(data_file: Path) -> ElementTree.Element:
 
 def build_process_from_xml(
     clarity_mock: MagicMock,
-    artifact_outputs_file,
-    container_file,
-    process_file,
+    artifact_outputs_file: Path,
+    container_file: Path,
+    process_file: Path,
 ) -> Process:
     output_artifact = Artifact(
         lims=clarity_mock,
