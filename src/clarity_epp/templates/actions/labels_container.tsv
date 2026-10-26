@@ -1,6 +1,9 @@
-{% if include_description -%} Description {% endif -%}
-Container
-{% for artifact in artifacts -%}
-    {% if include_description -%} {{ artifact.description }}	{% endif -%}
-    {{ artifact.container_name }}
-{% endfor -%}
+{% set newline = "\r\n" -%}
+{% if include_description -%}Description    {% endif -%}
+Container{{ newline }}
+{%- for artifact in artifacts -%}
+    {% if include_description -%}
+        {{ artifact.description }}
+    {% endif -%}
+    {{ artifact.container_name }}{{ newline }}
+{%- endfor -%}
