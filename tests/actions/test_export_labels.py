@@ -1,6 +1,5 @@
 from io import StringIO
 from unittest.mock import MagicMock, patch
-
 from s4.clarity.process import Process
 
 from clarity_epp.actions import export_labels
