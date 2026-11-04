@@ -19,7 +19,8 @@ def get_artifact_container_labels(
     """Get container artifact labels for given containers.
 
     Args:
-        artifact_containers: Dictionary with container IDs as keys and dictionaries of container positions and Artifact objects as values.
+        artifact_containers:
+            Dictionary with container IDs as keys and dictionaries of container positions and Artifact objects as values.
         description: Custom description to include in the output. Defaults to None.
         placements_to_keep: List of well placements to include in the output.
 

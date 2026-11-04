@@ -31,7 +31,8 @@ def get_artifact_containers_from_process(
 
     Args:
         process: Clarity process object.
-        format_placement_to_position: Format placement to well  well position "A1" (True) or keep original placement format "A:1" (False).
+        format_placement_to_position: Format placement to well  well position "A1" (True) or keep original placement format
+        "A:1" (False).
 
     Returns:
         Dictionary with container IDs as keys and dictionaries of container positions and Artifact objects as values.
