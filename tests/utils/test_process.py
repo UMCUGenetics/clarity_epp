@@ -1,6 +1,7 @@
+import pytest
 from s4.clarity.artifact import Artifact
 from s4.clarity.process import Process
-import pytest
+
 from clarity_epp.utils.process import get_artifact_containers_from_process
 
 

@@ -2,8 +2,8 @@ from io import StringIO
 from unittest.mock import MagicMock, patch
 
 import pytest
-from s4.clarity.artifact import Artifact
 from pytest_unordered import unordered
+from s4.clarity.artifact import Artifact
 
 from clarity_epp.instruments import label_printer
 
