@@ -14,7 +14,7 @@ cli = typer.Typer(no_args_is_help=True)
 
 def get_artifact_container_labels(
     artifact_containers: dict[str, dict[str, Artifact]],
-    description: str | None,
+    description: str | None = None,
 ) -> list[dict[str, str]]:
     """Get container artifact labels for given containers.
 
