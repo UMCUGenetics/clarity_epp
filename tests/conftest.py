@@ -76,7 +76,8 @@ def process_data_tube(custom_shared_datadir: Path, clarity_mock: MagicMock) -> P
 def process_data_tubes(custom_shared_datadir: Path, clarity_mock: MagicMock) -> Process:
     """Process testdata reflecting a process, with two artifacts (samples) located on different containers.
 
-    The containers reflect two tubes, which could have the same placement (e.g., "A:1") and are differentiated by their container IDs.
+    The containers reflect two tubes, which could have the same placement (e.g., "A:1") and are differentiated by their
+    container IDs.
 
     Args:
         custom_shared_datadir: Shared test data directory.
