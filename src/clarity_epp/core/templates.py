@@ -1,3 +1,10 @@
+"""Template rendering utilities for the Clarity EPP application.
+
+Use Jinja2 templates to generate dynamic content through reusable methods, keeping input and output formats readable and easy
+to understand. Separating formatting from application logic improves maintainability and allows output formats to be modified
+without changing the underlying code.
+"""
+
 from jinja2 import Environment, PackageLoader
 
 jinja_env = Environment(
