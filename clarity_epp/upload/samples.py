@@ -78,9 +78,9 @@ def from_helix_worklist(lims, email_settings, input_file):
         'Dx Einddatum': {'column': 'Einddatum'},
         'Dx Gerelateerde onderzoeken': {'column': 'Gerelateerde onderzoeken'},
         'Dx gerelateerd aan oz': {'column': 'Gerelateerd aan'},
-        'Dx gerelateerde oz #': {'column': 'Aantal gerelateerde onderzoeken.'},
+        'Dx gerelateerde oz #': {'column': 'Aantal gerelateerde onderzoeken'},
     }
-    header = input_file.readline().rstrip().split(',')  # expect header on first line
+    header = input_file.readline().rstrip().rstrip('.').split(',')  # expect header on first line
     for udf in udf_column:
         udf_column[udf]['index'] = header.index(udf_column[udf]['column'])
 
