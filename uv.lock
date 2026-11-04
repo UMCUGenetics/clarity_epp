@@ -164,7 +164,6 @@ source = { editable = "." }
 dependencies = [
     { name = "jinja2" },
     { name = "pydantic-settings" },
-    { name = "ruff" },
     { name = "s4-clarity" },
     { name = "tenacity" },
     { name = "typer" },
@@ -182,7 +181,6 @@ dev = [
 requires-dist = [
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "pydantic-settings", specifier = ">=2.13.1" },
-    { name = "ruff", specifier = "==0.16.10" },
     { name = "s4-clarity", specifier = ">=1.8.0" },
     { name = "tenacity", specifier = ">=9.1.4" },
     { name = "typer", specifier = ">=0.24.1" },
@@ -193,7 +191,7 @@ dev = [
     { name = "pytest", specifier = ">=9.0.3" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
     { name = "pytest-mock", specifier = ">=3.15.1" },
-    { name = "ruff", specifier = ">=0.15.11" },
+    { name = "ruff", specifier = "==0.16.10" },
 ]
 
 [[package]]
