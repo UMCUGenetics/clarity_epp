@@ -4,25 +4,30 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pytest_unordered import unordered
 from s4.clarity.artifact import Artifact
-
+import random
 from clarity_epp.instruments import label_printer
+from copy import deepcopy
 
 
-def make_artifact_mock(name: str, container_name: str) -> MagicMock:
+def make_artifact_mock(name: str, container_name: str, container_id: str | None = None) -> MagicMock:
     artifact = MagicMock(spec=Artifact)
     artifact.name = name
     artifact.container = MagicMock()
     artifact.container.name = container_name
+    artifact.container.limsid = container_id if container_id else f"{random.randint(0, 999999):06d}"
     return artifact
 
 
-class TestGetArtifactContainerLabels:
+class TestGetContainerLabels:
     def test_single_artifact_single_container_succeeds(self) -> None:
         artifact_name = "Tube Sample 1"
         artifact_container_name = "Tube 27-1"
         artifact_sample_tube_1 = make_artifact_mock(artifact_name, artifact_container_name)
 
-        labels = label_printer.get_artifact_container_labels({"27-1": {"1:1": artifact_sample_tube_1}})
+        labels = label_printer.get_container_labels(
+            {"27-1": {"1:1": artifact_sample_tube_1}},
+            with_artifacts=True,
+        )
         assert len(labels) == 1
         assert labels[0]["artifact_name"] == artifact_name
         assert labels[0]["container_name"] == artifact_container_name
@@ -33,15 +38,18 @@ class TestGetArtifactContainerLabels:
         artifact_container_name = "Well Plate 27-1"
         artifact_sample_well_1 = make_artifact_mock(artifact_name_1, artifact_container_name)
         artifact_name_2 = "Well Plate Sample 2"
-        artifact_sample_well_2 = make_artifact_mock(artifact_name_2, artifact_container_name)
 
-        labels = label_printer.get_artifact_container_labels(
+        artifact_sample_well_2 = deepcopy(artifact_sample_well_1)
+        artifact_sample_well_2.name = artifact_name_2
+
+        labels = label_printer.get_container_labels(
             {
-                "27-1": {
+                artifact_sample_well_1.container.limsid: {
                     "A:1": artifact_sample_well_1,
                     "B:1": artifact_sample_well_2,
                 }
             },
+            with_artifacts=True,
         )
 
         assert labels == unordered(
@@ -51,6 +59,29 @@ class TestGetArtifactContainerLabels:
             ]
         )
 
+    def test_multiple_artifacts_single_container_no_artifacts_succeeds(self) -> None:
+        artifact_name_1 = "Well Plate Sample 1"
+        artifact_container_name = "Well Plate 27-1"
+        artifact_sample_well_1 = make_artifact_mock(artifact_name_1, artifact_container_name)
+        artifact_name_2 = "Well Plate Sample 2"
+
+        artifact_sample_well_2 = deepcopy(artifact_sample_well_1)
+        artifact_sample_well_2.name = artifact_name_2
+
+        labels = label_printer.get_container_labels(
+            {
+                artifact_sample_well_1.container.limsid: {
+                    "A:1": artifact_sample_well_1,
+                    "B:1": artifact_sample_well_2,
+                }
+            },
+            with_artifacts=False,
+        )
+
+        assert len(labels) == 1
+        assert labels[0]["container_name"] == artifact_container_name
+        assert not labels[0]["description"]
+
     def test_multiple_artifacts_multiple_container_succeeds(self) -> None:
         artifact_name_1 = "Tube Sample 1"
         artifact_container_1 = "Tube 27-1"
@@ -59,11 +90,12 @@ class TestGetArtifactContainerLabels:
         artifact_container_2 = "Tube 27-2"
         artifact_sample_tube_2 = make_artifact_mock(artifact_name_2, artifact_container_2)
 
-        labels = label_printer.get_artifact_container_labels(
+        labels = label_printer.get_container_labels(
             {
-                "27-1": {"1:1": artifact_sample_tube_1},
-                "27-2": {"1:1": artifact_sample_tube_2},
+                artifact_sample_tube_1.container.limsid: {"1:1": artifact_sample_tube_1},
+                artifact_sample_tube_2.container.limsid: {"1:1": artifact_sample_tube_2},
             },
+            with_artifacts=True,
         )
 
         assert labels == unordered(
@@ -77,23 +109,27 @@ class TestGetArtifactContainerLabels:
         artifact_containers = {"27-1": {"1:1": make_artifact_mock("Tube Sample 1", "Tube 27-1")}}
         description = "description_lorem_ipsum"
 
-        labels = label_printer.get_artifact_container_labels(artifact_containers, description=description)
+        labels = label_printer.get_container_labels(artifact_containers, with_artifacts=True, description=description)
 
         assert len(labels) == 1
         assert labels[0]["description"] == description
 
     def test_multi_value_description_succeeds(self) -> None:
+        artifact_container_1 = make_artifact_mock("Tube Sample 1", "Tube 27-1")
+        artifact_container_2 = make_artifact_mock("Tube Sample 2", "Tube 27-2")
         description_1 = "description_lorem_ipsum_1"
         description_2 = "description_lorem_ipsum_2"
 
-        labels = label_printer.get_artifact_container_labels(
+        labels = label_printer.get_container_labels(
             artifact_containers={
-                "27-1": {"1:1": make_artifact_mock("Tube Sample 1", "Tube 27-1")},
-                "27-2": {"1:1": make_artifact_mock("Tube Sample 2", "Tube 27-2")},
+                artifact_container_1.container.limsid: {"1:1": artifact_container_1},
+                artifact_container_2.container.limsid: {"1:1": artifact_container_2},
             },
+            with_artifacts=True,
             description=",".join([description_1, description_2]),
         )
 
+        assert len(labels) == 2
         assert [label["description"] for label in labels] == unordered([description_1, description_2])
 
 

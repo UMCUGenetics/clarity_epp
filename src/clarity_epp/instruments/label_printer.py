@@ -12,8 +12,9 @@ from clarity_epp.utils.process import get_artifact_containers_from_process
 cli = typer.Typer(no_args_is_help=True)
 
 
-def get_artifact_container_labels(
+def get_container_labels(
     artifact_containers: dict[str, dict[str, Artifact]],
+    with_artifacts: bool,
     description: str | None = None,
 ) -> list[dict[str, str]]:
     """Get container artifact labels for given containers.
@@ -21,8 +22,8 @@ def get_artifact_container_labels(
     Args:
         artifact_containers:
             Dictionary with container IDs as keys and dictionaries of container positions and Artifact objects as values.
+        with_artifacts: Whether output should include linked artifact labels.
         description: Custom description to include in the output. Defaults to None.
-        placements_to_keep: List of well placements to include in the output.
 
     Returns:
         List of dictionaries with artifact name, container name, and description.
@@ -30,9 +31,13 @@ def get_artifact_container_labels(
     descriptions = description.split(",") if description and "," in description else None
 
     artifact_container_labels = []
+    containers_added = []
     list_artifact_container_ids = list(artifact_containers)
     for index, container_id in enumerate(sorted(list_artifact_container_ids, reverse=True)):
         for artifact in artifact_containers[container_id].values():
+            if not with_artifacts and container_id in containers_added:
+                continue
+            containers_added.append(container_id)
             artifact_container_labels.append(
                 {
                     "artifact_name": artifact.name,
@@ -62,7 +67,7 @@ def export_labels_container(
     process = clarity.processes.from_limsid(process_id)
 
     artifact_placement_container = get_artifact_containers_from_process(process, format_placement_to_position=True)
-    artifact_container_labels = get_artifact_container_labels(artifact_placement_container, description)
+    artifact_container_labels = get_container_labels(artifact_placement_container, with_artifacts, description)
 
     if with_artifacts:
         template_to_use = "instruments/label_printer_container_sample.tsv"
