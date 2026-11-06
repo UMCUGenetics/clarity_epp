@@ -5,19 +5,18 @@ from clarity_epp.core.templates import render_template
 
 class TestRenderTemplate:
     @pytest.mark.parametrize(
-        ("include_description", "expected_header", "expected_rows"),
+        ("include_description", "expected_rows"),
         [
-            (False, "Container", ["container1"]),
-            (True, "Description    Container", ["desc1    container1"]),
+            (False, ["container1"]),
+            (True, ["desc1    container1"]),
         ],
         ids=["container_only", "container_with_description"],
     )
-    def test_template_label_printer_container(self, include_description, expected_header, expected_rows):
+    def test_template_label_printer_container(self, include_description, expected_rows):
         """Test the render_template function with the label_printer_container_sample template.
 
         Args:
             include_description: Whether to include a description in the output.
-            expected_header: The expected header line in the output.
             expected_rows: The expected data rows in the output.
         """
         container_artifacts = [{"artifact_name": "artifact1", "container_name": "container1", "description": "desc1"}]
@@ -27,23 +26,21 @@ class TestRenderTemplate:
             include_description=include_description,
         )
         rendered_lines = rendered_output.splitlines()
-        assert rendered_lines[0] == expected_header
-        assert rendered_lines[1:] == expected_rows
+        assert rendered_lines == expected_rows
 
     @pytest.mark.parametrize(
-        ("include_description", "expected_header", "expected_rows"),
+        ("include_description", "expected_rows"),
         [
-            (False, "Container    Sample", ["artifact1    container1"]),
-            (True, "Description    Container    Sample", ["desc1    artifact1    container1"]),
+            (False, ["artifact1    container1"]),
+            (True, ["desc1    artifact1    container1"]),
         ],
         ids=["container_with_sample", "container_with_sample_and_description"],
     )
-    def test_template_label_printer_container_with_artifacts(self, include_description, expected_header, expected_rows):
+    def test_template_label_printer_container_with_artifacts(self, include_description, expected_rows):
         """Test the render_template function with the label_printer_container_sample template.
 
         Args:
             include_description: Whether to include a description in the output.
-            expected_header: The expected header line in the output.
             expected_rows: The expected data rows in the output.
         """
         container_artifacts = [{"artifact_name": "artifact1", "container_name": "container1", "description": "desc1"}]
@@ -53,5 +50,4 @@ class TestRenderTemplate:
             include_description=include_description,
         )
         rendered_lines = rendered_output.splitlines()
-        assert rendered_lines[0] == expected_header
-        assert rendered_lines[1:] == expected_rows
+        assert rendered_lines == expected_rows
