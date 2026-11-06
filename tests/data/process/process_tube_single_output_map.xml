@@ -1,0 +1,7 @@
+<prc:process xmlns:prc="http://genologics.com/ri/process" limsid="001-200003" uri="">
+    <type uri="">Tube output test</type>
+    <input-output-map>
+        <input limsid="TUBE_INPUT_1" uri="" />
+        <output limsid="TUBE_SAMPLE_1" output-type="Analyte" output-generation-type="PerInput" uri="" />
+    </input-output-map>
+</prc:process>

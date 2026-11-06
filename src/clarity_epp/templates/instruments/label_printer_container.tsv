@@ -1,0 +1,5 @@
+{% set newline = "\r\n" -%}
+{%- for artifact in artifacts %}
+    {%- if include_description %}{{ artifact.description }}    {% endif -%}
+    {{ artifact.container_name }}{{newline}}
+{%- endfor %}

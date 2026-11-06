@@ -4,6 +4,8 @@ jinja_env = Environment(
     loader=PackageLoader("clarity_epp", "templates"),
     autoescape=False,  # text files, not HTML
     keep_trailing_newline=True,
+    trim_blocks=True,  # Remove the first newline after a block tag.
+    lstrip_blocks=True,  # Remove spaces and tabs before block tags.
 )
 
 

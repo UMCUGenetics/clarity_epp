@@ -111,7 +111,9 @@ dependencies = [
 dev = [
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "pytest-datadir" },
     { name = "pytest-mock" },
+    { name = "pytest-unordered" },
     { name = "ruff" },
 ]
 
@@ -128,7 +130,9 @@ requires-dist = [
 dev = [
     { name = "pytest", specifier = ">=9.0.3" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
+    { name = "pytest-datadir", specifier = ">=1.8.0" },
     { name = "pytest-mock", specifier = ">=3.15.1" },
+    { name = "pytest-unordered", specifier = ">=0.8.0" },
     { name = "ruff", specifier = ">=0.15.11" },
 ]
 
@@ -477,6 +481,18 @@ wheels = [
 ]
 
 [[package]]
+name = "pytest-datadir"
+version = "1.9.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b6/8b/0f3460b1223d3053d355347445bc6d1a85cdc50f1fe80b17bb2b25b2e854/pytest_datadir-1.9.0.tar.gz", hash = "sha256:1e81f37069571fe283b58d8c14386898b62e54543654b6b5335d74313c16b1af", size = 13081, upload-time = "2026-11-03T14:28:15.899Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/35/5d/042a244ff485e2956e1bd548eb9a8ee186a1a9fd4dfc44a3683b62f1bf01/pytest_datadir-1.9.0-py3-none-any.whl", hash = "sha256:e8b071cc486deee3cc5d8fc24c41735396d1ced2e75bbb85d15b6e67b8b41acb", size = 6463, upload-time = "2026-11-03T14:28:14.747Z" },
+]
+
+[[package]]
 name = "pytest-mock"
 version = "3.15.1"
 source = { registry = "https://pypi.org/simple" }
@@ -486,6 +502,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/68/14/eb014d26be205d38ad5ad20d9a80f7d201472e08167f0bb4361e251084a9/pytest_mock-3.15.1.tar.gz", hash = "sha256:1849a238f6f396da19762269de72cb1814ab44416fa73a8686deac10b0d87a0f", size = 34036, upload-time = "2025-09-16T16:37:27.081Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5a/cc/06253936f4a7fa2e0f48dfe6d851d9c56df896a9ab09ac019d70b760619c/pytest_mock-3.15.1-py3-none-any.whl", hash = "sha256:0a25e2eb88fe5168d535041d09a4529a188176ae608a6d249ee65abc0949630d", size = 10095, upload-time = "2025-09-16T16:37:25.734Z" },
+]
+
+[[package]]
+name = "pytest-unordered"
+version = "0.8.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cb/0c/ab409d508c92ea6737875cfc39a696a0e0bd44359915e1376831dfb5a456/pytest_unordered-0.8.0.tar.gz", hash = "sha256:3c369ed86919d3eb35e11fd27bb679c1e3506ead9327e25aa8a07307256be65a", size = 7978, upload-time = "2026-06-16T02:48:53.209Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/dd/d4/2f63db7b6292856f51a76e3eb0acb5e53fd63ae6b6ec4dd11af24985f5b0/pytest_unordered-0.8.0-py3-none-any.whl", hash = "sha256:c792b879032b33141205e1a38a80234eb0117474bf9459ae65557e29837c2a1c", size = 6280, upload-time = "2026-06-16T02:48:52.399Z" },
 ]
 
 [[package]]
