@@ -1,12 +1,13 @@
+import random
+from copy import deepcopy
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
 import pytest
 from pytest_unordered import unordered
 from s4.clarity.artifact import Artifact
-import random
+
 from clarity_epp.instruments import label_printer
-from copy import deepcopy
 
 
 def make_artifact_mock(name: str, container_name: str, container_id: str | None = None) -> MagicMock:
