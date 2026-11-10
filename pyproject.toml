@@ -33,7 +33,6 @@ dev = [
 [tool.ruff]
 line-length = 127
 
-
 [tool.ruff.lint]
 extend-select = [
     "A",   # Prevent builtin shadowing
@@ -54,12 +53,12 @@ extend-select = [
 ]
 
 ignore = [
-    "RUF100", # Some imports are considered unused but are needed for the module to work
+    "RUF100", # Unsafe fix: Removed noqa directives that were still necessary.
     "SIM105", # Explicit try/except can be clearer then contextlib.suppress when exception handling has intentional semantics
     "SIM108", # Ternary expressions can reduce readability for complex or multi-line conditions
     "UP012",  # Explicit string conversion can make the intended type conversion clearer
     "UP015",  # Explicit open modes can make file behavior more obvious
-    "UP030",  # Keep %-style formatting where it improves readability or matches existing code
+    "UP030",  # Allow implicit and explicit positional references in string formatting.
 ]
 
 [tool.ruff.lint.flake8-unused-arguments]
