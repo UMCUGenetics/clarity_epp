@@ -445,7 +445,7 @@ def check_for_missing_samples_in_process(lims, process, cluster_dict, process_sa
     Returns:
         dict: Updated dictionary, qc stats samples that are not from the same LP pool removed
     """
-    for sample in cluster_dict:
+    for sample in list(cluster_dict):
         if sample not in process_samples:
             same_LP_pool = check_for_same_LP_pool(lims, process, sample, lp_pool_process)
             if not same_LP_pool:
@@ -628,10 +628,10 @@ def fill_info_dictionary(dx_analytes, volumes_dict, manually_excluded_samples):
         base_cause_length = len(cause)
 
         sample_name = dx_analyte.name.split('_')[0]
-        if 'excluded' in volumes_dict[sample_name] and volumes_dict[sample_name]['excluded']:
-            cause += f'Volume water buiten range: {volumes_dict[sample_name]["water_range"]} (wel meegenomen in berekening)'
-        elif volumes_dict[sample_name]['clusters'] == 0.0:
+        if volumes_dict[sample_name]['clusters'] == 0.0:
             cause += '0.0 clusters (niet meegenomen in berekening)'
+        elif 'excluded' in volumes_dict[sample_name] and volumes_dict[sample_name]['excluded']:
+            cause += f'Volume water buiten range: {volumes_dict[sample_name]["water_range"]} (wel meegenomen in berekening)'
         elif dx_analyte in manually_excluded_samples:
             cause += 'Handmatig geëxcludeerd (wel meegenomen in berekening)'
 
@@ -702,11 +702,12 @@ def get_info_for_samplesheet_redilute(lims, process, lp_pool_process):
             ):  # _LPsrWGS fraction for same sample
                 nM_pool, volume_sample = get_info_from_LP_process(lims, lowpass_processes, duplicate_analyte)
                 performances_dict[samplename]['volume_sample'] = volume_sample
-        performance = performances_dict[samplename]['performance']
-        volume_water = calculate_volumes_nM_rediluting(nM_pool, volume_sample, size, concentration, performance)
-        volumes_dict = check_excluding_sample(
-            process, dx_analyte, volume_water, performances_dict
-        )
+        if 'excluded' not in performances_dict[samplename] or not performances_dict[samplename]['excluded']:
+            performance = performances_dict[samplename]['performance']
+            volume_water = calculate_volumes_nM_rediluting(nM_pool, volume_sample, size, concentration, performance)
+            volumes_dict = check_excluding_sample(
+                process, dx_analyte, volume_water, performances_dict
+            )
 
     info_dictionary, excluded_samples_info_dictionary = fill_info_dictionary(
         dx_analytes, volumes_dict, manually_excluded_samples
