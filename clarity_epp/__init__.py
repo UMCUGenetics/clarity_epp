@@ -1,12 +1,12 @@
 """Clarity epp package."""
 
-from email import encoders
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email.mime.text import MIMEText
+import mimetypes
 import re
 import smtplib
-import mimetypes
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from genologics.entities import Artifact
 
@@ -31,7 +31,15 @@ def get_sequence_name(artifact, monsternummer="helix"):
 
 
 def get_sample_artifacts_from_pool(lims, pool_artifact):
-    """Get sample artifacts from (sequence) pool."""
+    """Gets all sample artifacts from pool artifact.
+
+    Args:
+        lims (object): Lims connection
+        pool_artifact (object): Lims pool artifact object
+
+    Returns:
+        list: Filled list containing sample artifacts
+    """
     sample_artifacts = []
     pool_artifact_demux = lims.get(pool_artifact.uri + '/demux')
     for node in pool_artifact_demux.getiterator('artifact'):

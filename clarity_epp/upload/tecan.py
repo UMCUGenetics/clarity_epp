@@ -4,6 +4,7 @@ import re
 
 from genologics.entities import Process
 
+import config
 from clarity_epp.upload.utils import txt_to_bool
 
 
@@ -82,7 +83,7 @@ def results_qc(lims, process_id):
                 for analyte in process.analytes()[0]:
                     if analyte.name == artifact.name:
                         if 'Dx Sample registratie zuivering' in analyte.parent_process.type.name:
-                            if sample_concentration <= 29.3:
+                            if sample_concentration <= config.manual_normalization_concentration_limit_tecan:
                                 artifact.samples[0].udf['Dx norm. manueel'] = True
                             else:
                                 artifact.samples[0].udf['Dx norm. manueel'] = False
@@ -179,3 +180,33 @@ def results_purify_mix(lims, process_id):
             artifact.udf['Dx Concentratie fluorescentie (ng/ul)'] = tecan_result[sample.udf['Dx Monsternummer']]['conc']
             artifact.udf['Dx QC status'] = tecan_result[sample.udf['Dx Monsternummer']]['norm']
         artifact.put()
+
+
+def get_portion_results_of_normalization(lims, process_id):
+    """Get portion results from 'Tecan Fluent 480 normalisatie bestand' and upload to artifacts udf 'Dx # porties'.
+
+    Args:
+        lims (object): Lims connection
+        process_id (str): Process ID
+    """
+    process = Process(lims, id=process_id)
+
+    # Find and parse Tecan Fluent 480 normalisatie bestand
+    tecan_result = {}
+    for result_file in process.result_files():
+        if result_file.name == 'Tecan Fluent 480 normalisatie bestand':
+            file_data = lims.get_file_contents(result_file.files[0].id).split('\n')
+            header = file_data[0].rstrip().split(';')
+            for line in file_data[1:]:
+                if line.rstrip():
+                    data = line.rstrip().split(';')
+                    tecan_result[data[header.index('sampleID')]] = {
+                        'portions': int(data[header.index('aantalPorties')])
+                    }
+            break  # File found exit loop
+
+    # Set portion values on artifacts
+    for analyte in process.analytes()[0]:
+        if analyte.name in tecan_result:
+            analyte.udf['Dx # porties'] = tecan_result[analyte.name]['portions']
+            analyte.put()

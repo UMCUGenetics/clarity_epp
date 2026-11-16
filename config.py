@@ -34,12 +34,12 @@ stoftestcode_workflow = {
     stoftestcode_wes: '1852',  # DEV Dx Exoom Magnis v2.1
     stoftestcode_wes_duplo: '1852',  # DEV Dx Exoom Magnis v2.1
     stoftestcode_mip: '1651',  # DEV Dx smMIP v1.2
-    stoftestcode_srwgs: '2602',  # DEV Dx srWGS Callisto v2.0
-    stoftestcode_srwgs_duplo: '2602',  # DEV Dx srWGS Callisto v2.0
+    stoftestcode_srwgs: '2704',  # DEV Dx srWGS Callisto v2.1
+    stoftestcode_srwgs_duplo: '2704',  # DEV Dx srWGS Callisto v2.1
 }
 
 # Update exome equivalent for certain indications
-indications_exome_equivalent = {'UBA1': 5, 'PID09': 5}
+indications_exome_equivalent = {}  # UBA1 and PID09 vervallen
 
 # Export meetw protocol steps WES
 meetw_zui_wes_processes = [
@@ -188,6 +188,7 @@ fragment_length = {
     'Exoom.analy_IL_versieVP_LP0002_srWGS': 600,
     'Genp.analy_IL_versieVP_LP0002_srWGS': 600,
     'SingleGeneAnaly_IL_versieVP_LP0002_srWGS': 600,
+    'DxExtern_versieVP_LP0002_srWGS': 600,
     'default': '',
 }
 
@@ -211,7 +212,17 @@ flowcell_volumes = {
 clusters_per_sample = 4.5
 
 # Non DX indications via Dx srWGS Callisto v2.0 flow
-lpsrwgsindicaties = ["PG", "DxVal"]
+lpsrwgsindicaties = ["PG", "DxVal", "DxExternDx"]
 
 # Non external project applications for clarity_epp.py export manual sequence_pools
-non_external_applications = ["DX", "FG", "DxVal"]
+non_external_applications = ["DX", "FG", "DxVal", "DxExternDx"]
+
+# Concentration limits (<=) for Dx norm. manueel udf based on type of measurement
+manual_normalization_concentration_limits = {
+    'Fluorescentiemeter': 37.7,
+    'Spectrofotometer': 75.4
+}
+
+# Concentration limits (<=) for Dx norm. manueel udf for Qubit and Tecan QC steps
+manual_normalization_concentration_limit_qubit = 37.7
+manual_normalization_concentration_limit_tecan = 37.7

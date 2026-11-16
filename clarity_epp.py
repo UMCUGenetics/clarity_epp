@@ -1,17 +1,16 @@
 #!venv/bin/python
 """Clarity epp application."""
 
-import sys
 import argparse
+import sys
 
 import genologics.lims
-from tenacity import Retrying, RetryError, stop_after_attempt, wait_fixed
+from tenacity import RetryError, Retrying, stop_after_attempt, wait_fixed
 
-import clarity_epp.upload
 import clarity_epp.export
-import clarity_epp.qc
 import clarity_epp.placement
-
+import clarity_epp.qc
+import clarity_epp.upload
 import config
 
 # Setup lims connection and try connection twice
@@ -137,7 +136,7 @@ def export_myra(args):
     elif args.type == 'dilute_LP':
         clarity_epp.export.myra.get_input_containers_and_generate_samplesheet_dilute(lims, args.process_id, args.output_file)
     elif args.type == 'redilute_DX':
-        clarity_epp.export.myra.get_input_containers_and_generate_samplesheet_redilute(lims, args.process_id, args.output_file)
+        clarity_epp.export.myra.check_pool_and_generate_samplesheet_redilute(lims, args.process_id, args.multiple_output_files)
     elif args.type == 'callisto_pools':
         clarity_epp.export.myra.get_input_containers_and_generate_samplesheet_callisto_pools(
             lims, args.process_id, args.output_file
@@ -206,6 +205,8 @@ def upload_tecan_results(args):
         clarity_epp.upload.tecan.results_purify_normalise(lims, args.process_id)
     elif args.type == 'purify_mix':
         clarity_epp.upload.tecan.results_purify_mix(lims, args.process_id)
+    elif args.type == 'portions':
+        clarity_epp.upload.tecan.get_portion_results_of_normalization(lims, args.process_id)
 
 
 def upload_tapestation_results(args):
@@ -274,6 +275,8 @@ def placement_artifact_set(args):
         clarity_epp.placement.artifact.set_runid_name(lims, args.process_id)
     elif args.type == 'norm_udf':
         clarity_epp.placement.artifact.set_norm_manual_udf(lims, args.process_id)
+    elif args.type == 'lp_pool_udf':
+        clarity_epp.placement.artifact.set_udf_lpsrwgs_pool(lims, args.process_id)
 
 
 def placement_route_artifact(args):
@@ -300,6 +303,11 @@ def placement_patient_pools(args):
 def placement_complete_step(args):
     """Complete protocol step (Dx Mark protocol complete)."""
     clarity_epp.placement.step.finish_protocol_complete(lims, args.process_id)
+
+
+def placement_next_step(args):
+    """Set next step."""
+    clarity_epp.placement.step.get_and_set_next_step_based_on_artifact_extension(lims, args.process_id)
 
 
 def placement_tecan(args):
@@ -477,7 +485,9 @@ if __name__ == "__main__":
 
     parser_upload_tecan = subparser_upload.add_parser('tecan', help='Upload tecan results')
     parser_upload_tecan.add_argument('process_id', help='Clarity lims process id')
-    parser_upload_tecan.add_argument('type', choices=['qc', 'purify_normalise', 'purify_mix'], help='Tecan process type')
+    parser_upload_tecan.add_argument(
+        'type', choices=['qc', 'purify_normalise', 'purify_mix', 'portions'], help='Tecan process type'
+    )
     parser_upload_tecan.set_defaults(func=upload_tecan_results)
 
     parser_upload_magnis = subparser_upload.add_parser('magnis', help='Upload magnis results')
@@ -526,7 +536,9 @@ if __name__ == "__main__":
     parser_placement_automatic.set_defaults(func=placement_automatic)
 
     parser_placement_artifact = subparser_placement.add_parser('artifact', help='Change artifact name to sequence name')
-    parser_placement_artifact.add_argument('type', choices=['sequence_name', 'run_id', 'norm_udf'], help='Check type')
+    parser_placement_artifact.add_argument(
+        'type', choices=['sequence_name', 'run_id', 'norm_udf', 'lp_pool_udf'], help='Check type'
+    )
     parser_placement_artifact.add_argument('process_id', help='Clarity lims process id')
     parser_placement_artifact.set_defaults(func=placement_artifact_set)
 
@@ -545,6 +557,10 @@ if __name__ == "__main__":
     )
     parser_placement_complete_step.add_argument('process_id', help='Clarity lims process id')
     parser_placement_complete_step.set_defaults(func=placement_complete_step)
+
+    parser_placement_next_step = subparser_placement.add_parser('next_step', help='Set next step')
+    parser_placement_next_step.add_argument('process_id', help='Clarity lims process id')
+    parser_placement_next_step.set_defaults(func=placement_next_step)
 
     parser_placement_unpooling = subparser_placement.add_parser('unpooling', help='Unpooling of sequencing pool')
     parser_placement_unpooling.add_argument('process_id', help='Clarity lims process id')

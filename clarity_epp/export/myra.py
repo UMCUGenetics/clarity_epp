@@ -5,8 +5,13 @@ import sys
 from genologics.entities import Process
 
 from clarity_epp.export.utils import (
-    create_samplesheet, extract_well_from_reagent_label, get_info_from_LP_process, get_input_containers, get_process_types,
-    get_qc_values_parent_process_artifact, sort_dict_by_nested_well_location
+    create_samplesheet,
+    extract_well_from_reagent_label,
+    get_info_from_LP_process,
+    get_input_containers,
+    get_process_types,
+    get_qc_values_parent_process_artifact,
+    sort_dict_by_nested_well_location,
 )
 from clarity_epp.placement.barcode import check_plate_id_with_used_reagent_labels
 
@@ -233,23 +238,37 @@ def get_info_for_samplesheet_placement_callisto(process, input_container):
     return info_dictionary
 
 
-def generate_samplesheet_callisto_strip(process, input_container):
-    """Generates a Myra samplesheet for pipetting from Callisto strip.
+def generate_samplesheets_callisto_strip(process, input_containers):
+    """Generates Myra samplesheets for pipetting from Callisto strip.
 
     Args:
         process (object): Lims Process object
-        input_container (str): Input container name
+        input_containers (list): List of input container names
 
     Returns:
-        str: Myra Placement Callisto samplesheet
+        list: List of generated Myra Placement Callisto samplesheets
     """
-    info_dictionary = get_info_for_samplesheet_placement_callisto(process, input_container)
-    sorted_info_dictionary = sort_dict_by_nested_well_location(
-        info_dictionary, "well_input", "24_well_barcoded_callisto_strip"
+    samplesheets = []
+    combined_info_dictionary = {}
+
+    for input_container in input_containers:
+        info_dictionary = get_info_for_samplesheet_placement_callisto(process, input_container)
+        combined_info_dictionary.update(info_dictionary)
+        sorted_info_dictionary = sort_dict_by_nested_well_location(
+            info_dictionary, "well_input", "24_well_barcoded_callisto_strip"
+        )
+        samplesheet_content = {"samples": sorted_info_dictionary}
+        samplesheet = create_samplesheet("Samplesheet_Myra_Placement_Callisto.csv", samplesheet_content)
+        samplesheets.append(samplesheet)
+
+    sorted_combined_info_dictionary = sort_dict_by_nested_well_location(
+        combined_info_dictionary, "well_output", "96_well_plate"
     )
-    samplesheet_content = {"samples": sorted_info_dictionary}
-    samplesheet = create_samplesheet("Samplesheet_Myra_Placement_Callisto.csv", samplesheet_content)
-    return samplesheet
+    combined_samplesheet_content = {"samples": sorted_combined_info_dictionary}
+    combined_samplesheet = create_samplesheet("Samplesheet_Myra_Placement_Callisto.csv", combined_samplesheet_content)
+    samplesheets.append(combined_samplesheet)
+
+    return samplesheets
 
 
 def get_input_containers_and_generate_samplesheet_callisto_strip(lims, process_id, output_files):
@@ -262,20 +281,23 @@ def get_input_containers_and_generate_samplesheet_callisto_strip(lims, process_i
     """
     process = Process(lims, id=process_id)
     input_containers = get_input_containers(process)
+    samplesheets = generate_samplesheets_callisto_strip(process, input_containers)
 
     number_of_inputs = len(input_containers)
-    samplesheet_1 = generate_samplesheet_callisto_strip(process, input_containers[0])
+    samplesheet_1 = samplesheets[0]
     if number_of_inputs > 1:
-        samplesheet_2 = generate_samplesheet_callisto_strip(process, input_containers[1])
+        samplesheet_2 = samplesheets[1]
     else:
         samplesheet_2 = "geen 2e input container"
     if number_of_inputs > 2:
-        samplesheet_3 = generate_samplesheet_callisto_strip(process, input_containers[2])
+        samplesheet_3 = samplesheets[2]
     else:
         samplesheet_3 = "geen 3e input container"
+    samplesheet_all = samplesheets[-1]
     output_files[0].write(samplesheet_1)
     output_files[1].write(samplesheet_2)
     output_files[2].write(samplesheet_3)
+    output_files[3].write(samplesheet_all)
 
 
 def calculate_volumes_nM_diluting(nM_pool, ul_sample, size, concentration):
@@ -387,28 +409,49 @@ def check_for_missing_samples_in_file(process, cluster_dict):
     return process_samples
 
 
-def check_for_missing_samples_in_process(cluster_dict, process_samples):
-    """Checks if all samples in cluster_dict are in process_samples, adding any samples that are not to the returning
-    missing_samples list, also removing these samples from cluster_dict and returning this updated dictionary
+def check_for_same_LP_pool(lims, process, sample_name, lp_pool_process):
+    """Checks if sample is from the same LP pool (CF Dx LPpool) as the samples in the process, returning True if so, else False
 
     Args:
-        cluster_dict (dict): Dictionary containing per sample: 'clusters' (number of clusters) and 'project'
-        process_samples (list): List of sample names (without _extension) in process
+        lims (object): Lims connection
+        process (object): Lims Process object
+        sample_name (str): Sample name (without _extension)
+        lp_pool_process (str): LP pool of the samples in the process
 
     Returns:
-        tuple[list,dict]:
-        List with missing sample names &
-        Updated dictionary, missing samples removed
+        bool: True if sample is from the same LP pool, else False
     """
-    missing_samples = []
-    for sample in cluster_dict:
+    artifact_name = f"{sample_name}_srWGS"
+    srwgs_artifact = lims.get_artifacts(name=artifact_name, process_type=process.parent_processes()[0].type.name)[0]
+    lp_pool_sample = srwgs_artifact.udf.get('Dx LPpool')
+
+    if lp_pool_sample == lp_pool_process:
+        return True
+    else:
+        return False
+
+
+def check_for_missing_samples_in_process(lims, process, cluster_dict, process_samples, lp_pool_process):
+    """Checks if samples in cluster_dict (samples in QC stats file) are in process_samples (samples in process), and if they
+    aren't and sample isn't from the same LP pool, removes these samples from cluster_dict and returns this updated dictionary
+
+    Args:
+        lims (object): Lims connection
+        process (object): Lims Process object
+        cluster_dict (dict): Dictionary containing per sample: 'clusters' (number of clusters) and 'project'
+        process_samples (list): List of sample names (without _extension) in process
+        lp_pool_process (str): LP pool of the samples in the process
+
+    Returns:
+        dict: Updated dictionary, qc stats samples that are not from the same LP pool removed
+    """
+    for sample in list(cluster_dict):
         if sample not in process_samples:
-            missing_samples.append(sample)
+            same_LP_pool = check_for_same_LP_pool(lims, process, sample, lp_pool_process)
+            if not same_LP_pool:
+                cluster_dict.pop(sample)
 
-    for missing_sample in missing_samples:
-        cluster_dict.pop(missing_sample)
-
-    return missing_samples, cluster_dict
+    return cluster_dict
 
 
 def exclude_samples_with_zero_clusters(process, cluster_dict):
@@ -429,18 +472,17 @@ def exclude_samples_with_zero_clusters(process, cluster_dict):
     return cluster_dict
 
 
-def get_LP_QC_stats(lims, process):
+def get_LP_QC_stats(lims, process, lp_pool_process):
     """Gets number of clusters for LPsrWGS (project) samples from uploaded QC stats LowPass file and checks samples in
     file with samples in process, exiting with message if error in parsing file, else returning dictionary and list
 
     Args:
         lims (object): Lims connection
         process (object): Lims Process object
+        lp_pool_process (str): LP pool of the samples in the process
 
     Returns:
-        tuple[dict,list]:
-        Dictionary containing per sample: 'clusters' (number of clusters) and 'project' &
-        List containing samplenames of samples present in QC stats LowPass file, but not in process analytes
+        dict: Dictionary containing per sample: 'clusters' (number of clusters) and 'project'
     """
     cluster_dict = {}
     for output in process.all_outputs(unique=True):
@@ -449,41 +491,40 @@ def get_LP_QC_stats(lims, process):
             QC_stats_file = lims.get_file_contents(QC_stats_file_id).data.decode('utf-8').rstrip().split('\n')
             for line in QC_stats_file:
                 if line.startswith('Sample'):
-                    header = line.split('\t')
+                    header = line.rstrip().split('\t')
+                    break
 
     for line_index, line in enumerate(QC_stats_file):
         data = line.rstrip().split('\t')
         try:
-            if ' - L' not in data[header.index('Sample')]:
-                if 'LPsrWGS' in data[header.index('Project')]:
-                    cluster_dict[data[header.index('Sample')].split(' (L')[0].split('_LPsrWGS')[0]] = {
-                        'clusters': float(data[header.index('Clusters')]),
-                        'project': data[header.index('Project')]
-                    }
+            if ' - L' not in data[header.index('Sample')] and 'LPsrWGS' in data[header.index('Project')]:
+                cluster_dict[data[header.index('Sample')].split(' (L')[0].split('_LPsrWGS')[0]] = {
+                    'clusters': float(data[header.index('Clusters')].replace(',','.')),
+                    'project': data[header.index('Project')]
+                }
         except (IndexError, ValueError):
             message = (f'Error parsing file: line {line_index}')
             sys.exit(message)
 
     process_samples = check_for_missing_samples_in_file(process, cluster_dict)
     cluster_dict = exclude_samples_with_zero_clusters(process, cluster_dict)
-    missing_samples, cluster_dict = check_for_missing_samples_in_process(cluster_dict, process_samples)
+    cluster_dict = check_for_missing_samples_in_process(lims, process, cluster_dict, process_samples, lp_pool_process)
 
-    return cluster_dict, missing_samples
+    return cluster_dict
 
 
-def calculate_performances(cluster_dict, excluded_samples):
+def calculate_performances(cluster_dict):
     """Calculates performance per sample based on number of clusters and updates cluster_dict with calculated performance
 
     Args:
         cluster_dict (dict): Dictionary containing per sample: 'clusters' (number of clusters) and 'project'
-        excluded_samples (list): List containing all excluded analytes (udf 'Dx Geëxcludeerd LP' = True) in process
 
     Returns:
-        dict: Updated dictionary cluster_dict ('performance' per sample added)
+        tuple[dict, float, int]:
+        Updated dictionary cluster_dict ('performance' per sample added) &
+        Average number of clusters &
+        Number of samples
     """
-    for artifact in excluded_samples:
-        cluster_dict[artifact.name.split('_')[0]]['excluded'] = True
-
     nr_samples = 0
     total_clusters = 0.0
     for sample in cluster_dict:
@@ -498,7 +539,7 @@ def calculate_performances(cluster_dict, excluded_samples):
             sample_performance = cluster_dict[sample]['clusters'] / average_clusters
             cluster_dict[sample]['performance'] = sample_performance
 
-    return cluster_dict
+    return cluster_dict, average_clusters, nr_samples
 
 
 def calculate_volumes_nM_rediluting(nM_pool, ul_sample, size, concentration, performance):
@@ -533,154 +574,228 @@ def get_excluded_samples(process):
     excluded_samples = []
     analytes = process.analytes()[0]
     for analyte in analytes:
-        if 'Dx Geëxcludeerd LP' in analyte.udf and analyte.udf['Dx Geëxcludeerd LP']:
+        if analyte.udf.get('Dx Geëxcludeerd LP'):
             excluded_samples.append(analyte)
     return excluded_samples
 
 
-def check_excluding_sample(dx_analyte, volume_water, performances_dict, new_samples_excluded):
+def check_excluding_sample(process, dx_analyte, volume_water, performances_dict):
     """Checks if sample needs to be excluded (based on volume_water);
     sample excluded: sets udf 'Dx Geëxcludeerd LP' and new_samples_excluded to True,
     sample not excluded: adds volume_water to performances_dict
 
     Args:
+        process (object): Lims Process object
         dx_analyte (object): Artifact object
         volume_water (float): Calculated volume water
         performances_dict (dict): Dictionary containing 'performance' per sample
-        new_samples_excluded (bool): Boolean
 
     Returns:
-        tuple[dict,bool]:
-        Supplied dictionary (performances_dict) updated with 'volume_water' per sample if sample is not excluded &
-        Boolean (set to True if sample is excluded)
+        dict: Supplied dictionary (performances_dict) updated with 'volume_water' per sample and 'excluded' if sample excluded
     """
-    if volume_water < 0 or volume_water > 180:
+    water_limit_low = float(process.udf['Dx Flowcell type (watervolume)'].strip(' ul)').split('(')[-1])
+    water_limit_high = 180
+    sample_name = dx_analyte.name.split('_')[0]
+
+    if volume_water < water_limit_low or volume_water > water_limit_high:
         dx_analyte.udf['Dx Geëxcludeerd LP'] = True
         dx_analyte.put()
-        new_samples_excluded = True
-    else:
-        performances_dict[dx_analyte.name.split('_')[0]]['volume_water'] = volume_water
-    return performances_dict, new_samples_excluded
+        performances_dict[sample_name]['excluded'] = True
+
+    performances_dict[sample_name]['volume_water'] = volume_water
+    performances_dict[sample_name]['water_range'] = f'{water_limit_low}-{water_limit_high}'
+
+    return performances_dict
 
 
-def fill_info_dictionary(dx_analytes, input_container, volumes_dict):
-    """Fills a new dictionary with all the necessary info for the samplesheet
+def fill_info_dictionary(dx_analytes, volumes_dict, manually_excluded_samples):
+    """Fills two new dictionaries with all the necessary info for the samplesheets
 
     Args:
         dx_analytes (list): List of Artifact objects
-        input_container (str): Name of input container
         volumes_dict (dict): Dictionary containing 'volume_sample' and 'volume_water' per sample
+        manually_excluded_samples (list): List containing excluded analytes (udf 'Dx Geëxcludeerd LP' == True)
 
     Returns:
-        dict: Dictionary filled with info for filling samplesheet
+        tuple[dict,dict]:
+        Dictionary filled with info for filling samplesheet &
+        Dictionary filled with info for filling excluded samplesheet
     """
     info_dictionary = {}
+    info_dictionary_excluded_samples = {}
     for dx_analyte in dx_analytes:
+        cause = 'Exclusie reden: '
+        base_cause_length = len(cause)
+
+        sample_name = dx_analyte.name.split('_')[0]
+        if volumes_dict[sample_name]['clusters'] == 0.0:
+            cause += '0.0 clusters (niet meegenomen in berekening)'
+        elif 'excluded' in volumes_dict[sample_name] and volumes_dict[sample_name]['excluded']:
+            cause += f'Volume water buiten range: {volumes_dict[sample_name]["water_range"]} (wel meegenomen in berekening)'
+        elif dx_analyte in manually_excluded_samples:
+            cause += 'Handmatig geëxcludeerd (wel meegenomen in berekening)'
+
         input_artifact = dx_analyte.input_artifact_list()[0]
-        if input_artifact.container.name == input_container:
-            sample_name = dx_analyte.name.split('_')[0]
-            if 'excluded' not in volumes_dict[sample_name] or not volumes_dict[sample_name]['excluded']:
-                info_dictionary[dx_analyte.name] = {
-                    "sample": dx_analyte.name,
-                    "input": input_artifact.container.name,
-                    "well_input": input_artifact.location[1].replace(':', ''),
-                    "output": dx_analyte.container.name,
-                    "well_output": dx_analyte.location[1].replace(':', ''),
-                    "volume_sample": f"{volumes_dict[sample_name]['volume_sample']:.1f}",
-                    "volume_water": f"{volumes_dict[sample_name]['volume_water']:.1f}"
-                }
-    return info_dictionary
+        if len(cause) > base_cause_length:
+            if volumes_dict[sample_name]['clusters'] == 0.0:
+                volume_sample = ''
+                volume_water = ''
+            else:
+                volume_sample = f"{volumes_dict[sample_name]['volume_sample']:.1f}"
+                volume_water = f"{volumes_dict[sample_name]['volume_water']:.1f}"
+
+            info_dictionary_excluded_samples[dx_analyte.name] = {
+                "sample": dx_analyte.name,
+                "input": input_artifact.container.name,
+                "well_input": input_artifact.location[1].replace(':', ''),
+                "output": dx_analyte.container.name,
+                "well_output": dx_analyte.location[1].replace(':', ''),
+                "volume_sample": volume_sample,
+                "volume_water": volume_water,
+                "cause": cause
+            }
+        else:
+            info_dictionary[dx_analyte.name] = {
+                "sample": dx_analyte.name,
+                "input": input_artifact.container.name,
+                "well_input": input_artifact.location[1].replace(':', ''),
+                "output": dx_analyte.container.name,
+                "well_output": dx_analyte.location[1].replace(':', ''),
+                "volume_sample": f"{volumes_dict[sample_name]['volume_sample']:.1f}",
+                "volume_water": f"{volumes_dict[sample_name]['volume_water']:.1f}"
+            }
+    return info_dictionary, info_dictionary_excluded_samples
 
 
-def get_info_for_samplesheet_redilute(lims, process, input_container):
+def get_info_for_samplesheet_redilute(lims, process, lp_pool_process):
     """Collects information for the Myra samplesheet redilute from the given process input container and
     returns a dictionary containing this information organised by analytes and a list with missing samples
 
     Args:
         lims (object): Lims connection
         process (object): Lims Process object
-        input_container (str): Input container name
+        lp_pool_process (str): LP pool of the samples in the process
 
     Returns:
-        tuple[dict,list]:
+        tuple[dict,dict,float,int]:
         Dictionary containing the information for the samplesheet in a nested dictionary per analyte &
-        List containing samplenames of samples present in QC stats LowPass file, but not in process analytes
+        Dictionary containing the information for the excluded samplesheet &
+        Float Average number of clusters &
+        Int Number of samples
     """
-    cluster_dict, missing_samples = get_LP_QC_stats(lims, process)
+    manually_excluded_samples = get_excluded_samples(process)
+
+    cluster_dict = get_LP_QC_stats(lims, process, lp_pool_process)
     lowpass_processes = get_process_types(lims, ["Dx nM verdunning Myra LP"])
 
-    new_samples_excluded = True
-    while new_samples_excluded:
-        new_samples_excluded = False
-        excluded_samples = get_excluded_samples(process)
-        performances_dict = calculate_performances(cluster_dict, excluded_samples)
-        dx_analytes = process.analytes()[0]
+    performances_dict, average_clusters, nr_samples = calculate_performances(cluster_dict)
+    dx_analytes = process.analytes()[0]
 
-        for dx_analyte in dx_analytes:
-            if dx_analyte not in excluded_samples:
-                input_artifact = dx_analyte.input_artifact_list()[0]
-                if input_artifact.container.name == input_container:
-                    samplename = dx_analyte.name.split('_')[0]
-                    size, concentration = get_qc_values_parent_process_artifact(input_artifact)
-                    duplicate_process = input_artifact.parent_process
-                    for duplicate_analyte in duplicate_process.analytes()[0]:
-                        if (input_artifact.name.split("_")[0] == duplicate_analyte.name.split("_")[0] and
-                                input_artifact.id != duplicate_analyte.id):  # _LPsrWGS fraction for same sample
-                            nM_pool, volume_sample = get_info_from_LP_process(lims, lowpass_processes, duplicate_analyte)
-                            performances_dict[samplename]['volume_sample'] = volume_sample
-                    performance = performances_dict[samplename]['performance']
-                    volume_water = calculate_volumes_nM_rediluting(nM_pool, volume_sample, size, concentration, performance)
-                    volumes_dict, new_samples_excluded = check_excluding_sample(
-                        dx_analyte, volume_water, performances_dict, new_samples_excluded
-                    )
+    for dx_analyte in dx_analytes:
+        input_artifact = dx_analyte.input_artifact_list()[0]
+        samplename = dx_analyte.name.split('_')[0]
+        size, concentration = get_qc_values_parent_process_artifact(input_artifact)
+        duplicate_process = input_artifact.parent_process
+        for duplicate_analyte in duplicate_process.analytes()[0]:
+            if (input_artifact.name.split("_")[0] == duplicate_analyte.name.split("_")[0]
+                    and input_artifact.id != duplicate_analyte.id
+            ):  # _LPsrWGS fraction for same sample
+                nM_pool, volume_sample = get_info_from_LP_process(lims, lowpass_processes, duplicate_analyte)
+                performances_dict[samplename]['volume_sample'] = volume_sample
+        if 'excluded' not in performances_dict[samplename] or not performances_dict[samplename]['excluded']:
+            performance = performances_dict[samplename]['performance']
+            volume_water = calculate_volumes_nM_rediluting(nM_pool, volume_sample, size, concentration, performance)
+            volumes_dict = check_excluding_sample(
+                process, dx_analyte, volume_water, performances_dict
+            )
 
-    info_dictionary = fill_info_dictionary(dx_analytes, input_container, volumes_dict)
+    info_dictionary, excluded_samples_info_dictionary = fill_info_dictionary(
+        dx_analytes, volumes_dict, manually_excluded_samples
+    )
 
-    return info_dictionary, missing_samples
+    return info_dictionary, excluded_samples_info_dictionary, average_clusters, nr_samples
 
 
-def generate_samplesheet_redilute(lims, process, input_containers):
+def generate_samplesheet_redilute(lims, process, lp_pool_process):
     """Generates a Myra samplesheet for nM rediluting after LowPass sequencing.
 
     Args:
         lims (object): Lims connection
         process (object): Lims Process object
-        input_containers (list): List of input container names
+        lp_pool_process (str): LP pool of the samples in the process
 
     Returns:
-        tuple[str,list]:
+        tuple[str,str]:
         Myra Dilute samplesheet &
-        List containing samplenames of samples present in QC stats LowPass file, but not in process analytes
+        Myra Dilute excluded samplesheet
     """
-    info_dictionary = {}
-    for input_container in input_containers:
-        info_input_dictionary, missing_samples = get_info_for_samplesheet_redilute(lims, process, input_container)
-        info_dictionary.update(info_input_dictionary)
+    info_dictionary, excluded_samples_info_dictionary, average_clusters, nr_samples = (
+        get_info_for_samplesheet_redilute(lims, process, lp_pool_process)
+    )
     sorted_info_dictionary = sort_dict_by_nested_well_location(info_dictionary, "well_output", "96_well_plate")
     samplesheet_content = {"samples": sorted_info_dictionary}
     samplesheet = create_samplesheet("Samplesheet_Myra_Dilute.csv", samplesheet_content)
 
-    return samplesheet, missing_samples
+    sorted_excluded_info_dictionary = sort_dict_by_nested_well_location(
+        excluded_samples_info_dictionary, "well_output", "96_well_plate"
+    )
+    samplesheet_content_excluded_samples = {
+        "samples": sorted_excluded_info_dictionary, "average_clusters": average_clusters, "nr_samples": nr_samples
+    }
+    samplesheet_excluded_samples = create_samplesheet(
+        "Samplesheet_Myra_Dilute_Excluded_Samples.csv", samplesheet_content_excluded_samples
+    )
+
+    return samplesheet, samplesheet_excluded_samples
 
 
-def get_input_containers_and_generate_samplesheet_redilute(lims, process_id, output_file):
+def check_all_samples_same_LP_pool(process):
+    """Checks if all samples in process are from the same LP pool (CF Dx LPpool), returning True if so, else False
+
+    Args:
+        process (object): Lims Process object
+
+    Returns:
+        tuple[bool,str]:
+        Boolean True if all samples are from the same LP pool, else False &
+        LP pool of the samples in the process
+    """
+    input_artifacts = process.all_inputs()
+    lp_pool_values = set()
+    for input_artifact in input_artifacts:
+        lp_pool = input_artifact.udf.get('Dx LPpool')
+        lp_pool_values.add(lp_pool)
+
+    check_result = len(lp_pool_values) == 1 and None not in lp_pool_values
+    if check_result:
+        lp_pool_process = list(lp_pool_values)[0]
+    else:
+        lp_pool_process = None
+
+    return check_result, lp_pool_process
+
+
+def check_pool_and_generate_samplesheet_redilute(lims, process_id, output_files):
     """Gets all input_containers and generates a redilute samplesheet.
 
     Args:
         lims (object): Lims connection
         process_id (str): Process ID
-        output_file (file): File path for samplesheet
+        output_files (list): List of file paths for samplesheet
     """
     process = Process(lims, id=process_id)
-    input_containers = get_input_containers(process)
-    samplesheet, missing_samples = generate_samplesheet_redilute(lims, process, input_containers)
+    check_result, lp_pool_process = check_all_samples_same_LP_pool(process)
 
-    output_file.write(samplesheet)
+    if check_result:
+        samplesheet, samplesheet_excluded_samples = generate_samplesheet_redilute(lims, process, lp_pool_process)
 
-    if missing_samples:
+        output_files[0].write(samplesheet)
+        with open(output_files[1].name, 'w', encoding='utf-8-sig') as excluded_samples_file:
+            excluded_samples_file.write(samplesheet_excluded_samples)
+
+    else:
         message = (
-            'De volgende samples staan wel in het QC stats LowPass bestand, '
-            f'maar zijn niet aanwezig in deze stap (clusters niet meegenomen in de berekening): {missing_samples}'
+            'Er zijn samples geselecteerd uit meerdere LP pools (of CF Dx LPpool is leeg voor alle samples)'
         )
         sys.exit(message)
 

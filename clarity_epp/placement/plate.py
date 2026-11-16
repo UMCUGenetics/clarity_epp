@@ -6,6 +6,14 @@ def copy_layout(lims, process_id):
     """Copy placement layout from previous steps."""
     process = Process(lims, id=process_id)
     used_placements = []
+
+    # Get selected output container and its placements
+    selected_output_container = process.step.placements.get_selected_containers()[0]  # Assume there is only one output container
+    placements_selected_output_container = selected_output_container.get_placements()
+
+    for occupied_well in placements_selected_output_container.keys():
+        used_placements.append(occupied_well)
+
     # Get parent container layout
     parent_container = None
     for parent_process in process.parent_processes():
@@ -20,15 +28,14 @@ def copy_layout(lims, process_id):
             sample = parent_container.placements[placement].samples[0].name
             parent_placements[sample] = placement
 
-        # Create new container and copy layout
-        new_container = Container.create(lims, type=parent_container.type)
+        # Copy layout and place samples on selected output container
         placement_list = []
         for artifact in process.analytes()[0]:
             sample_name = artifact.samples[0].name
             if sample_name in parent_placements:
                 placement = parent_placements[sample_name]
                 if placement not in used_placements:
-                    placement_list.append([artifact, (new_container, placement)])
+                    placement_list.append([artifact, (selected_output_container, placement)])
                     used_placements.append(placement)
 
         process.step.placements.set_placement_list(placement_list)
