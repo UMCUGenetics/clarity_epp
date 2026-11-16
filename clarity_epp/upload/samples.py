@@ -88,7 +88,7 @@ def from_helix(lims, email_settings, input_file):
         'Dx Conc. meting type': {'column': 'Concentratie meting type'},
         'Dx RIN/DIN waarde': {'column': 'RIN/DIN'},
     }
-    header = input_file.readline().rstrip().rstrip('.').split(',') # expect header on first line
+    header = input_file.readline().rstrip().rstrip('.').split(',')  # expect header on first line
     for udf in udf_column:
         udf_column[udf]['index'] = header.index(udf_column[udf]['column'])
 
