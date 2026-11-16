@@ -39,7 +39,7 @@ stoftestcode_workflow = {
 }
 
 # Update exome equivalent for certain indications
-indications_exome_equivalent = {}  # UBA1 en PID09 vervallen
+indications_exome_equivalent = {}  # UBA1 and PID09 vervallen
 
 # Export meetw protocol steps WES
 meetw_zui_wes_processes = [
