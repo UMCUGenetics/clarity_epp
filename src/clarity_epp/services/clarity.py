@@ -4,7 +4,7 @@ This keeps business logic reusable and consistent, while separating it from CLI 
 utilities.
 """
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import s4.clarity
 from s4.clarity.process import Process
@@ -29,11 +29,11 @@ class ClarityService(ClarityServiceType):
     application-specific methods to be defined.
     """
 
-    def __init__(self, connector: s4.clarity.LIMS):
+    def __init__(self, connector: s4.clarity.LIMS) -> None:
         """Initialize the ClarityService with a LIMS connector."""
         self._lims = connector
 
-    def __getattr__(self, name) -> Any:
+    def __getattr__(self, name: str) -> object:
         """If an attribute does not exist in ClarityService, then check whether it exists in self._lims."""
         return getattr(self._lims, name)
 

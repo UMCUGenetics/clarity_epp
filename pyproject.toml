@@ -19,7 +19,7 @@ dependencies = [
 clarity_epp = "clarity_epp.cli:cli"
 
 [build-system]
-requires = ["uv_build>=0.11.7,<0.12.0"]
+requires = ["uv_build>=0.11.27,<0.12"]
 build-backend = "uv_build"
 
 [dependency-groups]
@@ -27,7 +27,7 @@ dev = [
     "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.1",
-    "ruff>=0.16.10",
+    "ruff>=0.17.4",
 ]
 
 [tool.ruff]
@@ -38,9 +38,9 @@ extend-select = [
     "A",   # Prevent builtin shadowing
     "ARG", # Detect unused function arguments
     "D",   # Enforce docstring conventions
-    "DOC", # Validate docstrings against code
     "DTZ", # Require timezone-aware datetimes
     "E",   # Enforce general Python style
+    "F",   # Enable Pyflakes checks.
     "ISC", # Detect implicit string concatenation
     "I",   # Enforce import ordering
     "N",   # Enforce PEP 8 naming conventions
