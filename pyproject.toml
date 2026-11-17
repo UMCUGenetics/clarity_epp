@@ -19,7 +19,7 @@ dependencies = [
 clarity_epp = "clarity_epp.cli:cli"
 
 [build-system]
-requires = ["uv_build>=0.11.7,<0.12.0"]
+requires = ["uv_build>=0.11.27,<0.12"]
 build-backend = "uv_build"
 
 [dependency-groups]
@@ -27,8 +27,53 @@ dev = [
     "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.1",
-    "ruff>=0.15.11",
+    "ruff>=0.17.4",
 ]
 
 [tool.ruff]
 line-length = 127
+
+[tool.ruff.lint]
+extend-select = [
+    "A",   # Prevent builtin shadowing
+    "ARG", # Detect unused function arguments
+    "D",   # Enforce docstring conventions
+    "DTZ", # Require timezone-aware datetimes
+    "E",   # Enforce general Python style
+    "F",   # Enable Pyflakes checks.
+    "ISC", # Detect implicit string concatenation
+    "I",   # Enforce import ordering
+    "N",   # Enforce PEP 8 naming conventions
+    "PT",  # Enforce pytest best practices
+    "PTH", # Prefer pathlib over os.path
+    "Q",   # Enforce consistent quote style
+    "SIM", # Simplify code
+    "UP",  # Modernize Python code
+    "W",   # Enforce whitespace conventions
+]
+
+ignore = [
+    "RUF100", # Unsafe fix: Removed noqa directives that were still necessary.
+    "SIM105", # Explicit try/except can be clearer then contextlib.suppress when exception handling has intentional semantics
+    "SIM108", # Ternary expressions can reduce readability for complex or multi-line conditions
+    "UP012",  # Explicit string conversion can make the intended type conversion clearer
+    "UP015",  # Explicit open modes can make file behavior more obvious
+    "UP030",  # Allow implicit and explicit positional references in string formatting.
+]
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+
+[tool.ruff.lint.flake8-unused-arguments]
+ignore-variadic-names = true
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.uv]
+required-version = ">=0.11.28"
+package = true
+exclude-newer = "7 days"
