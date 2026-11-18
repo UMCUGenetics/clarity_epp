@@ -1,3 +1,5 @@
+"""Application template rendering."""
+
 from jinja2 import Environment, PackageLoader
 
 jinja_env = Environment(
