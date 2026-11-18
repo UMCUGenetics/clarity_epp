@@ -1,0 +1,12 @@
+<con:container xmlns:con="http://genologics.com/ri/container" limsid="27-1438" uri="">
+    <name>Plate 27-1438</name>
+    <type name="Well plate" uri="" />
+    <occupied-wells>2</occupied-wells>
+    <placement limsid="PLATE_SAMPLE_A" uri="">
+        <value>A:1</value>
+    </placement>
+    <placement limsid="PLATE_SAMPLE_B" uri="">
+        <value>B:1</value>
+    </placement>
+    <state>Populated</state>
+</con:container>

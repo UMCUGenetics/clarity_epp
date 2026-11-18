@@ -1,0 +1,9 @@
+<art:artifact xmlns:art="http://genologics.com/ri/artifact" limsid="TUBE_SAMPLE_2" uri="">
+    <name>Tube Sample 2</name>
+    <type>Analyte</type>
+    <output-type>Analyte</output-type>
+    <location>
+        <container limsid="27-2" uri="" />
+        <value>1:1</value>
+    </location>
+</art:artifact>

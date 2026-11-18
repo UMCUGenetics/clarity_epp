@@ -1,0 +1,11 @@
+<prc:process xmlns:prc="http://genologics.com/ri/process" limsid="001-200002" uri="">
+    <type uri="">Plate output test</type>
+    <input-output-map>
+        <input limsid="PLATE_INPUT_1" uri="" />
+        <output limsid="PLATE_SAMPLE_A" output-type="Analyte" output-generation-type="PerInput" uri="" />
+    </input-output-map>
+    <input-output-map>
+        <input limsid="PLATE_INPUT_2" uri="" />
+        <output limsid="PLATE_SAMPLE_B" output-type="Analyte" output-generation-type="PerInput" uri="" />
+    </input-output-map>
+</prc:process>
