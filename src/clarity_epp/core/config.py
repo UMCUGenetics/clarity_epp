@@ -1,9 +1,4 @@
-"""Configuration management for the Clarity EPP application.
-
-This module provides a structured way to manage application settings, including loading configurations from a TOML file and
-validating them using Pydantic models. It ensures that the application can be easily configured and that any configuration
-errors are reported clearly to the user.
-"""
+"""Application configuration settings."""
 
 import typer
 from pydantic import BaseModel, SecretStr, ValidationError

@@ -1,11 +1,4 @@
-"""Utilities to manage container layouts.
-
-A container in the context of Clarity LIMS is defined as a physical vessel used to hold and identify biological samples or
-their derivatives during laboratory processing. In Clarity LIMS, a container is represented by a system resource that records
-its identity, type and the location of its contents. Depending on the container, samples may occupy a single position or
-multiple positions, such as wells in a microplate. Clarity LIMS tracks sample placement in containers throughout the workflow,
-allowing samples and their processing history to be associated with their physical locations.
-"""
+"""Shared helpers for container objects."""
 
 
 def get_96_well_plate() -> list[str]:

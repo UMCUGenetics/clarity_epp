@@ -1,4 +1,4 @@
-"""Utilities to retrieve information from Clarity process objects."""
+"""Shared helpers for process objects."""
 
 from s4.clarity.artifact import Artifact
 from s4.clarity.process import Process

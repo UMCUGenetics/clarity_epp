@@ -1,8 +1,4 @@
-"""Clarity services encapsulate the business logic required to interact with Clarity LIMS and execute laboratory workflows.
-
-This keeps business logic reusable and consistent, while separating it from CLI commands, data access and general-purpose
-utilities.
-"""
+"""Clarity LIMS service definitions."""
 
 from typing import TYPE_CHECKING
 

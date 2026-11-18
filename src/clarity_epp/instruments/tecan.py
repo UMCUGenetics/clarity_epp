@@ -1,4 +1,4 @@
-"""Collection of methods when using Tecan instruments."""
+"""Tecan instrument command-line commands."""
 
 from typing import Annotated
 
