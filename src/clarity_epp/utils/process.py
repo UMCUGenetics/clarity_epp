@@ -1,3 +1,5 @@
+"""Shared helpers for process objects."""
+
 from s4.clarity.artifact import Artifact
 from s4.clarity.process import Process
 

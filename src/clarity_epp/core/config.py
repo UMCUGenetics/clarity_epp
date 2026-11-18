@@ -1,3 +1,5 @@
+"""Application configuration settings."""
+
 import typer
 from pydantic import BaseModel, SecretStr, ValidationError
 from pydantic_settings import (
@@ -28,11 +30,12 @@ class Settings(BaseSettings):
     def settings_customise_sources(
         cls,
         settings_cls: type[BaseSettings],
-        init_settings: PydanticBaseSettingsSource,
-        env_settings: PydanticBaseSettingsSource,
-        dotenv_settings: PydanticBaseSettingsSource,
-        file_secret_settings: PydanticBaseSettingsSource,
+        init_settings: PydanticBaseSettingsSource,  # noqa: ARG003 ; Unused arguments required by Pydantic's interface.
+        env_settings: PydanticBaseSettingsSource,  # noqa: ARG003 ; Unused arguments required by Pydantic's interface.
+        dotenv_settings: PydanticBaseSettingsSource,  # noqa: ARG003 ; Unused arguments required by Pydantic's interface.
+        file_secret_settings: PydanticBaseSettingsSource,  # noqa: ARG003 ; Unused arguments required by Pydantic's interface.
     ) -> tuple[PydanticBaseSettingsSource, ...]:
+        """Customise the settings sources to load from config.toml file."""
         return (TomlConfigSettingsSource(settings_cls),)
 
 

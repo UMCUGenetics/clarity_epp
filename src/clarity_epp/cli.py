@@ -1,3 +1,5 @@
+"""Clarity EPP command-line interface."""
+
 import typer
 
 import clarity_epp.instruments

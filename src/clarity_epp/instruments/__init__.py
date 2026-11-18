@@ -1,3 +1,5 @@
+"""Instrument-specific command-line interfaces."""
+
 import typer
 
 from . import tecan
