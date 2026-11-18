@@ -508,12 +508,36 @@ def from_helix_sql(lims, email_settings, input_file):
                         udf_data['Dx Mengfractie'] = True
                         pg_sample.udf['Dx Mengfractie'] = True
                         pg_sample.put()
+                        # Add import warning which will be removed if duplo sample is imported
+                        udf_data['Dx Import warning'] = ';'.join([
+                            ('Duplo sample niet ingeladen.'), udf_data['Dx Import warning']
+                        ])
                     elif monster and monster == udf_data['Dx Monsternummer']:
                         udf_data['Dx Import warning'] = ';'.join([
                             ('Er is al een PG sample aanwezig in Clarity met hetzelfde Dx Monsternummer in project '
                             f'{pg_sample.project.name}.'),
                             udf_data['Dx Import warning']
                         ])
+                    elif (monster
+                          and str(glims_id) == str(data[udf_columns_check['Dx GLIMS ID']['index']])
+                          and pg_sample.udf.get('Dx Mengfractie')
+                    ):
+                        # Duplo sample is imported, remove import warning from Clarity and email
+                        clarity_import_warnings = pg_sample.udf.get('Dx Import warning').split(';')
+                        if 'Duplo sample niet ingeladen.' in clarity_import_warnings:
+                            clarity_import_warnings.remove('Duplo sample niet ingeladen.')
+                            pg_sample.udf['Dx Import warning'] = ';'.join(clarity_import_warnings)
+                            pg_sample.put()
+
+                        if sample_messages.get(glims_id):
+                            email_import_warnings = sample_messages.get(glims_id).split(';')
+                            if 'Duplo sample niet ingeladen.' in email_import_warnings:
+                                email_import_warnings.remove('Duplo sample niet ingeladen.')
+                                sample_messages[glims_id] = ';'.join(email_import_warnings)
+
+                mix_sample = udf_data.get('Dx Mengfractie')
+                if not mix_sample:
+                    udf_data['Dx Mengfractie'] = False
 
                 # Find pg sample in Clarity
                 sample_udf = {'Dx Onderzoeksindicatie': 'PG'}
