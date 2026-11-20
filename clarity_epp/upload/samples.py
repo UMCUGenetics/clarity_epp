@@ -401,12 +401,12 @@ def from_helix_sql(lims, email_settings, input_file):
         sys.exit(message)
 
     # match header and udf fields
-    udf_columns_check = {
+    input_columns_to_check = {
         'Dx Persoons ID': {'column': 'Achternaam'},
         'Dx Geboortejaar': {'column': 'Geboortedatum'},
         'Dx GLIMS ID': {'column': 'GLIMS monsternummer'}
     }
-    udf_columns_fill = {
+    input_columns_to_fill = {
         'Dx Geslacht': {'column': 'Geslacht'},
         'Dx Einddatum': {'column': 'Datum aanmelding'},
         'Dx Monsternummer': {'column': 'Monsternummers'},
@@ -426,7 +426,7 @@ def from_helix_sql(lims, email_settings, input_file):
     message = f"Bestand: {filename}\n\nOpgewerkte samples:\n"
     sample_messages = {}
 
-    for udf_dict in [udf_columns_check, udf_columns_fill]:
+    for udf_dict in [input_columns_to_check, input_columns_to_fill]:
         for udf in udf_dict:
             udf_dict[udf]['index'] = header.index(udf_dict[udf]['column'])
 
@@ -434,7 +434,7 @@ def from_helix_sql(lims, email_settings, input_file):
         if not line.startswith('.'):
             data = line.rstrip().split(';')
             if data[status_column_index] == 'O':  # only upload status O (opgewerkt) samples
-                udf_data = {
+                udf_data_to_fill = {
                     'Dx Import warning': '',
                     'Dx NICU Spoed': False,
                     'Dx Spoed':	False,
@@ -446,33 +446,36 @@ def from_helix_sql(lims, email_settings, input_file):
                     'Dx Exoomequivalent': config.exoomequivalent_pg,
                     'Dx # clusters/sample': config.clusters_per_sample_pg
                 }
-                for udf in udf_columns_fill:
+                for udf_to_fill in input_columns_to_fill:
                     # Transform specific udf
                     try:
-                        if udf == 'Dx Geslacht':
-                            udf_data[udf] = clarity_epp.upload.utils.transform_sex(data[udf_columns_fill[udf]['index']])
-                        elif udf == 'Dx Einddatum':
-                            entry_date = datetime.strptime(data[udf_columns_fill[udf]['index']], '%d-%m-%Y')  # Helix format
-                            end_date = entry_date + timedelta(weeks=4)
-                            udf_data[udf] = end_date.strftime('%Y-%m-%d')  # LIMS format (2021-01-14)
-                        elif udf in ['Dx Monsternummer', 'Dx Fractienummer']:
-                            udf_data[udf] = clarity_epp.upload.utils.transform_sample_name(
-                                data[udf_columns_fill[udf]['index']].strip()
+                        if udf_to_fill == 'Dx Geslacht':
+                            udf_data_to_fill[udf_to_fill] = (
+                                clarity_epp.upload.utils.transform_sex(data[input_columns_to_fill[udf_to_fill]['index']])
                             )
-                        elif udf == 'Dx Concentratie (ng/ul)':
-                            udf_data[udf] = data[udf_columns_fill[udf]['index']].replace(',', '.')
-                            if udf_data[udf]:
-                                udf_data[udf] = float(udf_data[udf])
-                        elif udf == 'Dx Conc. meting type':
-                            udf_data[udf] = data[udf_columns_fill[udf]['index']].split(' - ')[-1]
+                        elif udf_to_fill == 'Dx Einddatum':  # Helix format (14-01-2021), LIMS format (2021-01-14)
+                            entry_date = datetime.strptime(data[input_columns_to_fill[udf_to_fill]['index']], '%d-%m-%Y')
+                            end_date = entry_date + timedelta(weeks=4)
+                            udf_data_to_fill[udf_to_fill] = end_date.strftime('%Y-%m-%d')
+                        elif udf_to_fill in ['Dx Monsternummer', 'Dx Fractienummer']:
+                            udf_data_to_fill[udf_to_fill] = clarity_epp.upload.utils.transform_sample_name(
+                                data[input_columns_to_fill[udf_to_fill]['index']].strip()
+                            )
+                        elif udf_to_fill == 'Dx Concentratie (ng/ul)':
+                            udf_data_to_fill[udf_to_fill] = data[input_columns_to_fill[udf_to_fill]['index']].replace(',', '.')
+                            if udf_data_to_fill[udf_to_fill]:
+                                udf_data_to_fill[udf_to_fill] = float(udf_data_to_fill[udf_to_fill])
+                        elif udf_to_fill == 'Dx Conc. meting type':
+                            udf_data_to_fill[udf_to_fill] = data[input_columns_to_fill[udf_to_fill]['index']].split(' - ')[-1]
                         else:
-                            udf_data[udf] = data[udf_columns_fill[udf]['index']]
+                            udf_data_to_fill[udf_to_fill] = data[input_columns_to_fill[udf_to_fill]['index']]
                     except (IndexError, ValueError):
                         # Catch parsing errors and send email
+                        column = input_columns_to_fill[udf_to_fill]['column']
                         subject = f"ERROR Lims Helix Upload: {filename}"
                         message = (
                             "Kan de data uit het Helix export bestand (sql dna_mons_indi_tijd) niet correct parsen.\n"
-                            f"Rij = {line_index+1} \t Kolom = {udf_columns_fill[udf]['column']} \t CF = {udf}.\n"
+                            f"Rij = {line_index+1} \t Kolom = {column} \t CF = {udf_to_fill}.\n"
                             "Check/update het bestand en probeer opnieuw."
                         )
                         send_email(
@@ -485,41 +488,42 @@ def from_helix_sql(lims, email_settings, input_file):
                         sys.exit(message)
 
                 # Set 'Dx norm. manueel' udf for concentration and type of measurement
-                if udf_data['Dx Concentratie (ng/ul)']:
-                    type_of_measurement = udf_data['Dx Conc. meting type']
+                if udf_data_to_fill['Dx Concentratie (ng/ul)']:
                     for type_of_measurement, limit in config.manual_normalization_concentration_limits.items():
-                        if udf_data['Dx Conc. meting type'] == type_of_measurement:
-                            if udf_data['Dx Concentratie (ng/ul)'] <= limit:
-                                udf_data['Dx norm. manueel'] = True
+                        if udf_data_to_fill['Dx Conc. meting type'] == type_of_measurement:
+                            if udf_data_to_fill['Dx Concentratie (ng/ul)'] <= limit:
+                                udf_data_to_fill['Dx norm. manueel'] = True
                             else:
-                                udf_data['Dx norm. manueel'] = False
+                                udf_data_to_fill['Dx norm. manueel'] = False
                 else:
-                    udf_data['Dx norm. manueel'] = True
+                    udf_data_to_fill['Dx norm. manueel'] = True
 
                 # Set 'Dx Mengfractie' srWGS
-                pg_samples = lims.get_samples(udf={
-                    'Dx Persoons ID': data[udf_columns_check['Dx Persoons ID']['index']],
+                clarity_pg_samples = lims.get_samples(udf={
+                    'Dx Persoons ID': data[input_columns_to_fill['Dx Persoons ID']['index']],
                     'Dx Onderzoeksindicatie': 'PG'
                 })
-                for pg_sample in pg_samples:
-                    monster = pg_sample.udf.get('Dx Monsternummer')
-                    glims_id = pg_sample.udf.get('Dx GLIMS ID')
-                    if not monster and str(glims_id) != str(data[udf_columns_check['Dx GLIMS ID']['index']]):
-                        udf_data['Dx Mengfractie'] = True
+                for pg_sample in clarity_pg_samples:
+                    helix_sample_id = pg_sample.udf.get('Dx Monsternummer')
+                    glims_sample_id = pg_sample.udf.get('Dx GLIMS ID')
+                    if (not helix_sample_id
+                        and str(glims_sample_id) != str(data[input_columns_to_fill['Dx GLIMS ID']['index']])
+                    ):
+                        udf_data_to_fill['Dx Mengfractie'] = True
                         pg_sample.udf['Dx Mengfractie'] = True
                         pg_sample.put()
                         # Add import warning which will be removed if duplo sample is imported
-                        udf_data['Dx Import warning'] = ';'.join([
-                            ('Duplo sample niet ingeladen.'), udf_data['Dx Import warning']
+                        udf_data_to_fill['Dx Import warning'] = ';'.join([
+                            ('Duplo sample niet ingeladen.'), udf_data_to_fill['Dx Import warning']
                         ])
-                    elif monster and monster == udf_data['Dx Monsternummer']:
-                        udf_data['Dx Import warning'] = ';'.join([
+                    elif helix_sample_id and helix_sample_id == udf_data_to_fill['Dx Monsternummer']:
+                        udf_data_to_fill['Dx Import warning'] = ';'.join([
                             ('Er is al een PG sample aanwezig in Clarity met hetzelfde Dx Monsternummer in project '
                             f'{pg_sample.project.name}.'),
-                            udf_data['Dx Import warning']
+                            udf_data_to_fill['Dx Import warning']
                         ])
-                    elif (monster
-                          and str(glims_id) == str(data[udf_columns_check['Dx GLIMS ID']['index']])
+                    elif (helix_sample_id
+                          and str(glims_sample_id) == str(data[input_columns_to_fill['Dx GLIMS ID']['index']])
                           and pg_sample.udf.get('Dx Mengfractie')
                     ):
                         # Duplo sample is imported, remove import warning from Clarity and email
@@ -529,66 +533,70 @@ def from_helix_sql(lims, email_settings, input_file):
                             pg_sample.udf['Dx Import warning'] = ';'.join(clarity_import_warnings)
                             pg_sample.put()
 
-                        if sample_messages.get(glims_id):
-                            email_import_warnings = sample_messages.get(glims_id).split(';')
+                        if sample_messages.get(helix_sample_id):
+                            email_import_warnings = sample_messages.get(helix_sample_id).split(';')
                             if 'Duplo sample niet ingeladen.' in email_import_warnings:
                                 email_import_warnings.remove('Duplo sample niet ingeladen.')
-                                sample_messages[glims_id] = ';'.join(email_import_warnings)
+                                sample_messages[helix_sample_id] = ';'.join(email_import_warnings)
 
-                mix_sample = udf_data.get('Dx Mengfractie')
+                mix_sample = udf_data_to_fill.get('Dx Mengfractie')
                 if not mix_sample:
-                    udf_data['Dx Mengfractie'] = False
+                    udf_data_to_fill['Dx Mengfractie'] = False
 
                 # Find pg sample in Clarity
-                sample_udf = {'Dx Onderzoeksindicatie': 'PG'}
-                for udf in udf_columns_check:
-                    if udf == 'Dx Geboortejaar':
-                        birthday = datetime.strptime(data[udf_columns_check[udf]['index']], '%d-%m-%Y')
-                        sample_udf[udf] =  birthday.strftime('%Y')
-                    elif udf == 'Dx GLIMS ID':
-                        sample_udf[udf] = int(float(data[udf_columns_check[udf]['index']].replace(',', '.')))
-                    else:
-                        sample_udf[udf] = data[udf_columns_check[udf]['index']]
-                sample_name = sample_udf['Dx GLIMS ID']
-                samples = lims.get_samples(name=sample_name, udf=sample_udf)
-
-                if not samples:
-                    sample_name = udf_data['Dx Monsternummer']
-                    glims_id = int(float(data[udf_columns_check[udf]['index']].replace(',', '.')))
-                    if udf_data['Dx Import warning']:
-                        sample_messages[sample_name] = (
-                            f"{sample_name}\tsample {glims_id} niet gevonden in Clarity, niet ingeladen."
-                            f"\tImport waarschuwing: {udf_data['Dx Import warning']}"
+                sample_udfs_to_check = {'Dx Onderzoeksindicatie': 'PG'}
+                for udf_to_check in input_columns_to_check:
+                    if udf_to_check == 'Dx Geboortejaar':
+                        birthday = datetime.strptime(data[input_columns_to_check[udf_to_check]['index']], '%d-%m-%Y')
+                        sample_udfs_to_check[udf_to_check] =  birthday.strftime('%Y')
+                    elif udf_to_check == 'Dx GLIMS ID':
+                        sample_udfs_to_check[udf_to_check] = (
+                            int(float(data[input_columns_to_check[udf_to_check]['index']].replace(',', '.')))
                         )
                     else:
-                        sample_messages[sample_name] = (
-                            f"{sample_name}\tsample {glims_id} niet gevonden in Clarity, niet ingeladen."
+                        sample_udfs_to_check[udf_to_check] = data[input_columns_to_check[udf_to_check]['index']]
+                clarity_glims_samples = lims.get_samples(name=sample_udfs_to_check['Dx GLIMS ID'], udf=sample_udfs_to_check)
+
+                if not clarity_glims_samples:
+                    helix_sample_id = udf_data_to_fill['Dx Monsternummer']
+                    glims_sample_id = int(float(data[input_columns_to_check['Dx GLIMS ID']['index']].replace(',', '.')))
+                    if udf_data_to_fill['Dx Import warning']:
+                        sample_messages[helix_sample_id] = (
+                            f"{helix_sample_id}\tsample {glims_sample_id} niet gevonden in Clarity, niet ingeladen."
+                            f"\tImport waarschuwing: {udf_data_to_fill['Dx Import warning']}"
+                        )
+                    else:
+                        sample_messages[helix_sample_id] = (
+                            f"{helix_sample_id}\tsample {glims_sample_id} niet gevonden in Clarity, niet ingeladen."
                         )
                 else:
-                    for sample in samples:
+                    for glims_sample in clarity_glims_samples:
+                        helix_sample_id = udf_data_to_fill['Dx Monsternummer']
                         # Add sample to workflow
                         workflow = clarity_epp.upload.utils.protocol_description_to_workflow(
-                            lims, udf_data['Dx Protocolomschrijving']
+                            lims, udf_data_to_fill['Dx Protocolomschrijving']
                         )
                         if workflow:
-                            for udf in udf_data:
-                                sample.udf[udf] = udf_data[udf]
-                            sample.name = sample.udf['Dx Monsternummer']
-                            sample.put()
-                            lims.route_artifacts([sample.artifact], workflow_uri=workflow.uri)
-                            if udf_data['Dx Import warning']:
-                                sample_messages[sample.name] = (
-                                    f"{sample.name}\taangevuld en toegevoegd aan workflow: {workflow.name}."
-                                    f"\tImport waarschuwing: {udf_data['Dx Import warning']}"
+                            for udf_to_fill in udf_data_to_fill:
+                                glims_sample.udf[udf_to_fill] = udf_data_to_fill[udf_to_fill]
+                            # Change sample name in Clarity from GLIMS ID to Helix monsternummer
+                            glims_sample.name = glims_sample.udf['Dx Monsternummer']
+                            glims_sample.put()
+                            lims.route_artifacts([glims_sample.artifact], workflow_uri=workflow.uri)
+                            if udf_data_to_fill['Dx Import warning']:
+                                sample_messages[helix_sample_id] = (
+                                    f"{helix_sample_id}\taangevuld en toegevoegd aan workflow: {workflow.name}."
+                                    f"\tImport waarschuwing: {udf_data_to_fill['Dx Import warning']}"
                                 )
                             else:
-                                sample_messages[sample.name] = (
-                                    f"{sample.name}\taangevuld en toegevoegd aan workflow: {workflow.name}."
+                                sample_messages[helix_sample_id] = (
+                                    f"{helix_sample_id}\taangevuld en toegevoegd aan workflow: {workflow.name}."
                                 )
                         else:
-                            description = udf_data['Dx Protocolomschrijving']
-                            sample_messages[sample_name] = (
-                                f"{sample_name}\tERROR: Protocolomschrijving {description} is niet gelinked aan een workflow."
+                            description = udf_data_to_fill['Dx Protocolomschrijving']
+                            sample_messages[helix_sample_id] = (
+                                f'{helix_sample_id}\tERROR: Protocolomschrijving "{description}" is '
+                                f'niet gelinked aan een workflow.'
                             )
         else:
             break
