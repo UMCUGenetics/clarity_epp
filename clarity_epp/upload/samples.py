@@ -500,14 +500,14 @@ def from_helix_sql(lims, email_settings, input_file):
 
                 # Set 'Dx Mengfractie' srWGS
                 clarity_pg_samples = lims.get_samples(udf={
-                    'Dx Persoons ID': data[input_columns_to_fill['Dx Persoons ID']['index']],
+                    'Dx Persoons ID': data[input_columns_to_check['Dx Persoons ID']['index']],
                     'Dx Onderzoeksindicatie': 'PG'
                 })
                 for pg_sample in clarity_pg_samples:
                     helix_sample_id = pg_sample.udf.get('Dx Monsternummer')
                     glims_sample_id = pg_sample.udf.get('Dx GLIMS ID')
                     if (not helix_sample_id
-                        and str(glims_sample_id) != str(data[input_columns_to_fill['Dx GLIMS ID']['index']])
+                        and str(glims_sample_id) != str(data[input_columns_to_check['Dx GLIMS ID']['index']])
                     ):
                         udf_data_to_fill['Dx Mengfractie'] = True
                         pg_sample.udf['Dx Mengfractie'] = True
@@ -523,7 +523,7 @@ def from_helix_sql(lims, email_settings, input_file):
                             udf_data_to_fill['Dx Import warning']
                         ])
                     elif (helix_sample_id
-                          and str(glims_sample_id) == str(data[input_columns_to_fill['Dx GLIMS ID']['index']])
+                          and str(glims_sample_id) == str(data[input_columns_to_check['Dx GLIMS ID']['index']])
                           and pg_sample.udf.get('Dx Mengfractie')
                     ):
                         # Duplo sample is imported, remove import warning from Clarity and email
