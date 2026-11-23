@@ -568,7 +568,9 @@ def from_helix_sql(lims, email_settings, input_file):
                         )
                 else:
                     for glims_sample in clarity_glims_samples:
-                        if not glims_sample.udf.get('Dx Mengfractie'):
+                        if (not udf_data_to_fill.get('Mengfractie')
+                            and not glims_sample.udf.get('Dx Mengfractie')
+                        ):
                             udf_data_to_fill['Dx Mengfractie'] = False
                         helix_sample_id = udf_data_to_fill['Dx Monsternummer']
                         # Add sample to workflow
