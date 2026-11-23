@@ -508,6 +508,7 @@ def from_helix_sql(lims, email_settings, input_file):
                     glims_sample_id = pg_sample.udf.get('Dx GLIMS ID')
                     if (not helix_sample_id
                         and str(glims_sample_id) != str(data[input_columns_to_check['Dx GLIMS ID']['index']])
+                        and not pg_sample.udf.get('Dx Mengfractie')
                     ):
                         udf_data_to_fill['Dx Mengfractie'] = True
                         pg_sample.udf['Dx Mengfractie'] = True
@@ -523,7 +524,7 @@ def from_helix_sql(lims, email_settings, input_file):
                             udf_data_to_fill['Dx Import warning']
                         ])
                     elif (helix_sample_id
-                          and str(glims_sample_id) == str(data[input_columns_to_check['Dx GLIMS ID']['index']])
+                          and str(glims_sample_id) != str(data[input_columns_to_check['Dx GLIMS ID']['index']])
                           and pg_sample.udf.get('Dx Mengfractie')
                     ):
                         # Duplo sample is imported, remove import warning from Clarity and email
@@ -538,10 +539,6 @@ def from_helix_sql(lims, email_settings, input_file):
                             if 'Duplo sample niet ingeladen.' in email_import_warnings:
                                 email_import_warnings.remove('Duplo sample niet ingeladen.')
                                 sample_messages[helix_sample_id] = ';'.join(email_import_warnings)
-
-                mix_sample = udf_data_to_fill.get('Dx Mengfractie')
-                if not mix_sample:
-                    udf_data_to_fill['Dx Mengfractie'] = False
 
                 # Find pg sample in Clarity
                 sample_udfs_to_check = {'Dx Onderzoeksindicatie': 'PG'}
@@ -571,6 +568,8 @@ def from_helix_sql(lims, email_settings, input_file):
                         )
                 else:
                     for glims_sample in clarity_glims_samples:
+                        if not glims_sample.udf.get('Dx Mengfractie'):
+                            udf_data_to_fill['Dx Mengfractie'] = False
                         helix_sample_id = udf_data_to_fill['Dx Monsternummer']
                         # Add sample to workflow
                         workflow = clarity_epp.upload.utils.protocol_description_to_workflow(
