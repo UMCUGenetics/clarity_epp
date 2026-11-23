@@ -528,11 +528,12 @@ def from_helix_sql(lims, email_settings, input_file):
                           and pg_sample.udf.get('Dx Mengfractie')
                     ):
                         # Duplo sample is imported, remove import warning from Clarity and email
-                        clarity_import_warnings = pg_sample.udf.get('Dx Import warning').split(';')
-                        if 'Duplo sample niet ingeladen.' in clarity_import_warnings:
-                            clarity_import_warnings.remove('Duplo sample niet ingeladen.')
-                            pg_sample.udf['Dx Import warning'] = ';'.join(clarity_import_warnings)
-                            pg_sample.put()
+                        if pg_sample.udf.get('Dx Import warning'):
+                            clarity_import_warnings = pg_sample.udf.get('Dx Import warning').split(';')
+                            if 'Duplo sample niet ingeladen.' in clarity_import_warnings:
+                                clarity_import_warnings.remove('Duplo sample niet ingeladen.')
+                                pg_sample.udf['Dx Import warning'] = ';'.join(clarity_import_warnings)
+                                pg_sample.put()
 
                         if sample_messages.get(helix_sample_id):
                             email_import_warnings = sample_messages.get(helix_sample_id).split(';')
