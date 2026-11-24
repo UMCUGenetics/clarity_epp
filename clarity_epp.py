@@ -1,17 +1,16 @@
 #!venv/bin/python
 """Clarity epp application."""
 
-import sys
 import argparse
+import sys
 
 import genologics.lims
-from tenacity import Retrying, RetryError, stop_after_attempt, wait_fixed
+from tenacity import RetryError, Retrying, stop_after_attempt, wait_fixed
 
-import clarity_epp.upload
 import clarity_epp.export
-import clarity_epp.qc
 import clarity_epp.placement
-
+import clarity_epp.qc
+import clarity_epp.upload
 import config
 
 # Setup lims connection and try connection twice
@@ -193,9 +192,17 @@ def export_workflow(args):
 
 
 # Upload Functions
-def upload_samples(args):
+def upload_samples_glims(args):
+    """Upload samples from glims output file."""
+    clarity_epp.upload.samples.from_glims(lims, config.email, args.input_file)
+
+
+def upload_samples_helix(args):
     """Upload samples from helix output file."""
-    clarity_epp.upload.samples.from_helix(lims, config.email, args.input_file)
+    if args.type == 'worklist':
+        clarity_epp.upload.samples.from_helix_worklist(lims, config.email, args.input_file)
+    elif args.type == 'sql':
+        clarity_epp.upload.samples.from_helix_sql(lims, config.email, args.input_file)
 
 
 def upload_tecan_results(args):
@@ -467,9 +474,14 @@ if __name__ == "__main__":
     parser_upload_bioanalyzer.add_argument('process_id', help='Clarity lims process id')
     parser_upload_bioanalyzer.set_defaults(func=upload_bioanalyzer_results)
 
-    parser_upload_sample = subparser_upload.add_parser('sample', help='Upload samples from helix export')
-    parser_upload_sample.add_argument('input_file', type=argparse.FileType('r'), help='Input file path')
-    parser_upload_sample.set_defaults(func=upload_samples)
+    parser_upload_glims = subparser_upload.add_parser('glims', help='Upload samples from helix export')
+    parser_upload_glims.add_argument('input_file', type=argparse.FileType('r'), help='Input file path')
+    parser_upload_glims.set_defaults(func=upload_samples_glims)
+
+    parser_upload_helix = subparser_upload.add_parser('helix', help='Upload samples from helix export')
+    parser_upload_helix.add_argument('input_file', type=argparse.FileType('r', encoding='Latin-1'), help='Input file path')
+    parser_upload_helix.add_argument('type', choices=['worklist', 'sql'], help='File type')
+    parser_upload_helix.set_defaults(func=upload_samples_helix)
 
     parser_upload_tapestation = subparser_upload.add_parser('tapestation', help='Upload tapestation results')
     parser_upload_tapestation.add_argument('process_id', help='Clarity lims process id')
