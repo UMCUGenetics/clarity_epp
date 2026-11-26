@@ -662,7 +662,7 @@ def from_glims(lims, email_settings, input_file):
 
     # Parse samples
     for line_index, line in enumerate(input_file):
-        if ';' in line:
+        if ';' in line and line.rstrip().split(';')[1]:
             data = line.rstrip().split(';')
 
             udf_data = {'Sample Type': 'DNA isolated'}  # required lims input
